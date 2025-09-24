@@ -15,4 +15,12 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Models\Enums\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Bulgarikon.Common\Bulgarikon.Common.csproj" />
+  </ItemGroup>
+
 </Project>

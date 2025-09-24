@@ -19,4 +19,9 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Bulgarikon.Core\Bulgarikon.Core.csproj" />
+    <ProjectReference Include="..\Bulgarikon.Data\Bulgarikon.Data.csproj" />
+  </ItemGroup>
+
 </Project>
