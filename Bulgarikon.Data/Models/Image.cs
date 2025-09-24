@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Bulgarikon.Data.Models.Enums;
 
 namespace Bulgarikon.Data.Models
 {
@@ -10,9 +11,7 @@ namespace Bulgarikon.Data.Models
     {
         public int Id { get; set; }
         public string Url { get; set; } = null!;
-        public string Caption { get; set; } = null!;
-        public string TargetType { get; set; } = null!; // e.g., "Question", "Answer", etc. // TO DO: Enum
-        public int TargetId { get; set; }
+        public string? Caption { get; set; }
+        public ImageTargetType TargetType { get; set; }
     }
-
 }

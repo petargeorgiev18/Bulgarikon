@@ -8,7 +8,7 @@ using System;
 
 namespace Bulgarikon.Data.Migrations
 {
-    //[DbContext(typeof(ApplicationDbContext))]
+    [DbContext(typeof(BulgarikonDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

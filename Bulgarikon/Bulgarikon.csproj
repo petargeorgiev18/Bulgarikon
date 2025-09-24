@@ -9,8 +9,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.10" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.10" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.10" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.20" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.20" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.20" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.20" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.20">
@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Bulgarikon.Common\Bulgarikon.Common.csproj" />
     <ProjectReference Include="..\Bulgarikon.Core\Bulgarikon.Core.csproj" />
     <ProjectReference Include="..\Bulgarikon.Data\Bulgarikon.Data.csproj" />
   </ItemGroup>
