@@ -11,7 +11,8 @@ namespace Bulgarikon.Data.Models
         [ForeignKey(nameof(User))]
         public int UserId { get; set; }
         public BulgarikonUser User { get; set; } = null!;
-        public string? Message { get; set; }
+        public string? Comment { get; set; }
+        [Required]
         public DateTime CreatedAt { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using static Bulgarikon.Common.DataModelsValidation.EntityClassesValidations.Era;
 
 namespace Bulgarikon.Data.Models
 {
@@ -6,9 +7,17 @@ namespace Bulgarikon.Data.Models
     {
         [Key]
         public int Id { get; set; }
+        [Required]
+        [MaxLength(NameEraMaxLength)]
         public string Name { get; set; } = null!;
+        [Required]
+        [MaxLength(DescriptionMaxLength)]
         public string Description { get; set; } = null!;
+        [Required]
+        [Range(StartYearMinValue, StartYearMaxValue)]
         public int StartYear { get; set; }
+        [Required]
+        [Range(EndYearMinValue, EndYearMaxValue)]
         public int EndYear { get; set; }
         public ICollection<Event> Events { get; set; }
             = new HashSet<Event>();

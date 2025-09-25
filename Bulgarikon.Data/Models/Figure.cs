@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using static Bulgarikon.Common.DataModelsValidation.EntityClassesValidations.Figure;
 
 namespace Bulgarikon.Data.Models
 {
@@ -7,11 +8,19 @@ namespace Bulgarikon.Data.Models
     {
         [Key]
         public int Id { get; set; }
+        [Required]
+        [MaxLength(NameFigureMaxLength)]
         public string Name { get; set; } = null!;
+        [Required]
+        [MaxLength(DescriptionMaxLength)]
         public string Description { get; set; } = null!;
         public DateTime? BirthDate { get; set; }
         public DateTime? DeathDate { get; set; }
         public string? ImageUrl { get; set; }
+        [Range(BirthYearMinValue, BirthYearMaxValue)]
+        public int? BirthYear { get; set; }
+        [Range(DeathYearMinValue, DeathYearMaxValue)]
+        public int? DeathYear { get; set; }
         [Required]
         [ForeignKey(nameof(Era))]
         public int EraId { get; set; }
