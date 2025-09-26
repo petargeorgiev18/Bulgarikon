@@ -33,5 +33,7 @@ namespace Bulgarikon.Data.Models
             = new HashSet<Figure>();
         public ICollection<EventCivilization> EventCivilizations { get; set; }
             = new HashSet<EventCivilization>();
+        public ICollection<Image> Images { get; set; }
+            = new HashSet<Image>();
     }
 }

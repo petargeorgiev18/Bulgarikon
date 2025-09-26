@@ -29,5 +29,7 @@ namespace Bulgarikon.Data.Models
             = new HashSet<Artifact>();
         public ICollection<Quiz> Quizzes { get; set; }
             = new HashSet<Quiz>();
+        public ICollection<Image> Images { get; set; }
+            = new HashSet<Image>();
     }
 }

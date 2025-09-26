@@ -31,5 +31,7 @@ namespace Bulgarikon.Data.Models
         public Civilization? Civilization { get; set; }
         public ICollection<EventFigure> EventFigures { get; set; }
             = new HashSet<EventFigure>();
+        public ICollection<Image> Images { get; set; }
+            = new HashSet<Image>();
     }
 }
