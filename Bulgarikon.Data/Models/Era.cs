@@ -6,7 +6,7 @@ namespace Bulgarikon.Data.Models
     public class Era
     {
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         [Required]
         [MaxLength(NameEraMaxLength)]
         public string Name { get; set; } = null!;

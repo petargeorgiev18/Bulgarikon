@@ -7,13 +7,13 @@ namespace Bulgarikon.Data.Models
     public class Question
     {
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         [Required]
         [MaxLength(TextMaxLength)]
         public string Text { get; set; } = null!;
         [Required]
         [ForeignKey(nameof(Quiz))]
-        public int QuizId { get; set; }
+        public Guid QuizId { get; set; }
         public Quiz Quiz { get; set; } = null!;
         public ICollection<Answer> Answers { get; set; }
             = new HashSet<Answer>();

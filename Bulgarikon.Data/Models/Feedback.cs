@@ -6,10 +6,10 @@ namespace Bulgarikon.Data.Models
     public class Feedback
     {
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         [Required]
         [ForeignKey(nameof(User))]
-        public int UserId { get; set; }
+        public Guid UserId { get; set; }
         public BulgarikonUser User { get; set; } = null!;
         public string? Comment { get; set; }
         [Required]

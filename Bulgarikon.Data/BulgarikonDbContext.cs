@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Bulgarikon.Data
 {
-    public class BulgarikonDbContext : IdentityDbContext<BulgarikonUser, IdentityRole<int>, int>
+    public class BulgarikonDbContext : IdentityDbContext<BulgarikonUser, IdentityRole<Guid>,Guid>
     {
         public BulgarikonDbContext(DbContextOptions<BulgarikonDbContext> options)
         : base(options)

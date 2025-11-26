@@ -8,7 +8,7 @@ namespace Bulgarikon.Data.Models
     public class Civilization
     {
         [Key]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         [Required]
         [MaxLength(NameCivilizationMaxLength)]
         public string Name { get; set; } = null!;
@@ -26,9 +26,10 @@ namespace Bulgarikon.Data.Models
         public string? ImageUrl { get; set; }
         [Required]
         [ForeignKey(nameof(Era))]
-        public int EraId { get; set; }
+        public Guid EraId { get; set; }
         public Era Era { get; set; } = null!;
-        public ICollection<Artifact> Artifacts { get; set; } = null!;
+        public ICollection<Artifact> Artifacts { get; set; }
+            = new List<Artifact>();
         public ICollection<Figure> Figures { get; set; } 
             = new HashSet<Figure>();
         public ICollection<EventCivilization> EventCivilizations { get; set; }

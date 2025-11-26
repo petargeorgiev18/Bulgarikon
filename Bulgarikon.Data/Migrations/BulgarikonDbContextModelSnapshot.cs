@@ -24,17 +24,15 @@ namespace Bulgarikon.Data.Migrations
 
             modelBuilder.Entity("Bulgarikon.Data.Models.Answer", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("IsCorrect")
                         .HasColumnType("bit");
 
-                    b.Property<int>("QuestionId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("QuestionId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Text")
                         .IsRequired()
@@ -50,15 +48,13 @@ namespace Bulgarikon.Data.Migrations
 
             modelBuilder.Entity("Bulgarikon.Data.Models.Artifact", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("CivilizationId")
+                    b.Property<Guid?>("CivilizationId")
                         .IsRequired()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -68,8 +64,8 @@ namespace Bulgarikon.Data.Migrations
                     b.Property<DateTime>("DiscoveredAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("EraId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("EraId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ImageUrl")
                         .HasMaxLength(2083)
@@ -104,11 +100,9 @@ namespace Bulgarikon.Data.Migrations
 
             modelBuilder.Entity("Bulgarikon.Data.Models.BulgarikonUser", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
@@ -172,11 +166,9 @@ namespace Bulgarikon.Data.Migrations
 
             modelBuilder.Entity("Bulgarikon.Data.Models.Civilization", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -186,8 +178,8 @@ namespace Bulgarikon.Data.Migrations
                     b.Property<int>("EndYear")
                         .HasColumnType("int");
 
-                    b.Property<int>("EraId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("EraId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
@@ -212,11 +204,9 @@ namespace Bulgarikon.Data.Migrations
 
             modelBuilder.Entity("Bulgarikon.Data.Models.Era", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -241,15 +231,13 @@ namespace Bulgarikon.Data.Migrations
 
             modelBuilder.Entity("Bulgarikon.Data.Models.Event", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("CivilizationId")
+                    b.Property<Guid?>("CivilizationId")
                         .IsRequired()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("Date")
                         .IsRequired()
@@ -263,8 +251,8 @@ namespace Bulgarikon.Data.Migrations
                     b.Property<int?>("EndYear")
                         .HasColumnType("int");
 
-                    b.Property<int>("EraId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("EraId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Location")
                         .HasMaxLength(100)
@@ -289,17 +277,15 @@ namespace Bulgarikon.Data.Migrations
 
             modelBuilder.Entity("Bulgarikon.Data.Models.EventCivilization", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<Guid>("CivilizationId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("CivilizationId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("EventId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -312,17 +298,15 @@ namespace Bulgarikon.Data.Migrations
 
             modelBuilder.Entity("Bulgarikon.Data.Models.EventFigure", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("EventId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("FigureId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("FigureId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -335,11 +319,9 @@ namespace Bulgarikon.Data.Migrations
 
             modelBuilder.Entity("Bulgarikon.Data.Models.Feedback", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Comment")
                         .HasColumnType("nvarchar(max)");
@@ -347,8 +329,8 @@ namespace Bulgarikon.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -359,11 +341,9 @@ namespace Bulgarikon.Data.Migrations
 
             modelBuilder.Entity("Bulgarikon.Data.Models.Figure", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("BirthDate")
                         .HasColumnType("datetime2");
@@ -371,9 +351,9 @@ namespace Bulgarikon.Data.Migrations
                     b.Property<int?>("BirthYear")
                         .HasColumnType("int");
 
-                    b.Property<int?>("CivilizationId")
+                    b.Property<Guid?>("CivilizationId")
                         .IsRequired()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("DeathDate")
                         .HasColumnType("datetime2");
@@ -386,8 +366,8 @@ namespace Bulgarikon.Data.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
-                    b.Property<int>("EraId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("EraId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)");
@@ -408,29 +388,27 @@ namespace Bulgarikon.Data.Migrations
 
             modelBuilder.Entity("Bulgarikon.Data.Models.Image", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int?>("ArtifactId")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("ArtifactId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Caption")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("CivilizationId")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("CivilizationId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<int?>("EraId")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("EraId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<int?>("EventId")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("EventId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<int?>("FigureId")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("FigureId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("TargetType")
                         .HasColumnType("int");
@@ -457,14 +435,12 @@ namespace Bulgarikon.Data.Migrations
 
             modelBuilder.Entity("Bulgarikon.Data.Models.Question", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("QuizId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("QuizId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Text")
                         .IsRequired()
@@ -480,14 +456,12 @@ namespace Bulgarikon.Data.Migrations
 
             modelBuilder.Entity("Bulgarikon.Data.Models.Quiz", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("EraId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("EraId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -503,23 +477,21 @@ namespace Bulgarikon.Data.Migrations
 
             modelBuilder.Entity("Bulgarikon.Data.Models.QuizResult", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("DateTaken")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("QuizId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("QuizId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("Score")
-                        .HasColumnType("int");
+                    b.Property<Guid>("Score")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -530,13 +502,11 @@ namespace Bulgarikon.Data.Migrations
                     b.ToTable("QuizResults");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -560,7 +530,7 @@ namespace Bulgarikon.Data.Migrations
                     b.ToTable("AspNetRoles", (string)null);
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -574,8 +544,8 @@ namespace Bulgarikon.Data.Migrations
                     b.Property<string>("ClaimValue")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("RoleId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -584,7 +554,7 @@ namespace Bulgarikon.Data.Migrations
                     b.ToTable("AspNetRoleClaims", (string)null);
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -598,8 +568,8 @@ namespace Bulgarikon.Data.Migrations
                     b.Property<string>("ClaimValue")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -608,7 +578,7 @@ namespace Bulgarikon.Data.Migrations
                     b.ToTable("AspNetUserClaims", (string)null);
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
                 {
                     b.Property<string>("LoginProvider")
                         .HasMaxLength(128)
@@ -621,8 +591,8 @@ namespace Bulgarikon.Data.Migrations
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("LoginProvider", "ProviderKey");
 
@@ -631,13 +601,13 @@ namespace Bulgarikon.Data.Migrations
                     b.ToTable("AspNetUserLogins", (string)null);
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
                 {
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("RoleId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("UserId", "RoleId");
 
@@ -646,10 +616,10 @@ namespace Bulgarikon.Data.Migrations
                     b.ToTable("AspNetUserRoles", (string)null);
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
                 {
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("LoginProvider")
                         .HasMaxLength(128)
@@ -867,16 +837,16 @@ namespace Bulgarikon.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<int>", null)
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<System.Guid>", b =>
                 {
                     b.HasOne("Bulgarikon.Data.Models.BulgarikonUser", null)
                         .WithMany()
@@ -885,7 +855,7 @@ namespace Bulgarikon.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<System.Guid>", b =>
                 {
                     b.HasOne("Bulgarikon.Data.Models.BulgarikonUser", null)
                         .WithMany()
@@ -894,9 +864,9 @@ namespace Bulgarikon.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<int>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<System.Guid>", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<int>", null)
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -909,7 +879,7 @@ namespace Bulgarikon.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<System.Guid>", b =>
                 {
                     b.HasOne("Bulgarikon.Data.Models.BulgarikonUser", null)
                         .WithMany()
