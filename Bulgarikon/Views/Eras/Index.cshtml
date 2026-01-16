@@ -1,0 +1,69 @@
+﻿@model IEnumerable<Bulgarikon.Core.DTOs.EraDTOs.EraViewDto>
+
+@{
+    ViewData["Title"] = "Eras";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="mb-0">Historical Eras</h1>
+
+    @if (User.IsInRole("Admin"))
+    {
+        <a asp-controller="Eras" asp-action="Create" class="btn btn-primary">
+            + Add Era
+        </a>
+    }
+</div>
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-info">No eras found.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th style="width: 220px;">Period</th>
+                    <th style="width: 280px;" class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var era in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@era.Name</td>
+                        <td>@era.StartYear – @era.EndYear</td>
+                        <td class="text-end">
+                            <a asp-controller="Eras"
+                               asp-action="Details"
+                               asp-route-id="@era.Id"
+                               class="btn btn-sm btn-outline-secondary">
+                                Details
+                            </a>
+
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a asp-controller="Eras"
+                                   asp-action="Edit"
+                                   asp-route-id="@era.Id"
+                                   class="btn btn-sm btn-outline-primary ms-1">
+                                    Edit
+                                </a>
+
+                                <a asp-controller="Eras"
+                                   asp-action="Delete"
+                                   asp-route-id="@era.Id"
+                                   class="btn btn-sm btn-outline-danger ms-1">
+                                    Delete
+                                </a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

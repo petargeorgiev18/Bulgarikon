@@ -62,15 +62,19 @@
                 }
                 else
                 {
-                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
-                        <div>
-                            <p>
-                                @foreach (var provider in Model.ExternalLogins!)
-                                {
-                                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
-                                }
-                            </p>
-                        </div>
+                    <form asp-controller="Auth" asp-action="ExternalLogin" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+
+                        @foreach (var provider in Model.ExternalLogins!)
+                        {
+                            <button type="submit"
+                                    class="btn btn-primary"
+                                    name="provider"
+                                    value="@provider.Name">
+                                Continue with @provider.DisplayName
+                            </button>
+                        }
                     </form>
                 }
             }

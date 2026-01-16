@@ -1,10 +1,6 @@
 ﻿using Bulgarikon.Data.Repository.Interface;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Bulgarikon.Data.Repository
@@ -21,25 +17,42 @@ namespace Bulgarikon.Data.Repository
             this.dbSet = context.Set<TEntity>();
         }
 
-        public async Task<IEnumerable<TEntity>> GetAllAsync()
-        {
-            return await dbSet.AsNoTracking().ToListAsync();
-        }
-
         public async Task<TEntity?> GetByIdAsync(TId id)
         {
-            var entity = await dbSet.FindAsync(id);
-            if (entity == null)
-                return null;
-
-            context.Entry(entity).State = EntityState.Detached;
-
-            return entity;
+            return await dbSet.AsNoTracking()
+                .FirstOrDefaultAsync(e => EF.Property<TId>(e, "Id")!.Equals(id));
         }
+        public async Task<IEnumerable<TEntity>> WhereAsync(Expression<Func<TEntity, bool>> predicate)
+        {
+            return await dbSet.AsNoTracking()
+                .Where(predicate)
+                .ToListAsync();
+        }
+
+        public async Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate)
+        {
+            return await dbSet.AsNoTracking().AnyAsync(predicate);
+        }
+
+        public async Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null)
+        {
+            var query = dbSet.AsNoTracking().AsQueryable();
+            if (predicate != null) 
+                query = query.Where(predicate);
+            return await query.CountAsync();
+        }
+
+        public IQueryable<TEntity> Query()
+            => dbSet.AsNoTracking();
 
         public async Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate)
         {
             return await dbSet.AsNoTracking().FirstOrDefaultAsync(predicate);
+        }
+
+        public async Task<TEntity?> FirstOrDefaultTrackingAsync(Expression<Func<TEntity, bool>> predicate)
+        {
+            return await dbSet.FirstOrDefaultAsync(predicate);
         }
 
         public async Task AddAsync(TEntity entity)
@@ -52,30 +65,15 @@ namespace Bulgarikon.Data.Repository
             await dbSet.AddRangeAsync(entities);
         }
 
-        public Task UpdateAsync(TEntity entity)
-        {
-            dbSet.Update(entity);
-            return Task.CompletedTask;
-        }
-
-        public async Task DeleteAsync(TEntity entity)
+        public async Task Delete(TEntity entity)
         {
             dbSet.Remove(entity);
-            await Task.CompletedTask;
+            await context.SaveChangesAsync();
         }
 
-        public async Task DeleteByIdAsync(TId id)
+        public async Task SaveChangesAsync()
         {
-            var entity = await GetByIdAsync(id);
-            if (entity != null)
-            {
-                dbSet.Remove(entity);
-            }
-        }
-
-        public async Task<int> SaveChangesAsync()
-        {
-            return await context.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
     }
 }

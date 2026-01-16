@@ -1,5 +1,10 @@
+using Bulgarikon.Core.DTOs;
+using Bulgarikon.Core.Implementations;
 using Bulgarikon.Data;
 using Bulgarikon.Data.Models;
+using Bulgarikon.Data.Repository;
+using Bulgarikon.Data.Repository.Interface;
+using Bulgarikon.Data.Seed;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -23,8 +28,24 @@ namespace Bulgarikon
                 .AddRoles<IdentityRole<Guid>>()
                 .AddEntityFrameworkStores<BulgarikonDbContext>();
 
+            builder.Services.AddAuthentication()
+                .AddGoogle(options =>
+                {
+                    options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
+                    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+                    options.CallbackPath = "/signin-google";
+                })
+                .AddFacebook(options =>
+                {
+                    options.AppId = builder.Configuration["Authentication:Facebook:AppId"]!;
+                    options.AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"]!;
+                });
+
             builder.Services.AddControllersWithViews();
             builder.Services.AddRazorPages();
+
+            builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
+            builder.Services.AddScoped<IEraService, EraService>();
 
             var app = builder.Build();
 
@@ -52,6 +73,21 @@ namespace Bulgarikon
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
             app.MapRazorPages();
+
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+
+                IdentitySeeder
+                    .SeedRolesAsync(services)
+                    .GetAwaiter()
+                    .GetResult();
+
+                IdentitySeeder
+                    .SeedAdminAsync(services)
+                    .GetAwaiter()
+                    .GetResult();
+            }
 
             app.Run();
         }
