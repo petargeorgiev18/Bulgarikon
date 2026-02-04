@@ -1,5 +1,6 @@
 using Bulgarikon.Core.DTOs;
 using Bulgarikon.Core.Implementations;
+using Bulgarikon.Core.Interfaces;
 using Bulgarikon.Data;
 using Bulgarikon.Data.Models;
 using Bulgarikon.Data.Repository;
@@ -46,6 +47,7 @@ namespace Bulgarikon
 
             builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
             builder.Services.AddScoped<IEraService, EraService>();
+            builder.Services.AddScoped<ICivilizationService, CivilizationService>();
 
             var app = builder.Build();
 

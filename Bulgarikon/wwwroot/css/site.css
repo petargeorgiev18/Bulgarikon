@@ -380,9 +380,9 @@ body {
     box-shadow: 0 10px 22px rgba(156,107,47,.18);
 }
 
-    .home-btn-primary:hover {
-        filter: brightness(.97);
-    }
+.home-btn-primary:hover {
+    filter: brightness(.97);
+}
 
 .home-btn-ghost {
     background: rgba(255,255,255,.65);
@@ -632,9 +632,9 @@ body {
     display: none;
 }
 
-    .bk-modal.is-open {
-        display: block;
-    }
+.bk-modal.is-open {
+    display: block;
+}
 
 .bk-backdrop {
     position: absolute;
@@ -706,9 +706,9 @@ body.bk-modal-open {
     cursor: pointer;
 }
 
-    .bk-x:hover {
-        background: rgba(255,255,255,.55);
-    }
+.bk-x:hover {
+    background: rgba(255,255,255,.55);
+}
 
 .bk-body {
     padding: 16px 18px;
@@ -784,9 +784,9 @@ body.bk-modal-open {
     color: var(--bk-ink);
 }
 
-    .bk-btn-ghost:hover {
-        background: rgba(255,255,255,.55);
-    }
+.bk-btn-ghost:hover {
+    background: rgba(255,255,255,.55);
+}
 
 .bk-btn-danger {
     border: 0;
@@ -803,4 +803,169 @@ body.bk-modal-open {
     .bk-dialog {
         margin: 8vh auto 0;
     }
+}
+
+.bk-header-simple {
+    position: sticky;
+    top: 0;
+    z-index: 1200;
+    background: radial-gradient(900px 240px at 20% 0%, rgba(156,107,47,.18), transparent 55%), linear-gradient(180deg, #fffdf7, #f3eadc);
+    border-bottom: 1px solid rgba(0,0,0,.10);
+    box-shadow: 0 6px 22px rgba(0,0,0,.06);
+}
+
+.bk-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    gap: 16px;
+}
+
+.bk-header-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.bk-header-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    object-fit: cover;
+    border: 1px solid rgba(0,0,0,.12);
+    background: #fff;
+}
+
+.bk-header-kicker {
+    font-size: .78rem;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    font-weight: 950;
+    color: #8a5b23;
+    line-height: 1.1;
+}
+
+.bk-header-title {
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: #1d1d1d;
+    line-height: 1.2;
+}
+
+.bk-header-title span {
+    color: #9c6b2f;
+}
+
+.bk-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+@media (max-width: 576px) {
+    .bk-header-title {
+        font-size: .95rem;
+    }
+}
+
+.bk-header-right ul,
+.bk-header-right li,
+.bk-header-right form {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.bk-header-right ul {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.bk-header-right a,
+.bk-header-right button {
+    white-space: nowrap;
+}
+
+.bk-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.bk-header-right > * {
+    display: inline-flex;
+    align-items: center;
+}
+
+.bk-header-right ul {
+    display: inline-flex !important;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.bk-header-right li {
+    margin: 0;
+    padding: 0;
+}
+
+.bk-header-right form {
+    display: inline-flex;
+    margin: 0;
+}
+
+.bk-header-right a,
+.bk-header-right button {
+    white-space: nowrap;
+}
+
+    /* ===== FORCE LoginPartial to be ONE LINE in header ===== */
+    .bk-header-right,
+    .bk-header-right * {
+        flex-direction: row !important;
+    }
+
+.bk-header-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    flex-wrap: nowrap !important;
+}
+
+.bk-header-right ul {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    gap: 10px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+}
+
+.bk-header-right li {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.bk-header-right form {
+    display: flex !important;
+    align-items: center !important;
+    margin: 0 !important;
+}
+
+.bk-header-right a,
+.bk-header-right button,
+.bk-header-right span {
+    display: inline-flex !important;
+    align-items: center !important;
+    white-space: nowrap !important;
+}
+
+.home-hero {
+    margin-top: 10px;
 }

@@ -1,0 +1,196 @@
+﻿@model IEnumerable<Bulgarikon.Core.DTOs.CivilizaionDTOs.CivilizationViewDto>
+
+@{
+    ViewData["Title"] = "Цивилизации";
+    bool isAdmin = User.IsInRole("Admin");
+    Guid? eraId = ViewBag.EraId as Guid?;
+    string? eraName = ViewBag.EraName as string;
+}
+
+<div class="era-shell">
+    <div class="era-header">
+        <div>
+            <div class="era-kicker">Bulgarikon • Цивилизации</div>
+            <h1 class="era-h1">Цивилизации @(!string.IsNullOrWhiteSpace(eraName) ? $"— {eraName}" : "")</h1>
+            <div class="era-sub">Разглеждай цивилизации по период и тип.</div>
+        </div>
+
+        <div class="era-actions">
+            @if (isAdmin)
+            {
+                <a asp-action="Create" asp-route-eraId="@eraId" class="btn btn-primary era-btn-primary">+ Добави цивилизация</a>
+            }
+        </div>
+    </div>
+
+    <div class="era-toolbar card shadow-sm">
+        <div class="card-body era-toolbar-body" style="grid-template-columns: 1.3fr .8fr .8fr auto;">
+            <div class="era-field">
+                <label class="era-label">Търсене</label>
+                <input id="civSearch" class="form-control era-input" type="search"
+                       placeholder="Пример: „Траки“, „Славяни“, „Прабългари“…" />
+            </div>
+
+            <div class="era-field">
+                <label class="era-label">Тип</label>
+                <select id="civType" class="form-select era-input">
+                    <option value="">Всички</option>
+                    @foreach (var t in (IEnumerable<SelectListItem>)ViewBag.CivilizationTypes)
+                    {
+                        <option value="@t.Value">@t.Text</option>
+                    }
+                </select>
+            </div>
+
+            <div class="era-field">
+                <label class="era-label">Подреди</label>
+                <select id="civSort" class="form-select era-input">
+                    <option value="startAsc" selected>Начална година ↑</option>
+                    <option value="startDesc">Начална година ↓</option>
+                    <option value="nameAsc">Име А–Я</option>
+                    <option value="nameDesc">Име Я–А</option>
+                </select>
+            </div>
+
+            <div class="era-field era-count">
+                <div class="era-count-box">
+                    <div class="era-count-num" id="civCount">0</div>
+                    <div class="era-count-label">показани</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info border-0 shadow-sm">Няма намерени цивилизации.</div>
+    }
+    else
+    {
+        <div class="era-timeline" id="civTimeline">
+            @foreach (var c in Model)
+            {
+                var shortDesc = string.IsNullOrWhiteSpace(c.Description)
+                ? ""
+                : (c.Description.Length > 180 ? c.Description.Substring(0, 180) + "…" : c.Description);
+
+                <article class="era-node"
+                         data-name="@c.Name"
+                         data-type="@c.Type"
+                         data-start="@c.StartYear"
+                         data-end="@c.EndYear"
+                         data-desc="@c.Description">
+
+                    <div class="era-rail">
+                        <div class="era-dot"></div>
+                        <div class="era-line"></div>
+                    </div>
+
+                    <div class="card era-card shadow-sm">
+                        <div class="card-body">
+                            <div class="era-top">
+                                <div class="era-years">
+                                    <span class="era-year">@c.StartYear</span>
+                                    <span class="era-sep">—</span>
+                                    <span class="era-year">@c.EndYear</span>
+                                </div>
+
+                                <div class="era-title-wrap">
+                                    <div class="era-title">@c.Name</div>
+                                    <div class="era-meta">
+                                        <span class="era-chip">@c.Type</span>
+                                        <span class="era-chip">@($"{c.EndYear - c.StartYear + 1}") г.</span>
+                                    </div>
+                                </div>
+
+                                <div class="era-buttons">
+                                    <a asp-action="Details" asp-route-id="@c.Id"
+                                       class="btn btn-sm btn-outline-secondary">Детайли</a>
+
+                                    @if (isAdmin)
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@c.Id"
+                                           class="btn btn-sm btn-outline-primary">Редакция</a>
+
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger"
+                                                data-bk-delete-civ
+                                                data-id="@c.Id"
+                                                data-name="@c.Name"
+                                                data-eraid="@c.EraId">
+                                            Изтриване
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(c.Description))
+                            {
+                                <div class="era-desc">@shortDesc</div>
+                            }
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const search = document.getElementById('civSearch');
+            const sort = document.getElementById('civSort');
+            const type = document.getElementById('civType');
+            const timeline = document.getElementById('civTimeline');
+            const countEl = document.getElementById('civCount');
+
+            if (!timeline) return;
+            const nodes = Array.from(timeline.querySelectorAll('.era-node'));
+
+            function normalize(s){ return (s || '').toString().toLowerCase().trim(); }
+
+            function apply(){
+                const q = normalize(search.value);
+                const t = normalize(type.value);
+
+                let visible = nodes.filter(n => {
+                    const name = normalize(n.dataset.name);
+                    const desc = normalize(n.dataset.desc);
+                    const start = normalize(n.dataset.start);
+                    const end = normalize(n.dataset.end);
+                    const typ = normalize(n.dataset.type);
+
+                    const hay = `${name} ${desc} ${start} ${end} ${typ}`;
+                    const okQ = !q || hay.includes(q);
+                    const okT = !t || typ === t;
+
+                    n.style.display = (okQ && okT) ? '' : 'none';
+                    return okQ && okT;
+                });
+
+                const mode = sort.value;
+                const sorter = {
+                    startAsc: (a,b) => Number(a.dataset.start) - Number(b.dataset.start),
+                    startDesc: (a,b) => Number(b.dataset.start) - Number(a.dataset.start),
+                    nameAsc: (a,b) => a.dataset.name.localeCompare(b.dataset.name),
+                    nameDesc: (a,b) => b.dataset.name.localeCompare(a.dataset.name),
+                }[mode];
+
+                visible.sort(sorter);
+
+                const frag = document.createDocumentFragment();
+                visible.forEach(n => frag.appendChild(n));
+                nodes.filter(n => !visible.includes(n)).forEach(n => frag.appendChild(n));
+                timeline.appendChild(frag);
+
+                if (countEl) countEl.textContent = String(visible.length);
+            }
+
+            search?.addEventListener('input', apply);
+            sort?.addEventListener('change', apply);
+            type?.addEventListener('change', apply);
+            apply();
+        })();
+    </script>
+}

@@ -22,6 +22,7 @@ public class CivilizationsController : Controller
     {
         var model = await civilizationsService.GetByEraAsync(eraId);
         ViewBag.EraId = eraId;
+        await LoadDropdownsAsync(selectedEraId: eraId);
         return View(model);
     }
 
