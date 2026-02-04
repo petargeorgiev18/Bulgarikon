@@ -71,6 +71,8 @@ namespace Bulgarikon.Controllers
             {
                 var era = await eraService.GetByIdAsync(id);
 
+                ViewBag.EraId = id;
+
                 var model = new EraFormDto
                 {
                     Name = era.Name,
@@ -111,25 +113,10 @@ namespace Bulgarikon.Controllers
             }
         }
 
-        [HttpGet]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            try
-            {
-                var era = await eraService.GetByIdAsync(id);
-                return View(era);
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
-        }
-
         [HttpPost]
         [Authorize(Roles = "Admin")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(Guid id)
+        public async Task<IActionResult> Delete(Guid id)
         {
             try
             {

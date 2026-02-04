@@ -1,5 +1,89 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
-@{
-}
+﻿@model EraDeleteViewModel
+
+@* Vanilla modal (no bootstrap required) *@
+<div class="bk-modal" id="bkDeleteEraModal" aria-hidden="true" data-bk-modal>
+    <div class="bk-backdrop" data-bk-close></div>
+
+    <div class="bk-dialog" role="dialog" aria-modal="true" aria-labelledby="bkDeleteTitle">
+        <div class="bk-paper">
+            <div class="bk-head">
+                <div>
+                    <div class="bk-kicker">Потвърждение</div>
+                    <h3 class="bk-title" id="bkDeleteTitle">Изтриване на епоха</h3>
+                </div>
+                <button type="button" class="bk-x" aria-label="Close" data-bk-close>✕</button>
+            </div>
+
+            <div class="bk-body">
+                <div class="bk-warning">
+                    <div class="bk-warning-icon">⚠</div>
+                    <div>
+                        <div class="bk-warning-title">Това действие е необратимо.</div>
+                        <div class="bk-warning-sub">Епохата ще бъде премахната от системата.</div>
+                    </div>
+                </div>
+
+                <dl class="bk-dl">
+                    <div>
+                        <dt>Име</dt>
+                        <dd id="bkDeleteEraName">@Model.Name</dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="bk-foot">
+                <button type="button" class="bk-btn bk-btn-ghost" data-bk-close>Отказ</button>
+
+                <form asp-controller="Eras" asp-action="Delete" method="post" class="bk-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="Id" id="bkDeleteEraId" />
+                    <button type="submit" class="bk-btn bk-btn-danger">Изтрий</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const modal = document.getElementById('bkDeleteEraModal');
+        if (!modal) return;
+
+        const closeModal = () => {
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('bk-modal-open');
+        };
+
+        const openModal = () => {
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('bk-modal-open');
+        };
+
+        document.addEventListener('click', (e) => {
+            const openBtn = e.target.closest('[data-bk-open="bkDeleteEraModal"]');
+            if (openBtn) {
+                const id = openBtn.getAttribute('data-era-id');
+                const name = openBtn.getAttribute('data-era-name');
+
+                const idInput = document.getElementById('bkDeleteEraId');
+                const nameEl = document.getElementById('bkDeleteEraName');
+
+                if (idInput) idInput.value = id || '';
+                if (nameEl) nameEl.textContent = name || '';
+
+                openModal();
+                return;
+            }
+
+            if (e.target.closest('[data-bk-close]')) {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') {
+                closeModal();
+            }
+        });
+    })();
+</script>

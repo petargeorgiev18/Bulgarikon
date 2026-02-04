@@ -1,8 +1,247 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Начало";
+    bool isAdmin = User.IsInRole("Admin");
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="home-hero">
+    <div class="home-hero-inner">
+        <div class="home-badge">Bulgarikon • Изучавай • Изследвай • Откривай</div>
+
+        <h1 class="home-title">
+            Българската история,
+            <span class="home-title-accent">разказана интерактивно</span>
+        </h1>
+
+        <p class="home-subtitle">
+            Влез във времевата линия, свързвай събития с личности и артефакти, и тествай знанията си с куизове.
+        </p>
+
+        <div class="home-actions">
+            <a class="btn btn-lg home-btn-primary" asp-controller="Eras" asp-action="Index">Времева линия (Епохи)</a>
+            <a class="btn btn-lg home-btn-ghost" asp-controller="Events" asp-action="Index">Събития</a>
+            <a class="btn btn-lg home-btn-ghost" asp-controller="Figures" asp-action="Index">Личности</a>
+            <a class="btn btn-lg home-btn-ghost" asp-controller="Artifacts" asp-action="Index">Артефакти</a>
+            <a class="btn btn-lg home-btn-ghost" asp-controller="Quizzes" asp-action="Index">Куизове</a>
+
+            @if (isAdmin)
+            {
+                <a class="btn btn-lg home-btn-admin" asp-controller="Eras" asp-action="Create">+ Добави епоха</a>
+            }
+        </div>
+
+        <div class="home-stats" id="homeStats">
+            <div class="home-stat">
+                <div class="home-stat-num" data-target="7">0</div>
+                <div class="home-stat-label">Ключови периода</div>
+            </div>
+            <div class="home-stat">
+                <div class="home-stat-num" data-target="50">0</div>
+                <div class="home-stat-label">Събития (пример)</div>
+            </div>
+            <div class="home-stat">
+                <div class="home-stat-num" data-target="25">0</div>
+                <div class="home-stat-label">Личности (пример)</div>
+            </div>
+            <div class="home-stat">
+                <div class="home-stat-num" data-target="120">0</div>
+                <div class="home-stat-label">Артефакти (пример)</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="home-ornament" aria-hidden="true">
+        <div class="home-compass">
+            <div class="home-compass-ring"></div>
+            <div class="home-compass-needle" id="needle"></div>
+            <div class="home-compass-center"></div>
+            <div class="home-compass-text">681</div>
+        </div>
+
+        <div class="home-scrollhint">
+            <span class="home-scrollhint-dot"></span>
+            <span>Скролни за акценти</span>
+        </div>
+    </div>
 </div>
+
+<div class="home-section">
+    <div class="home-section-head">
+        <div class="home-kicker">Акценти</div>
+        <h2 class="home-h2">Какво можеш да правиш в Bulgarikon</h2>
+        <p class="home-p">Изградено като учебна и изследователска платформа – бързо, ясно и приятно.</p>
+    </div>
+
+    <div class="home-grid">
+        <div class="home-card home-card-click" data-go="Eras/Index">
+            <div class="home-card-icon">⏳</div>
+            <div class="home-card-title">Времева линия</div>
+            <div class="home-card-text">Подреди епохите по години, търси по ключови думи и виж връзки.</div>
+            <div class="home-card-cta">Отвори епохи →</div>
+        </div>
+
+        <div class="home-card home-card-click" data-go="Events/Index">
+            <div class="home-card-icon">📜</div>
+            <div class="home-card-title">Събития</div>
+            <div class="home-card-text">Преглеждай събития по период, тема, ключови думи и години.</div>
+            <div class="home-card-cta">Отвори събития →</div>
+        </div>
+
+        <div class="home-card home-card-click" data-go="Figures/Index">
+            <div class="home-card-icon">👑</div>
+            <div class="home-card-title">Личности</div>
+            <div class="home-card-text">Личности с биографии, периоди и участие в ключови събития.</div>
+            <div class="home-card-cta">Отвори личности →</div>
+        </div>
+
+        <div class="home-card home-card-click" data-go="Artifacts/Index">
+            <div class="home-card-icon">🏛️</div>
+            <div class="home-card-title">Артефакти</div>
+            <div class="home-card-text">Културно-историческо наследство – описания, периоди и снимки.</div>
+            <div class="home-card-cta">Отвори артефакти →</div>
+        </div>
+
+        <div class="home-card home-card-click" data-go="Quizzes/Index">
+            <div class="home-card-icon">🧠</div>
+            <div class="home-card-title">Куизове</div>
+            <div class="home-card-text">Тествай знанията си и следи резултати. Подходящо за ученици.</div>
+            <div class="home-card-cta">Отвори куизове →</div>
+        </div>
+
+        <div class="home-card home-card-click" data-go="Feedback/Create">
+            <div class="home-card-icon">✉️</div>
+            <div class="home-card-title">Обратна връзка</div>
+            <div class="home-card-text">Предложи подобрение или сигнализирай за грешка в съдържанието.</div>
+            <div class="home-card-cta">Изпрати →</div>
+        </div>
+    </div>
+</div>
+
+<div class="home-section">
+    <div class="home-section-head">
+        <div class="home-kicker">Бързо търсене</div>
+        <h2 class="home-h2">Намери нещо конкретно</h2>
+        <p class="home-p">Търси по години, имена, места и ключови думи (ако имаш Search контролер – супер).</p>
+    </div>
+
+    <div class="home-search card shadow-sm">
+        <div class="card-body d-flex flex-column flex-lg-row gap-2 align-items-lg-center">
+            <input id="homeSearch" class="form-control home-input" type="search"
+                   placeholder="Пример: 681, „Симеон“, „Плиска“, „Освобождение“..." />
+            <div class="d-flex gap-2 flex-wrap">
+                <a id="goSearch" class="btn home-btn-primary" href="#">Търси</a>
+                <a class="btn home-btn-ghost" asp-controller="Eras" asp-action="Index">Към епохите</a>
+            </div>
+        </div>
+        <div class="home-search-hint">
+            Съвет: използвай година + дума, напр. <span class="home-chip">1878</span> <span class="home-chip">Освобождение</span>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            document.querySelectorAll('.home-card-click').forEach(card => {
+                card.addEventListener('click', () => {
+                    const path = card.getAttribute('data-go');
+                    window.location.href = '/' + path;
+                });
+            });
+
+            const stats = document.getElementById('homeStats');
+            if (stats) {
+                const nums = stats.querySelectorAll('.home-stat-num');
+                const run = () => {
+                    nums.forEach(el => {
+                        const target = Number(el.getAttribute('data-target') || '0');
+                        const duration = 700;
+                        const start = performance.now();
+                        const from = 0;
+
+                        const step = (t) => {
+                            const p = Math.min(1, (t - start) / duration);
+                            const val = Math.round(from + (target - from) * (1 - Math.pow(1 - p, 3)));
+                            el.textContent = val.toString();
+                            if (p < 1) requestAnimationFrame(step);
+                        };
+                        requestAnimationFrame(step);
+                    });
+                };
+
+                const io = new IntersectionObserver((entries) => {
+                    if (entries.some(e => e.isIntersecting)) {
+                        run();
+                        io.disconnect();
+                    }
+                }, { threshold: 0.25 });
+
+                io.observe(stats);
+            }
+
+            const needle = document.getElementById('needle');
+            const yearText = document.querySelector('.home-compass-text');
+
+            if (needle && yearText) {
+                const minYear = 681;
+                const maxYear = new Date().getFullYear();
+                const range = maxYear - minYear;
+
+                let rafId = null;
+                let lastX = 0;
+
+                function clamp01(x) {
+                    return Math.min(1, Math.max(0, x));
+                }
+
+                function render() {
+                    rafId = null;
+
+                    const w = window.innerWidth || 1;
+                    const denom = Math.max(1, w - 1);
+                    const t = clamp01(lastX / denom);
+
+
+                    const year = Math.round(minYear + t * range);
+                    yearText.textContent = String(year);
+
+                    const deg = (t * 360) - 180;
+                    needle.style.transform = `rotate(${deg}deg)`;
+                }
+
+                window.addEventListener('mousemove', (e) => {
+                    lastX = e.clientX;
+                    if (rafId == null) rafId = requestAnimationFrame(render);
+                });
+
+                window.addEventListener('resize', () => {
+                    if (rafId == null) rafId = requestAnimationFrame(render);
+                });
+
+                lastX = window.innerWidth / 2;
+                render();
+            }
+
+            const input = document.getElementById('homeSearch');
+            const go = document.getElementById('goSearch');
+            if (input && go) {
+                const build = () => {
+                    const q = (input.value || '').trim();
+                    if (!q) return '#';
+                    return `/Search/Index?q=${encodeURIComponent(q)}`;
+                };
+                go.addEventListener('click', (e) => {
+                    const url = build();
+                    if (url === '#') { e.preventDefault(); input.focus(); return; }
+                    go.setAttribute('href', url);
+                });
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        const url = build();
+                        if (url === '#') { e.preventDefault(); return; }
+                        window.location.href = url;
+                    }
+                });
+            }
+        })();
+    </script>
+}

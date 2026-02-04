@@ -1,69 +1,231 @@
 ﻿@model IEnumerable<Bulgarikon.Core.DTOs.EraDTOs.EraViewDto>
 
 @{
-    ViewData["Title"] = "Eras";
+    ViewData["Title"] = "Епохи";
+    bool isAdmin = User.IsInRole("Admin");
 }
 
-<div class="d-flex align-items-center justify-content-between mb-3">
-    <h1 class="mb-0">Historical Eras</h1>
+<div class="era-shell">
+    <div class="era-header">
+        <div>
+            <div class="era-kicker">Bulgarikon • Времева линия</div>
+            <h1 class="era-h1">Исторически епохи</h1>
+            <div class="era-sub">Разглеждай периоди и после навлизай в събития, личности и артефакти.</div>
+        </div>
 
-    @if (User.IsInRole("Admin"))
+        <div class="era-actions">
+            @if (isAdmin)
+            {
+                <a asp-action="Create" class="btn btn-primary era-btn-primary">+ Добави епоха</a>
+            }
+        </div>
+    </div>
+
+    <div class="era-toolbar card shadow-sm">
+        <div class="card-body era-toolbar-body">
+            <div class="era-field">
+                <label class="era-label">Търсене</label>
+                <input id="eraSearch" class="form-control era-input"
+                       type="search" placeholder="Напиши: „Средновековие“, „681“, „Османско“..." />
+            </div>
+
+            <div class="era-field">
+                <label class="era-label">Подреди по</label>
+                <select id="eraSort" class="form-select era-input">
+                    <option value="startAsc" selected>Начална година ↑</option>
+                    <option value="startDesc">Начална година ↓</option>
+                    <option value="nameAsc">Име А–Я</option>
+                    <option value="nameDesc">Име Я–А</option>
+                </select>
+            </div>
+
+            <div class="era-field era-field-inline">
+                <label class="era-label">Описания</label>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="expandAll">Покажи всички</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="collapseAll">Скрий всички</button>
+                </div>
+            </div>
+
+            <div class="era-field era-count">
+                <div class="era-count-box">
+                    <div class="era-count-num" id="eraCount">0</div>
+                    <div class="era-count-label">показани</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
     {
-        <a asp-controller="Eras" asp-action="Create" class="btn btn-primary">
-            + Add Era
-        </a>
+        <div class="alert alert-info border-0 shadow-sm">Няма намерени епохи.</div>
+    }
+    else
+    {
+        <div class="era-timeline" id="eraTimeline">
+            @foreach (var era in Model)
+            {
+                var shortDesc = string.IsNullOrWhiteSpace(era.Description)
+                ? ""
+                : (era.Description.Length > 180 ? era.Description.Substring(0, 180) + "…" : era.Description);
+
+                <article class="era-node"
+                         data-name="@era.Name"
+                         data-start="@era.StartYear"
+                         data-end="@era.EndYear"
+                         data-desc="@era.Description">
+
+                    <div class="era-rail">
+                        <div class="era-dot"></div>
+                        <div class="era-line"></div>
+                    </div>
+
+                    <div class="card era-card shadow-sm">
+                        <div class="card-body">
+                            <div class="era-top">
+                                <div class="era-years">
+                                    <span class="era-year">@era.StartYear</span>
+                                    <span class="era-sep">—</span>
+                                    <span class="era-year">@era.EndYear</span>
+                                </div>
+
+                                <div class="era-title-wrap">
+                                    <div class="era-title">@era.Name</div>
+                                    <div class="era-meta">
+                                        <span class="era-chip">Епоха</span>
+                                        <span class="era-chip">@($"{era.EndYear - era.StartYear + 1}") г.</span>
+                                    </div>
+                                </div>
+
+                                <div class="era-buttons">
+                                    <a asp-action="Details" asp-route-id="@era.Id"
+                                       class="btn btn-sm btn-outline-secondary">Детайли</a>
+
+                                    @if (isAdmin)
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@era.Id"
+                                           class="btn btn-sm btn-outline-primary">Редакция</a>
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger"
+                                                data-bk-delete-era
+                                                data-id="@era.Id"
+                                                data-name="@era.Name"
+                                                data-start="@era.StartYear"
+                                                data-end="@era.EndYear">
+                                            Изтриване
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(era.Description))
+                            {
+                                <div class="era-desc">
+                                    <div class="era-desc-short">@shortDesc</div>
+
+                                    <div class="collapse era-desc-full" id="desc-@era.Id">
+                                        @era.Description
+                                    </div>
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-link era-toggle"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#desc-@era.Id"
+                                            aria-expanded="false">
+                                        Прочети още
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
     }
 </div>
 
-@if (Model == null || !Model.Any())
-{
-    <div class="alert alert-info">No eras found.</div>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-striped align-middle">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th style="width: 220px;">Period</th>
-                    <th style="width: 280px;" class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var era in Model)
-                {
-                    <tr>
-                        <td class="fw-semibold">@era.Name</td>
-                        <td>@era.StartYear – @era.EndYear</td>
-                        <td class="text-end">
-                            <a asp-controller="Eras"
-                               asp-action="Details"
-                               asp-route-id="@era.Id"
-                               class="btn btn-sm btn-outline-secondary">
-                                Details
-                            </a>
+@section Scripts {
+    <script>
+        (function () {
+            const search = document.getElementById('eraSearch');
+            const sort = document.getElementById('eraSort');
+            const timeline = document.getElementById('eraTimeline');
+            const countEl = document.getElementById('eraCount');
+            const expandAll = document.getElementById('expandAll');
+            const collapseAll = document.getElementById('collapseAll');
 
-                            @if (User.IsInRole("Admin"))
-                            {
-                                <a asp-controller="Eras"
-                                   asp-action="Edit"
-                                   asp-route-id="@era.Id"
-                                   class="btn btn-sm btn-outline-primary ms-1">
-                                    Edit
-                                </a>
+            if (!timeline) return;
 
-                                <a asp-controller="Eras"
-                                   asp-action="Delete"
-                                   asp-route-id="@era.Id"
-                                   class="btn btn-sm btn-outline-danger ms-1">
-                                    Delete
-                                </a>
-                            }
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+            const nodes = Array.from(timeline.querySelectorAll('.era-node'));
+
+            function normalize(s) {
+                return (s || '').toString().toLowerCase().trim();
+            }
+
+            function applyFilterAndSort() {
+                const q = normalize(search.value);
+
+                let visible = nodes.filter(n => {
+                    const name = normalize(n.dataset.name);
+                    const desc = normalize(n.dataset.desc);
+                    const start = normalize(n.dataset.start);
+                    const end = normalize(n.dataset.end);
+                    const hay = `${name} ${desc} ${start} ${end}`;
+                    const ok = !q || hay.includes(q);
+                    n.style.display = ok ? '' : 'none';
+                    return ok;
+                });
+
+                const mode = sort.value;
+                const sorter = {
+                    startAsc: (a, b) => Number(a.dataset.start) - Number(b.dataset.start),
+                    startDesc: (a, b) => Number(b.dataset.start) - Number(a.dataset.start),
+                    nameAsc: (a, b) => a.dataset.name.localeCompare(b.dataset.name),
+                    nameDesc: (a, b) => b.dataset.name.localeCompare(a.dataset.name),
+                }[mode];
+
+                visible.sort(sorter);
+
+                const frag = document.createDocumentFragment();
+                visible.forEach(n => frag.appendChild(n));
+                nodes.filter(n => !visible.includes(n)).forEach(n => frag.appendChild(n));
+                timeline.appendChild(frag);
+
+                countEl.textContent = String(visible.length);
+            }
+
+            function setAllCollapses(open) {
+                nodes.forEach(n => {
+                    const full = n.querySelector('.era-desc-full');
+                    const btn = n.querySelector('.era-toggle');
+                    if (!full || !btn) return;
+
+                    const isShown = full.classList.contains('show');
+                    if (open && !isShown) btn.click();
+                    if (!open && isShown) btn.click();
+                });
+            }
+
+            timeline.addEventListener('click', (e) => {
+                const btn = e.target.closest('.era-toggle');
+                if (!btn) return;
+
+                setTimeout(() => {
+                    const target = document.querySelector(btn.getAttribute('data-bs-target'));
+                    const expanded = target && target.classList.contains('show');
+                    btn.textContent = expanded ? 'Show less' : 'Read more';
+                }, 60);
+            });
+
+            search.addEventListener('input', applyFilterAndSort);
+            sort.addEventListener('change', applyFilterAndSort);
+
+            expandAll.addEventListener('click', () => setAllCollapses(true));
+            collapseAll.addEventListener('click', () => setAllCollapses(false));
+
+            applyFilterAndSort();
+        })();
+    </script>
 }
+
+@await Html.PartialAsync("Partials/_DeleteEraModal")

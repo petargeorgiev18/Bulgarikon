@@ -1,5 +1,187 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model Bulgarikon.Core.DTOs.EraDTOs.EraFormDto
+
 @{
+    ViewData["Title"] = "Редакция на епоха";
+    var eraId = (Guid?)ViewBag.EraId;
+}
+
+<div class="container py-4">
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-2 mb-3">
+        <div>
+            <div class="era-kicker">Админ • Редакция</div>
+            <h1 class="mb-1">Редакция на епоха</h1>
+            <div class="text-muted">Промени заглавие, описание и период.</div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            @if (eraId != null)
+            {
+                <a asp-action="Details" asp-route-id="@eraId" class="btn btn-outline-secondary">← Детайли</a>
+            }
+            <a asp-action="Index" class="btn btn-outline-secondary">Към списъка</a>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card shadow-sm era-paper">
+                <div class="card-body p-4">
+                    <form asp-action="Edit" asp-route-id="@eraId" method="post" autocomplete="off">
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Name" class="form-label fw-semibold">Име на епохата</label>
+                            <input asp-for="Name" class="form-control" />
+                            <span asp-validation-for="Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label fw-semibold d-flex justify-content-between">
+                                <span>Описание</span>
+                                <span class="text-muted small"><span id="descCount">0</span> символа</span>
+                            </label>
+                            <textarea asp-for="Description" class="form-control" rows="7"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="row g-3 mb-2">
+                            <div class="col-md-6">
+                                <label asp-for="StartYear" class="form-label fw-semibold">Начална година</label>
+                                <input asp-for="StartYear" class="form-control" id="startYear" />
+                                <span asp-validation-for="StartYear" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="EndYear" class="form-label fw-semibold">Крайна година</label>
+                                <input asp-for="EndYear" class="form-control" id="endYear" />
+                                <span asp-validation-for="EndYear" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2 flex-wrap mt-4">
+                            <button type="submit" class="btn btn-primary px-4">Запази промените</button>
+                            @if (eraId != null)
+                            {
+                                <a asp-action="Details" asp-route-id="@eraId" class="btn btn-outline-secondary">Откажи</a>
+                            }
+                            else
+                            {
+                                <a asp-action="Index" class="btn btn-outline-secondary">Откажи</a>
+                            }
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm era-paper">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h5 class="mb-0">Преглед</h5>
+                        <span class="badge text-bg-dark" id="yearsBadge">—</span>
+                    </div>
+
+                    <div class="small text-muted mb-3">Live преглед докато редактираш.</div>
+
+                    <div class="preview-box">
+                        <div class="preview-title" id="previewName">—</div>
+                        <div class="preview-period" id="previewPeriod">—</div>
+                        <div class="preview-desc" id="previewDesc">—</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function () {
+            const nameEl = document.querySelector('[name="Name"]');
+            const descEl = document.querySelector('[name="Description"]');
+            const startEl = document.getElementById('startYear');
+            const endEl = document.getElementById('endYear');
+
+            const previewName = document.getElementById('previewName');
+            const previewPeriod = document.getElementById('previewPeriod');
+            const previewDesc = document.getElementById('previewDesc');
+            const descCount = document.getElementById('descCount');
+            const yearsBadge = document.getElementById('yearsBadge');
+
+            function v(el) { return (el?.value || '').trim(); }
+
+            function update() {
+                const n = v(nameEl);
+                const d = v(descEl);
+                const s = v(startEl);
+                const e = v(endEl);
+
+                previewName.textContent = n || "Име на епохата…";
+                previewDesc.textContent = d || "Описанието ще се появи тук…";
+
+                previewPeriod.textContent = (s || e) ? `${s || "…"} – ${e || "…"}`
+                                                    : "Начало – Край";
+
+                descCount.textContent = String((descEl?.value || '').length);
+
+                const sNum = Number(s);
+                const eNum = Number(e);
+                if (s && e && !Number.isNaN(sNum) && !Number.isNaN(eNum)) {
+                    const years = eNum - sNum + 1;
+                    yearsBadge.textContent = years > 0 ? `${years} г.` : "—";
+                } else {
+                    yearsBadge.textContent = "—";
+                }
+            }
+
+            [nameEl, descEl, startEl, endEl].forEach(x => x?.addEventListener('input', update));
+            update();
+        })();
+    </script>
+
+    <style>
+        .era-paper {
+            background: linear-gradient(180deg, #fffdf7, #f5ecd9);
+            border: 1px solid rgba(0,0,0,.10);
+        }
+
+        .era-kicker {
+            font-size: .78rem;
+            letter-spacing: .16em;
+            text-transform: uppercase;
+            color: rgba(140, 98, 25, .95);
+        }
+
+        .preview-box {
+            border: 1px dashed rgba(0,0,0,.18);
+            border-radius: 14px;
+            padding: 14px;
+            background: rgba(255,255,255,.65);
+        }
+
+        .preview-title {
+            font-weight: 900;
+            font-size: 1.05rem;
+            color: #111;
+            margin-bottom: 2px;
+        }
+
+        .preview-period {
+            color: rgba(0,0,0,.65);
+            font-size: .92rem;
+            margin-bottom: 10px;
+        }
+
+        .preview-desc {
+            color: #141414;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+    </style>
 }

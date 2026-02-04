@@ -3,7 +3,6 @@ using Bulgarikon.Core.DTOs.EraDTOs;
 using Bulgarikon.Data.Models;
 using Bulgarikon.Data.Repository.Interface;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Bulgarikon.Core.Implementations
 {
@@ -32,10 +31,10 @@ namespace Bulgarikon.Core.Implementations
         public async Task<EraViewDto?> GetByIdAsync(Guid id)
         {
             Era? era = await eraRepository.GetByIdAsync(id);
+
             if (era == null)
-            {
                 throw new KeyNotFoundException("Era not found.");
-            }
+
             return new EraViewDto
             {
                 Id = era.Id,
@@ -49,9 +48,8 @@ namespace Bulgarikon.Core.Implementations
         public async Task CreateAsync(EraFormDto model)
         {
             if (model.EndYear < model.StartYear)
-            {
                 throw new InvalidOperationException("End year cannot be before start year.");
-            }
+
             Era era = new Era
             {
                 Id = Guid.NewGuid(),
@@ -60,32 +58,30 @@ namespace Bulgarikon.Core.Implementations
                 StartYear = model.StartYear,
                 EndYear = model.EndYear
             };
+
             await eraRepository.AddAsync(era);
             await eraRepository.SaveChangesAsync();
         }
 
         public async Task Delete(Guid id)
         {
-            Era? era = eraRepository.Query().FirstOrDefault(e => e.Id == id);
+            var era = await eraRepository.GetByIdTrackedAsync(id);
+
             if (era == null)
-            {
                 throw new KeyNotFoundException("Era not found.");
-            }
-            await eraRepository.Delete(era);
+
+            eraRepository.Delete(era);
+            await eraRepository.SaveChangesAsync();
         }
 
         public async Task EditAsync(Guid id, EraFormDto model)
         {
             if (model.EndYear < model.StartYear)
-            {
                 throw new InvalidOperationException("End year cannot be before start year.");
-            }
 
-            Era? era = eraRepository.Query().FirstOrDefault(e => e.Id == id);
+            Era? era = await eraRepository.GetByIdTrackedAsync(id);
             if (era == null)
-            {
                 throw new KeyNotFoundException("Era not found.");
-            }
 
             era.Name = model.Name;
             era.Description = model.Description;

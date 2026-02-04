@@ -22,6 +22,13 @@ namespace Bulgarikon.Data.Repository
             return await dbSet.AsNoTracking()
                 .FirstOrDefaultAsync(e => EF.Property<TId>(e, "Id")!.Equals(id));
         }
+
+        public async Task<TEntity?> GetByIdTrackedAsync(TId id)
+        {
+            return await dbSet
+                .FirstOrDefaultAsync(e => EF.Property<TId>(e, "Id")!.Equals(id));
+        }
+
         public async Task<IEnumerable<TEntity>> WhereAsync(Expression<Func<TEntity, bool>> predicate)
         {
             return await dbSet.AsNoTracking()
@@ -65,10 +72,9 @@ namespace Bulgarikon.Data.Repository
             await dbSet.AddRangeAsync(entities);
         }
 
-        public async Task Delete(TEntity entity)
+        public void Delete(TEntity entity)
         {
             dbSet.Remove(entity);
-            await context.SaveChangesAsync();
         }
 
         public async Task SaveChangesAsync()

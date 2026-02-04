@@ -10,9 +10,8 @@ namespace Bulgarikon.Data.Models
         [Required]
         [MaxLength(NameEraMaxLength)]
         public string Name { get; set; } = null!;
-        [Required]
         [MaxLength(DescriptionMaxLength)]
-        public string Description { get; set; } = null!;
+        public string? Description { get; set; }
         [Required]
         [Range(StartYearMinValue, StartYearMaxValue)]
         public int StartYear { get; set; }

@@ -6,6 +6,7 @@ namespace Bulgarikon.Data.Repository.Interface
         where TEntity : class
     {
         Task<TEntity?> GetByIdAsync(TId id);
+        Task<TEntity?> GetByIdTrackedAsync(TId id);
         Task<IEnumerable<TEntity>> WhereAsync(Expression<Func<TEntity, bool>> predicate);
         Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate);
         Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null);
@@ -14,7 +15,7 @@ namespace Bulgarikon.Data.Repository.Interface
         Task<TEntity?> FirstOrDefaultTrackingAsync(Expression<Func<TEntity, bool>> predicate);
         Task AddAsync(TEntity entity);
         Task AddRangeAsync(IEnumerable<TEntity> entities);
-        Task Delete(TEntity entity);
+        void Delete(TEntity entity);
         Task SaveChangesAsync();
     }
 }
