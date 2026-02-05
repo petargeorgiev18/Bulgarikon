@@ -1,0 +1,216 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@model IEnumerable<Bulgarikon.Core.DTOs.FigureDTOs.FigureViewDto>
+
+@{
+    ViewData["Title"] = "Личности";
+    bool isAdmin = User.IsInRole("Admin");
+
+    Guid? eraId = ViewBag.EraId as Guid?;
+    Guid? civId = ViewBag.CivilizationId as Guid?;
+}
+
+<div class="era-shell">
+    <div class="era-header">
+        <div>
+            <div class="era-kicker">Bulgarikon • Личности</div>
+            <h1 class="era-h1">Исторически личности</h1>
+            <div class="era-sub">Търси, филтрирай по цивилизация и подреждай.</div>
+        </div>
+
+        <div class="era-actions">
+            @if (isAdmin && eraId != null)
+            {
+                <a asp-action="Create"
+                   asp-route-eraId="@eraId"
+                   asp-route-civilizationId="@civId"
+                   class="btn btn-primary era-btn-primary">
+                    + Добави личност
+                </a>
+            }
+        </div>
+    </div>
+
+    <div class="era-toolbar card shadow-sm">
+        <div class="card-body era-toolbar-body" style="grid-template-columns: 1.3fr 1fr .8fr auto;">
+            <div class="era-field">
+                <label class="era-label">Търсене</label>
+                <input id="figSearch" class="form-control era-input" type="search"
+                       placeholder="Пример: „Симеон“, „Левски“, „хан“…" />
+            </div>
+
+            <div class="era-field">
+                <label class="era-label">Цивилизация</label>
+                <select id="figCiv" class="form-select era-input">
+                    <option value="">Всички</option>
+                    @if (ViewBag.Civilizations != null)
+                    {
+                        foreach (var c in (IEnumerable<SelectListItem>)ViewBag.Civilizations)
+                        {
+                            <option value="@c.Value" selected="@(c.Selected ? "selected" : null)">@c.Text</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="era-field">
+                <label class="era-label">Подреди</label>
+                <select id="figSort" class="form-select era-input">
+                    <option value="nameAsc" selected>Име А–Я</option>
+                    <option value="nameDesc">Име Я–А</option>
+                    <option value="birthAsc">Рожд. година ↑</option>
+                    <option value="birthDesc">Рожд. година ↓</option>
+                </select>
+            </div>
+
+            <div class="era-field era-count">
+                <div class="era-count-box">
+                    <div class="era-count-num" id="figCount">0</div>
+                    <div class="era-count-label">показани</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info border-0 shadow-sm">Няма намерени личности.</div>
+    }
+    else
+    {
+        <div class="era-timeline" id="figTimeline">
+            @foreach (var f in Model)
+            {
+                var years =
+                (f.BirthYear.HasValue || f.DeathYear.HasValue)
+                ? $"{(f.BirthYear?.ToString() ?? "—")} – {(f.DeathYear?.ToString() ?? "—")}"
+                : "—";
+
+                var shortDesc = string.IsNullOrWhiteSpace(f.Description)
+                ? ""
+                : (f.Description.Length > 180 ? f.Description.Substring(0, 180) + "…" : f.Description);
+
+                <article class="era-node"
+                         data-name="@f.Name"
+                         data-desc="@f.Description"
+                         data-birth="@(f.BirthYear ?? int.MaxValue)"
+                         data-civid="@(f.CivilizationId?.ToString() ?? "")">
+
+                    <div class="era-rail">
+                        <div class="era-dot"></div>
+                        <div class="era-line"></div>
+                    </div>
+
+                    <div class="card era-card shadow-sm">
+                        <div class="card-body">
+                            <div class="era-top">
+                                <div class="era-years">
+                                    <span class="era-year">@years</span>
+                                </div>
+
+                                <div class="era-title-wrap">
+                                    <div class="era-title">@f.Name</div>
+                                    <div class="era-meta">
+                                        @if (!string.IsNullOrWhiteSpace(f.CivilizationName))
+                                        {
+                                            <span class="era-chip">@f.CivilizationName</span>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(f.EraName))
+                                        {
+                                            <span class="era-chip">@f.EraName</span>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="era-buttons">
+                                    <a asp-action="Details" asp-route-id="@f.Id"
+                                       class="btn btn-sm btn-outline-secondary">Детайли</a>
+
+                                    @if (isAdmin)
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@f.Id"
+                                           class="btn btn-sm btn-outline-primary">Редакция</a>
+
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger"
+                                                data-bk-delete-figure
+                                                data-id="@f.Id"
+                                                data-name="@f.Name"
+                                                data-eraid="@f.EraId"
+                                                data-civid="@f.CivilizationId">
+                                            Изтриване
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(shortDesc))
+                            {
+                                <div class="era-desc">@shortDesc</div>
+                            }
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const search = document.getElementById('figSearch');
+            const sort = document.getElementById('figSort');
+            const civ = document.getElementById('figCiv');
+            const timeline = document.getElementById('figTimeline');
+            const countEl = document.getElementById('figCount');
+
+            if (!timeline) return;
+            const nodes = Array.from(timeline.querySelectorAll('.era-node'));
+
+            function normalize(s) { return (s || '').toString().toLowerCase().trim(); }
+
+            function apply() {
+                const q = normalize(search.value);
+                const civId = (civ?.value || '').trim().toLowerCase();
+
+                let visible = nodes.filter(n => {
+                    const name = normalize(n.dataset.name);
+                    const desc = normalize(n.dataset.desc);
+                    const civid = normalize(n.dataset.civid);
+
+                    const hay = `${name} ${desc}`;
+                    const okQ = !q || hay.includes(q);
+                    const okC = !civId || civid === civId;
+
+                    n.style.display = (okQ && okC) ? '' : 'none';
+                    return okQ && okC;
+                });
+
+                const mode = sort.value;
+                const sorter = {
+                    nameAsc: (a, b) => a.dataset.name.localeCompare(b.dataset.name),
+                    nameDesc: (a, b) => b.dataset.name.localeCompare(a.dataset.name),
+                    birthAsc: (a, b) => Number(a.dataset.birth) - Number(b.dataset.birth),
+                    birthDesc: (a, b) => Number(b.dataset.birth) - Number(a.dataset.birth),
+                }[mode];
+
+                visible.sort(sorter);
+
+                const frag = document.createDocumentFragment();
+                visible.forEach(n => frag.appendChild(n));
+                nodes.filter(n => !visible.includes(n)).forEach(n => frag.appendChild(n));
+                timeline.appendChild(frag);
+
+                if (countEl) countEl.textContent = String(visible.length);
+            }
+
+            search?.addEventListener('input', apply);
+            sort?.addEventListener('change', apply);
+            civ?.addEventListener('change', apply);
+
+            apply();
+        })();
+    </script>
+}
+
+@await Html.PartialAsync("Partials/_DeleteFigureModal")

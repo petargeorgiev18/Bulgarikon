@@ -34,7 +34,7 @@ public class CivilizationsController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> Create(Guid eraId)
     {
@@ -48,7 +48,7 @@ public class CivilizationsController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CivilizationFormDto model)
@@ -63,7 +63,7 @@ public class CivilizationsController : Controller
         return RedirectToAction(nameof(Details), new { id });
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> Edit(Guid id)
     {
@@ -76,7 +76,7 @@ public class CivilizationsController : Controller
         return View(model);
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(Guid id, CivilizationFormDto model)
@@ -92,7 +92,7 @@ public class CivilizationsController : Controller
         return RedirectToAction(nameof(Details), new { id });
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(Guid id, Guid eraId)

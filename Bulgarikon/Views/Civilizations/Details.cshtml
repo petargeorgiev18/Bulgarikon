@@ -1,5 +1,126 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model Bulgarikon.Core.DTOs.CivilizaionDTOs.CivilizationViewDto
+
 @{
+    ViewData["Title"] = "Детайли";
+    bool isAdmin = User.IsInRole("Admin");
+}
+
+<div class="container py-3">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-2 mb-3">
+        <div>
+            <div class="text-muted small">Цивилизация</div>
+            <h1 class="mb-1">@Model.Name</h1>
+            <div class="text-muted">
+                @Model.StartYear – @Model.EndYear • @Model.Type
+                @if (!string.IsNullOrWhiteSpace(Model.EraName))
+                {
+                    <span> • Епоха: @Model.EraName</span>
+                }
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="Index" asp-route-eraId="@Model.EraId" class="btn btn-outline-secondary">← Назад</a>
+
+            @if (isAdmin)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Редактирай</a>
+
+                <button type="button"
+                        class="btn btn-outline-danger"
+                        data-bk-delete-civ
+                        data-id="@Model.Id"
+                        data-name="@Model.Name"
+                        data-start="@Model.StartYear"
+                        data-end="@Model.EndYear"
+                        data-eraid="@Model.EraId">
+                    Изтрий
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+    {
+        <div class="card shadow-sm mb-3">
+            <img src="@Model.ImageUrl" class="img-fluid rounded" alt="@Model.Name" style="max-height:420px; object-fit:cover;" />
+        </div>
+    }
+
+    <div class="card shadow-sm era-paper">
+        <div class="card-body">
+            <h5 class="mb-3">Описание</h5>
+
+            @if (string.IsNullOrWhiteSpace(Model.Description))
+            {
+                <div class="alert alert-info mb-0">Няма описание.</div>
+            }
+            else
+            {
+                <p class="mb-0 era-readable">@Model.Description</p>
+            }
+        </div>
+    </div>
+    @await Html.PartialAsync("Partials/_DeleteCivilizationModal")
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const modal = document.getElementById('bkDeleteCivilizationModal');
+            if (!modal) return;
+
+            const idInput = document.getElementById('bkDeleteCivId');
+            const eraIdInput = document.getElementById('bkDeleteCivEraId');
+            const nameEl = document.getElementById('bkDeleteCivName');
+            const periodEl = document.getElementById('bkDeleteCivPeriod');
+
+            function openModal({ id, name, start, end, eraId }) {
+                if (idInput) idInput.value = id || '';
+                if (eraIdInput) eraIdInput.value = eraId || '';
+                if (nameEl) nameEl.textContent = name || '—';
+
+                const s = (start ?? '').toString().trim();
+                const e = (end ?? '').toString().trim();
+                if (periodEl) periodEl.textContent = (s || e) ? `${s || '…'} – ${e || '…'}` : '—';
+
+                modal.hidden = false;
+                modal.setAttribute('aria-hidden', 'false');
+                modal.classList.add('is-open');
+                document.body.classList.add('bk-modal-open');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeModal() {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+                modal.hidden = true;
+                document.body.classList.remove('bk-modal-open');
+                document.body.style.overflow = '';
+            }
+
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-bk-delete-civ]');
+                if (!btn) return;
+
+                openModal({
+                    id: btn.getAttribute('data-id'),
+                    name: btn.getAttribute('data-name'),
+                    start: btn.getAttribute('data-start'),
+                    end: btn.getAttribute('data-end'),
+                    eraId: btn.getAttribute('data-eraid')
+                });
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target.closest('[data-bk-close]')) closeModal();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal.hidden === false) closeModal();
+            });
+
+            closeModal();
+        })();
+    </script>
 }

@@ -1,0 +1,98 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@model Bulgarikon.Core.DTOs.FigureDTOs.FigureFormDto
+
+@{
+    ViewData["Title"] = "Добави личност";
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-2 mb-3">
+        <div>
+            <div class="era-kicker">Админ • Създаване</div>
+            <h1 class="mb-1">Добави личност</h1>
+            <div class="text-muted">Име, описание, дати/години и принадлежност.</div>
+        </div>
+
+        <a asp-action="Index" asp-route-eraId="@Model.EraId" asp-route-civilizationId="@Model.CivilizationId"
+           class="btn btn-outline-secondary">Към списъка</a>
+    </div>
+
+    <div class="card shadow-sm era-paper">
+        <div class="card-body p-4">
+            <form asp-action="Create" method="post" autocomplete="off">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label fw-semibold">Име</label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label fw-semibold">Описание</label>
+                    <textarea asp-for="Description" class="form-control" rows="7"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="BirthDate" class="form-label fw-semibold">Дата на раждане</label>
+                        <input asp-for="BirthDate" class="form-control" type="date" />
+                        <span asp-validation-for="BirthDate" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="DeathDate" class="form-label fw-semibold">Дата на смърт</label>
+                        <input asp-for="DeathDate" class="form-control" type="date" />
+                        <span asp-validation-for="DeathDate" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="BirthYear" class="form-label fw-semibold">Година на раждане</label>
+                        <input asp-for="BirthYear" class="form-control" />
+                        <span asp-validation-for="BirthYear" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="DeathYear" class="form-label fw-semibold">Година на смърт</label>
+                        <input asp-for="DeathYear" class="form-control" />
+                        <span asp-validation-for="DeathYear" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ImageUrl" class="form-label fw-semibold">Image URL</label>
+                    <input asp-for="ImageUrl" class="form-control" />
+                    <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                </div>
+
+                <div class="row g-3 mb-2">
+                    <div class="col-md-6">
+                        <label asp-for="EraId" class="form-label fw-semibold">Епоха</label>
+                        <select asp-for="EraId" class="form-select" asp-items="(IEnumerable<SelectListItem>)ViewBag.Eras"></select>
+                        <span asp-validation-for="EraId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="CivilizationId" class="form-label fw-semibold">Цивилизация (по избор)</label>
+                        <select asp-for="CivilizationId" class="form-select" asp-items="(IEnumerable<SelectListItem>)ViewBag.Civilizations">
+                            <option value="">(няма)</option>
+                        </select>
+                        <span asp-validation-for="CivilizationId" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap mt-4">
+                    <button type="submit" class="btn btn-primary px-4">Запази</button>
+                    <a asp-action="Index" asp-route-eraId="@Model.EraId" asp-route-civilizationId="@Model.CivilizationId"
+                       class="btn btn-outline-secondary">Откажи</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -17,45 +17,48 @@ namespace Bulgarikon.Core.Implementations
 
         public async Task<IEnumerable<CivilizationViewDto>> GetByEraAsync(Guid eraId)
         {
-            return await civilizations
+            var list = await civilizations
                 .Query()
                 .Where(c => c.EraId == eraId)
                 .Include(c => c.Era)
                 .OrderBy(c => c.StartYear)
-                .Select(c => new CivilizationViewDto
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    Description = c.Description,
-                    Type = c.Type,
-                    StartYear = c.StartYear,
-                    EndYear = c.EndYear,
-                    EraId = c.EraId,
-                    EraName = c.Era.Name,
-                    ImageUrl = c.ImageUrl
-                })
                 .ToListAsync();
+
+            return list.Select(c => new CivilizationViewDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Description = c.Description,
+                Type = c.Type,
+                StartYear = c.StartYear,
+                EndYear = c.EndYear,
+                EraId = c.EraId,
+                EraName = c.Era?.Name ?? "",
+                ImageUrl = c.ImageUrl
+            });
         }
 
         public async Task<CivilizationViewDto?> GetDetailsAsync(Guid id)
         {
-            return await civilizations
+            var c = await civilizations
                 .Query()
-                .Where(c => c.Id == id)
-                .Include(c => c.Era)
-                .Select(c => new CivilizationViewDto
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    Description = c.Description,
-                    Type = c.Type,
-                    StartYear = c.StartYear,
-                    EndYear = c.EndYear,
-                    EraId = c.EraId,
-                    EraName = c.Era.Name,
-                    ImageUrl = c.ImageUrl
-                })
-                .FirstOrDefaultAsync();
+                .Include(x => x.Era)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (c == null) return null;
+
+            return new CivilizationViewDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Description = c.Description,
+                Type = c.Type,
+                StartYear = c.StartYear,
+                EndYear = c.EndYear,
+                EraId = c.EraId,
+                EraName = c.Era?.Name ?? "",
+                ImageUrl = c.ImageUrl
+            };
         }
 
         public async Task<Guid> CreateAsync(CivilizationFormDto model)
@@ -69,7 +72,7 @@ namespace Bulgarikon.Core.Implementations
                 StartYear = model.StartYear,
                 EndYear = model.EndYear,
                 EraId = model.EraId,
-                ImageUrl = string.IsNullOrWhiteSpace(model.ImageUrl) ? null : model.ImageUrl.Trim()
+                ImageUrl = model.ImageUrl
             };
 
             await civilizations.AddAsync(entity);
@@ -79,20 +82,19 @@ namespace Bulgarikon.Core.Implementations
 
         public async Task<CivilizationFormDto?> GetForEditAsync(Guid id)
         {
-            return await civilizations
-                .Query()
-                .Where(c => c.Id == id)
-                .Select(c => new CivilizationFormDto
-                {
-                    Name = c.Name,
-                    Description = c.Description,
-                    Type = c.Type,
-                    StartYear = c.StartYear,
-                    EndYear = c.EndYear,
-                    EraId = c.EraId,
-                    ImageUrl = c.ImageUrl
-                })
-                .FirstOrDefaultAsync();
+            var c = await civilizations.GetByIdAsync(id);
+            if (c == null) return null;
+
+            return new CivilizationFormDto
+            {
+                Name = c.Name,
+                Description = c.Description,
+                Type = c.Type,
+                StartYear = c.StartYear,
+                EndYear = c.EndYear,
+                EraId = c.EraId,
+                ImageUrl = c.ImageUrl
+            };
         }
 
         public async Task UpdateAsync(Guid id, CivilizationFormDto model)
@@ -106,7 +108,7 @@ namespace Bulgarikon.Core.Implementations
             c.StartYear = model.StartYear;
             c.EndYear = model.EndYear;
             c.EraId = model.EraId;
-            c.ImageUrl = string.IsNullOrWhiteSpace(model.ImageUrl) ? null : model.ImageUrl.Trim();
+            c.ImageUrl = model.ImageUrl;
 
             await civilizations.SaveChangesAsync();
         }

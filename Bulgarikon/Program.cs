@@ -48,6 +48,7 @@ namespace Bulgarikon
             builder.Services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
             builder.Services.AddScoped<IEraService, EraService>();
             builder.Services.AddScoped<ICivilizationService, CivilizationService>();
+            builder.Services.AddScoped<IFigureService, FigureService>();
 
             var app = builder.Build();
 

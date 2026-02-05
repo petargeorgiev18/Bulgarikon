@@ -1,0 +1,72 @@
+﻿@model Bulgarikon.Core.DTOs.FigureDTOs.FigureViewDto
+
+@{
+    ViewData["Title"] = "Детайли";
+    bool isAdmin = User.IsInRole("Admin");
+}
+
+<div class="container py-3">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-2 mb-3">
+        <div>
+            <div class="text-muted small">Личност</div>
+            <h1 class="mb-1">@Model.Name</h1>
+            <div class="text-muted">
+                @if (Model.BirthYear.HasValue || Model.DeathYear.HasValue)
+                {
+                    <span>@(Model.BirthYear?.ToString() ?? "—") – @(Model.DeathYear?.ToString() ?? "—")</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.CivilizationName))
+                {
+                    <span> • @Model.CivilizationName</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.EraName))
+                {
+                    <span> • Епоха: @Model.EraName</span>
+                }
+            </div>
+
+            @if (Model.BirthDate.HasValue || Model.DeathDate.HasValue)
+            {
+                <div class="text-muted small mt-1">
+                    Дати: @(Model.BirthDate?.ToString("yyyy-MM-dd") ?? "—") → @(Model.DeathDate?.ToString("yyyy-MM-dd") ?? "—")
+                </div>
+            }
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="Index" asp-route-eraId="@Model.EraId" asp-route-civilizationId="@Model.CivilizationId"
+               class="btn btn-outline-secondary">← Назад</a>
+
+            @if (isAdmin)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Редактирай</a>
+
+                <button type="button"
+                        class="btn btn-outline-danger"
+                        data-bk-delete-figure
+                        data-id="@Model.Id"
+                        data-name="@Model.Name"
+                        data-eraid="@Model.EraId"
+                        data-civid="@Model.CivilizationId">
+                    Изтрий
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+    {
+        <div class="card shadow-sm mb-3">
+            <img src="@Model.ImageUrl" class="img-fluid rounded" alt="@Model.Name" style="max-height:420px; object-fit:cover;" />
+        </div>
+    }
+
+    <div class="card shadow-sm era-paper">
+        <div class="card-body">
+            <h5 class="mb-3">Описание</h5>
+            <p class="mb-0 era-readable">@Model.Description</p>
+        </div>
+    </div>
+</div>
+
+@await Html.PartialAsync("Partials/_DeleteFigureModal")

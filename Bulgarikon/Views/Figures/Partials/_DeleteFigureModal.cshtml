@@ -1,0 +1,96 @@
+﻿<div class="bk-modal" id="bkDeleteFigureModal" aria-hidden="true" hidden>
+    <div class="bk-backdrop" data-bk-close></div>
+
+    <div class="bk-dialog" role="dialog" aria-modal="true" aria-labelledby="bkDeleteFigureTitle">
+        <div class="bk-paper">
+            <div class="bk-head">
+                <div>
+                    <div class="bk-kicker">Потвърждение</div>
+                    <h3 class="bk-title" id="bkDeleteFigureTitle">Изтриване на личност</h3>
+                </div>
+                <button type="button" class="bk-x" aria-label="Close" data-bk-close>✕</button>
+            </div>
+
+            <div class="bk-body">
+                <div class="bk-warning">
+                    <div class="bk-warning-icon">⚠</div>
+                    <div>
+                        <div class="bk-warning-title">Това действие е необратимо.</div>
+                        <div class="bk-warning-sub">Личността ще бъде премахната от системата.</div>
+                    </div>
+                </div>
+
+                <div class="bk-card">
+                    <div class="bk-card-title" id="bkDeleteFigureName">—</div>
+                </div>
+            </div>
+
+            <div class="bk-foot">
+                <button type="button" class="bk-btn bk-btn-ghost" data-bk-close>Отказ</button>
+
+                <form asp-controller="Figures" asp-action="Delete" method="post" class="bk-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="bkDeleteFigureId" />
+                    <input type="hidden" name="eraId" id="bkDeleteFigureEraId" />
+                    <input type="hidden" name="civilizationId" id="bkDeleteFigureCivId" />
+                    <button type="submit" class="bk-btn bk-btn-danger">Изтрий</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const modal = document.getElementById('bkDeleteFigureModal');
+        if (!modal) return;
+
+        const idInput = document.getElementById('bkDeleteFigureId');
+        const eraIdInput = document.getElementById('bkDeleteFigureEraId');
+        const civIdInput = document.getElementById('bkDeleteFigureCivId');
+        const nameEl = document.getElementById('bkDeleteFigureName');
+
+        function openModal({ id, name, eraId, civId }) {
+            if (idInput) idInput.value = id || '';
+            if (eraIdInput) eraIdInput.value = eraId || '';
+            if (civIdInput) civIdInput.value = civId || '';
+            if (nameEl) nameEl.textContent = name || '—';
+
+            modal.hidden = false;
+            modal.setAttribute('aria-hidden', 'false');
+            modal.classList.add('is-open');
+            document.body.classList.add('bk-modal-open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+            modal.hidden = true;
+            document.body.classList.remove('bk-modal-open');
+            document.body.style.overflow = '';
+        }
+
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-bk-delete-figure]');
+            if (!btn) return;
+
+            openModal({
+                id: btn.getAttribute('data-id'),
+                name: btn.getAttribute('data-name'),
+                eraId: btn.getAttribute('data-eraid'),
+                civId: btn.getAttribute('data-civid')
+            });
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target.closest('[data-bk-close]')) closeModal();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.hidden === false) closeModal();
+        });
+
+        closeModal();
+    })();
+</script>

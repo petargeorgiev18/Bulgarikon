@@ -1,5 +1,106 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model Bulgarikon.Core.DTOs.CivilizaionDTOs.CivilizationFormDto
+
 @{
+    ViewData["Title"] = "Редакция";
+    var civId = (Guid?)ViewBag.CivilizationId;
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-2 mb-3">
+        <div>
+            <div class="era-kicker">Админ • Редакция</div>
+            <h1 class="mb-1">Редакция на цивилизация</h1>
+            <div class="text-muted">Промени данните и периода.</div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            @if (civId != null)
+            {
+                <a asp-action="Details" asp-route-id="@civId" class="btn btn-outline-secondary">← Детайли</a>
+            }
+            <a asp-action="Index" asp-route-eraId="@Model.EraId" class="btn btn-outline-secondary">Към списъка</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm era-paper">
+        <div class="card-body p-4">
+            <form asp-action="Edit" asp-route-id="@civId" method="post" autocomplete="off">
+                @Html.AntiForgeryToken()
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Name" class="form-label fw-semibold">Име</label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label fw-semibold">Описание</label>
+                    <textarea asp-for="Description" class="form-control" rows="7"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Type" class="form-label fw-semibold">Тип</label>
+                        <select asp-for="Type" class="form-select">
+                            @foreach (var t in (IEnumerable<SelectListItem>)ViewBag.CivilizationTypes)
+                            {
+                                <option value="@t.Value">@t.Text</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Type" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="EraId" class="form-label fw-semibold">Епоха</label>
+                        <select asp-for="EraId" class="form-select">
+                            @foreach (var e in (IEnumerable<SelectListItem>)ViewBag.Eras)
+                            {
+                                <option value="@e.Value" selected="@e.Selected">@e.Text</option>
+                            }
+                        </select>
+                        <span asp-validation-for="EraId" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="StartYear" class="form-label fw-semibold">Начална година</label>
+                        <input asp-for="StartYear" class="form-control" />
+                        <span asp-validation-for="StartYear" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="EndYear" class="form-label fw-semibold">Крайна година</label>
+                        <input asp-for="EndYear" class="form-control" />
+                        <span asp-validation-for="EndYear" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ImageUrl" class="form-label fw-semibold">Image URL (по избор)</label>
+                    <input asp-for="ImageUrl" class="form-control" />
+                    <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap mt-4">
+                    <button type="submit" class="btn btn-primary px-4">Запази</button>
+                    @if (civId != null)
+                    {
+                        <a asp-action="Details" asp-route-id="@civId" class="btn btn-outline-secondary">Откажи</a>
+                    }
+                    else
+                    {
+                        <a asp-action="Index" asp-route-eraId="@Model.EraId" class="btn btn-outline-secondary">Откажи</a>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
 }

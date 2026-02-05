@@ -37,14 +37,14 @@ namespace Bulgarikon.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         public IActionResult Create()
         {
             return View();
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(EraFormDto model)
         {
@@ -64,7 +64,7 @@ namespace Bulgarikon.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         public async Task<IActionResult> Edit(Guid id)
         {
             try
@@ -90,7 +90,7 @@ namespace Bulgarikon.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Guid id, EraFormDto model)
         {
@@ -114,7 +114,7 @@ namespace Bulgarikon.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(Guid id)
         {
