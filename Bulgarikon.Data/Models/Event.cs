@@ -11,7 +11,6 @@ namespace Bulgarikon.Data.Models
         [Required]
         [MaxLength(TitleMaxLength)]
         public string Title { get; set; } = null!;
-        [Required]
         public DateTime? Date { get; set; }
         [Required]
         [MaxLength(DescriptionMaxLength)]
@@ -26,7 +25,6 @@ namespace Bulgarikon.Data.Models
         [ForeignKey(nameof(Era))]
         public Guid EraId { get; set; }
         public Era Era { get; set; } = null!;
-        [Required]
         [ForeignKey(nameof(Civilization))]
         public Guid? CivilizationId { get; set; }
         public Civilization Civilization { get; set; } = null!;

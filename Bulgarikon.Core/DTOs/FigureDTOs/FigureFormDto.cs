@@ -27,4 +27,5 @@ namespace Bulgarikon.Core.DTOs.FigureDTOs
 
         public Guid? CivilizationId { get; set; }
     }
+
 }

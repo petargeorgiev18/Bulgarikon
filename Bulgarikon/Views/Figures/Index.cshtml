@@ -20,12 +20,7 @@
         <div class="era-actions">
             @if (isAdmin && eraId != null)
             {
-                <a asp-action="Create"
-                   asp-route-eraId="@eraId"
-                   asp-route-civilizationId="@civId"
-                   class="btn btn-primary era-btn-primary">
-                    + Добави личност
-                </a>
+                <a asp-controller="Figures" asp-action="Create" asp-route-eraId="@ViewBag.EraId">+ Добави личност</a>
             }
         </div>
     </div>
