@@ -1,0 +1,39 @@
+﻿<div class="bk-modal" id="bkDeleteEventModal" aria-hidden="true" hidden>
+    <div class="bk-backdrop" data-bk-close></div>
+
+    <div class="bk-dialog" role="dialog" aria-modal="true" aria-labelledby="bkDeleteEventTitleLabel">
+        <div class="bk-paper">
+            <div class="bk-head">
+                <div>
+                    <div class="bk-kicker">Потвърждение</div>
+                    <h3 class="bk-title" id="bkDeleteEventTitleLabel">Изтриване на събитие</h3>
+                </div>
+                <button type="button" class="bk-x" aria-label="Close" data-bk-close>✕</button>
+            </div>
+
+            <div class="bk-body">
+                <div class="bk-warning">
+                    <div class="bk-warning-icon">⚠</div>
+                    <div>
+                        <div class="bk-warning-title">Това действие е необратимо.</div>
+                        <div class="bk-warning-sub">Събитието ще бъде премахнато от системата.</div>
+                    </div>
+                </div>
+
+                <div class="bk-card">
+                    <div class="bk-card-title" id="bkDeleteEventTitle">—</div>
+                </div>
+            </div>
+
+            <div class="bk-foot">
+                <button type="button" class="bk-btn bk-btn-ghost" data-bk-close>Отказ</button>
+
+                <form asp-controller="Events" asp-action="Delete" method="post" class="bk-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="bkDeleteEventId" />
+                    <button type="submit" class="bk-btn bk-btn-danger">Изтрий</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

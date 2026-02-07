@@ -1,0 +1,83 @@
+﻿@model Bulgarikon.Core.DTOs.EventDTOs.EventFormDto
+
+@{
+    ViewData["Title"] = "Добави събитие";
+}
+
+<div class="container py-3">
+    <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+        <div>
+            <div class="text-muted small">Събития</div>
+            <h1 class="mb-0">Добави събитие</h1>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">← Назад</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="row g-3">
+                    <div class="col-lg-8">
+                        <label class="form-label">Заглавие</label>
+                        <input asp-for="Title" class="form-control" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <label class="form-label">Епоха</label>
+                        <select asp-for="EraId" class="form-select" asp-items="(IEnumerable<SelectListItem>)ViewBag.Eras"></select>
+                        <span asp-validation-for="EraId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <label class="form-label">Начална година</label>
+                        <input asp-for="StartYear" class="form-control" type="number" />
+                        <span asp-validation-for="StartYear" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <label class="form-label">Крайна година</label>
+                        <input asp-for="EndYear" class="form-control" type="number" />
+                        <span asp-validation-for="EndYear" class="text-danger"></span>
+                        <div class="form-text">Ако е еднодневно/едногодишно — можеш да оставиш EndYear празно (ще се нормализира).</div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Локация (по желание)</label>
+                        <input asp-for="Location" class="form-control" />
+                        <span asp-validation-for="Location" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Описание</label>
+                        <textarea asp-for="Description" class="form-control" rows="6"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <label class="form-label">Цивилизации (по желание)</label>
+                        <select asp-for="CivilizationIds" class="form-select" multiple
+                                asp-items="(IEnumerable<SelectListItem>)ViewBag.Civilizations"></select>
+                    </div>
+
+                    <div class="col-lg-6">
+                        <label class="form-label">Личности (по желание)</label>
+                        <select asp-for="FigureIds" class="form-select" multiple
+                                asp-items="(IEnumerable<SelectListItem>)ViewBag.Figures"></select>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Отказ</a>
+                    <button type="submit" class="btn btn-primary">Запази</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -16,9 +16,12 @@ namespace Bulgarikon.Core.Implementations
             this.figures = figures;
         }
 
-        public async Task<IEnumerable<FigureViewDto>> GetByEraAsync(Guid eraId, Guid? civilizationId = null)
+        public async Task<IEnumerable<FigureViewDto>> GetByEraAsync(Guid? eraId, Guid? civilizationId = null)
         {
-            var q = figures.Query().Where(f => f.EraId == eraId);
+            var q = figures.Query();
+
+            if (eraId.HasValue)
+                q = q.Where(f => f.EraId == eraId.Value);
 
             if (civilizationId.HasValue)
                 q = q.Where(f => f.CivilizationId == civilizationId.Value);
@@ -136,11 +139,14 @@ namespace Bulgarikon.Core.Implementations
             await figures.SaveChangesAsync();
         }
 
+        // Helper method to validate the figure entity record
         private static void ValidateFigure(FigureFormDto model)
         {
-            var hasBirth = model.BirthDate.HasValue || model.BirthYear.HasValue;
-            if (!hasBirth)
-                throw new ValidationException("Личността трябва да има дата или година на раждане.");
+            bool hasBirth = model.BirthDate.HasValue || model.BirthYear.HasValue;
+            bool hasDeath = model.DeathDate.HasValue || model.DeathYear.HasValue;
+
+            if (!hasBirth && !hasDeath)
+                throw new ValidationException("Личността трябва да има поне година/дата на раждане или година/дата на смърт.");
 
             if (model.BirthDate.HasValue && model.BirthYear.HasValue &&
                 model.BirthDate.Value.Year != model.BirthYear.Value)
@@ -154,8 +160,8 @@ namespace Bulgarikon.Core.Implementations
                 throw new ValidationException("Годината на смърт не съвпада с датата на смърт.");
             }
 
-            var birthYear = model.BirthDate?.Year ?? model.BirthYear;
-            var deathYear = model.DeathDate?.Year ?? model.DeathYear;
+            int? birthYear = model.BirthDate?.Year ?? model.BirthYear;
+            int? deathYear = model.DeathDate?.Year ?? model.DeathYear;
 
             if (birthYear.HasValue && deathYear.HasValue && deathYear.Value < birthYear.Value)
                 throw new ValidationException("Смъртта не може да е преди раждането.");

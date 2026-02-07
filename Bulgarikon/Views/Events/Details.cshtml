@@ -1,0 +1,158 @@
+﻿@model Bulgarikon.Core.DTOs.EventDTOs.EventDetailsDto
+
+@{
+    ViewData["Title"] = "Детайли";
+    bool isAdmin = User.IsInRole("Admin");
+}
+
+<div class="container py-3">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-2 mb-3">
+        <div>
+            <div class="text-muted small">Събитие</div>
+            <h1 class="mb-1">@Model.Title</h1>
+            <div class="text-muted">
+                @Model.StartYear – @Model.EndYear
+                @if (!string.IsNullOrWhiteSpace(Model.Location))
+                {
+                    <span> • @Model.Location</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.EraName))
+                {
+                    <span> • Епоха: @Model.EraName</span>
+                }
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="Index" class="btn btn-outline-secondary">← Назад</a>
+
+            @if (isAdmin)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Редактирай</a>
+
+                <button type="button"
+                        class="btn btn-outline-danger"
+                        data-bk-delete-event
+                        data-id="@Model.Id"
+                        data-title="@Model.Title">
+                    Изтрий
+                </button>
+            }
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <h5 class="mb-3">Описание</h5>
+            <p class="mb-0">@Model.Description</p>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="mb-3">Цивилизации</h5>
+
+                    @if (Model.Civilizations == null || !Model.Civilizations.Any())
+                    {
+                        <div class="text-muted">Няма.</div>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var c in Model.Civilizations)
+                            {
+                                <a class="btn btn-sm btn-outline-secondary"
+                                   asp-controller="Civilizations"
+                                   asp-action="Details"
+                                   asp-route-id="@c.Id">
+                                    @c.Name
+                                </a>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="mb-3">Личности</h5>
+
+                    @if (Model.Figures == null || !Model.Figures.Any())
+                    {
+                        <div class="text-muted">Няма.</div>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-wrap gap-2">
+                            @foreach (var f in Model.Figures)
+                            {
+                                <a class="btn btn-sm btn-outline-secondary"
+                                   asp-controller="Figures"
+                                   asp-action="Details"
+                                   asp-route-id="@f.Id">
+                                    @f.Name
+                                </a>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @await Html.PartialAsync("Partials/_DeleteEventModal")
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const modal = document.getElementById('bkDeleteEventModal');
+            if (!modal) return;
+
+            const idInput = document.getElementById('bkDeleteEventId');
+            const titleEl = document.getElementById('bkDeleteEventTitle');
+
+            function openModal({ id, title }) {
+                if (idInput) idInput.value = id || '';
+                if (titleEl) titleEl.textContent = title || '—';
+
+                modal.hidden = false;
+                modal.setAttribute('aria-hidden', 'false');
+                modal.classList.add('is-open');
+                document.body.classList.add('bk-modal-open');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeModal() {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+                modal.hidden = true;
+                document.body.classList.remove('bk-modal-open');
+                document.body.style.overflow = '';
+            }
+
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-bk-delete-event]');
+                if (btn) {
+                    openModal({
+                        id: btn.getAttribute('data-id'),
+                        title: btn.getAttribute('data-title')
+                    });
+                    return;
+                }
+
+                if (e.target.closest('[data-bk-close]')) closeModal();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal.hidden === false) closeModal();
+            });
+
+            closeModal();
+        })();
+    </script>
+}

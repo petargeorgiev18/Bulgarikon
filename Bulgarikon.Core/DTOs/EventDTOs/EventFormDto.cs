@@ -1,34 +1,33 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 using static Bulgarikon.Common.DataModelsValidation.EntityClassesValidations.Event;
 
-namespace Bulgarikon.Data.Models
+namespace Bulgarikon.Core.DTOs.EventDTOs
 {
-    public class Event
+    public class EventFormDto
     {
-        [Key]
-        public Guid Id { get; set; }
         [Required]
         [MaxLength(TitleMaxLength)]
         public string Title { get; set; } = null!;
+
+        public DateTime? Date { get; set; }
+
         [Required]
         [MaxLength(DescriptionMaxLength)]
         public string Description { get; set; } = null!;
+
         [MaxLength(LocationMaxLength)]
         public string? Location { get; set; }
+
         [Range(StartYearMinValue, StartYearMaxValue)]
         public int? StartYear { get; set; }
+
         [Range(EndYearMinValue, EndYearMaxValue)]
         public int? EndYear { get; set; }
+
         [Required]
-        [ForeignKey(nameof(Era))]
         public Guid EraId { get; set; }
-        public Era Era { get; set; } = null!;
-        public ICollection<EventFigure> EventFigures { get; set; }
-            = new HashSet<EventFigure>();
-        public ICollection<EventCivilization> EventCivilizations { get; set; } 
-            = new HashSet<EventCivilization>();
-        public ICollection<Image> Images { get; set; }
-            = new HashSet<Image>();
+
+        public List<Guid>? CivilizationIds { get; set; } = new();
+        public List<Guid>? FigureIds { get; set; } = new();
     }
 }

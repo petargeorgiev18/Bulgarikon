@@ -44,13 +44,16 @@ namespace Bulgarikon.Data.Repository
         public async Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null)
         {
             var query = dbSet.AsNoTracking().AsQueryable();
-            if (predicate != null) 
+            if (predicate != null)
                 query = query.Where(predicate);
             return await query.CountAsync();
         }
 
         public IQueryable<TEntity> Query()
             => dbSet.AsNoTracking();
+
+        public IQueryable<TEntity> QueryTracking()
+            => dbSet.AsQueryable();
 
         public async Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate)
         {

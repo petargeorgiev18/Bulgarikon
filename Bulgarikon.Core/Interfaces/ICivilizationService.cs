@@ -9,7 +9,7 @@ namespace Bulgarikon.Core.Interfaces
 {
     public interface ICivilizationService
     {
-        Task<IEnumerable<CivilizationViewDto>> GetByEraAsync(Guid eraId);
+        Task<IEnumerable<CivilizationViewDto>> GetByEraAsync(Guid? eraId);
         Task<CivilizationViewDto?> GetDetailsAsync(Guid id);
         Task<Guid> CreateAsync(CivilizationFormDto model);
         Task<CivilizationFormDto?> GetForEditAsync(Guid id);

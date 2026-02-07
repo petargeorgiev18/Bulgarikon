@@ -1,0 +1,167 @@
+﻿@model IEnumerable<EventEraGroupViewModel>
+
+@{
+	ViewData["Title"] = "Събития";
+	bool isAdmin = User.IsInRole("Admin");
+}
+
+<div class="era-shell">
+	<div class="era-header">
+		<div>
+			<div class="era-kicker">Bulgarikon • Събития</div>
+			<h1 class="era-h1">Исторически събития</h1>
+			<div class="era-sub">Подредени по епохи (възходящо) и по години вътре.</div>
+		</div>
+
+		<div class="era-actions">
+			@if (isAdmin)
+			{
+				<a asp-action="Create" class="btn btn-primary era-btn-primary">+ Добави събитие</a>
+			}
+		</div>
+	</div>
+
+	@if (!Model.Any())
+	{
+		<div class="alert alert-info border-0 shadow-sm">Няма събития.</div>
+	}
+	else
+	{
+		@foreach (var g in Model)
+		{
+			<div class="card shadow-sm mb-3" style="border:1px solid var(--stroke); background:#fffdf8;">
+				<div class="card-body">
+					<div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+						<div>
+							<div class="era-kicker">Епоха</div>
+							<div class="era-title">@g.EraName</div>
+							<div class="era-sub">@g.EraStartYear – @g.EraEndYear</div>
+						</div>
+
+						@if (isAdmin)
+						{
+							<div class="d-flex gap-2 flex-wrap align-items-start">
+								<a asp-controller="Eras" asp-action="Details" asp-route-id="@g.EraId"
+								   class="btn btn-sm btn-outline-secondary">Епоха детайли</a>
+								<a asp-action="Create" asp-route-eraId="@g.EraId"
+								   class="btn btn-sm btn-outline-primary">+ Събитие в епохата</a>
+							</div>
+						}
+					</div>
+
+					@if (!g.Events.Any())
+					{
+						<div class="alert alert-info mt-3 mb-0">Няма събития в тази епоха.</div>
+					}
+					else
+					{
+						<div class="era-timeline mt-3">
+							@foreach (var e in g.Events)
+							{
+								<article class="era-node">
+									<div class="era-rail">
+										<div class="era-dot"></div>
+										<div class="era-line"></div>
+									</div>
+
+									<div class="card era-card shadow-sm">
+										<div class="card-body">
+											<div class="era-top">
+												<div class="era-years">
+													<span class="era-year">@e.StartYear</span>
+													<span class="era-sep">—</span>
+													<span class="era-year">@e.EndYear</span>
+												</div>
+
+												<div class="era-title-wrap">
+													<div class="era-title">@e.Title</div>
+													<div class="era-meta">
+														@if (!string.IsNullOrWhiteSpace(e.Location))
+														{
+															<span class="era-chip">@e.Location</span>
+														}
+													</div>
+												</div>
+
+												<div class="era-buttons">
+													<a asp-action="Details" asp-route-id="@e.Id"
+													   class="btn btn-sm btn-outline-secondary">Детайли</a>
+
+													@if (isAdmin)
+													{
+														<a asp-action="Edit" asp-route-id="@e.Id"
+														   class="btn btn-sm btn-outline-primary">Редакция</a>
+
+														<button type="button"
+																class="btn btn-sm btn-outline-danger"
+																data-bk-delete-event
+																data-id="@e.Id"
+																data-title="@e.Title">
+															Изтриване
+														</button>
+													}
+												</div>
+											</div>
+										</div>
+									</div>
+								</article>
+							}
+						</div>
+					}
+				</div>
+			</div>
+		}
+
+		@await Html.PartialAsync("Partials/_DeleteEventModal")
+	}
+</div>
+
+@section Scripts {
+	<script>
+		(function () {
+			const modal = document.getElementById('bkDeleteEventModal');
+			if (!modal) return;
+
+			const idInput = document.getElementById('bkDeleteEventId');
+			const titleEl = document.getElementById('bkDeleteEventTitle');
+
+			function openModal({ id, title }) {
+				if (idInput) idInput.value = id || '';
+				if (titleEl) titleEl.textContent = title || '—';
+
+				modal.hidden = false;
+				modal.setAttribute('aria-hidden', 'false');
+				modal.classList.add('is-open');
+				document.body.classList.add('bk-modal-open');
+				document.body.style.overflow = 'hidden';
+			}
+
+			function closeModal() {
+				modal.classList.remove('is-open');
+				modal.setAttribute('aria-hidden', 'true');
+				modal.hidden = true;
+				document.body.classList.remove('bk-modal-open');
+				document.body.style.overflow = '';
+			}
+
+			document.addEventListener('click', (e) => {
+				const btn = e.target.closest('[data-bk-delete-event]');
+				if (btn) {
+					openModal({
+						id: btn.getAttribute('data-id'),
+						title: btn.getAttribute('data-title')
+					});
+					return;
+				}
+
+				if (e.target.closest('[data-bk-close]')) closeModal();
+			});
+
+			document.addEventListener('keydown', (e) => {
+				if (e.key === 'Escape' && modal.hidden === false) closeModal();
+			});
+
+			closeModal();
+		})();
+	</script>
+}

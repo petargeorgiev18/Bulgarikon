@@ -15,12 +15,16 @@ namespace Bulgarikon.Core.Implementations
             this.civilizations = civilizations;
         }
 
-        public async Task<IEnumerable<CivilizationViewDto>> GetByEraAsync(Guid eraId)
+        public async Task<IEnumerable<CivilizationViewDto>> GetByEraAsync(Guid? eraId)
         {
-            var list = await civilizations
-                .Query()
-                .Where(c => c.EraId == eraId)
-                .Include(c => c.Era)
+            IQueryable<Civilization> q = civilizations.Query();
+
+            q = q.Include(c => c.Era);
+
+            if (eraId.HasValue)
+                q = q.Where(c => c.EraId == eraId.Value);
+
+            var list = await q
                 .OrderBy(c => c.StartYear)
                 .ToListAsync();
 

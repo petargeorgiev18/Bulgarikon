@@ -11,6 +11,7 @@ namespace Bulgarikon.Data.Repository.Interface
         Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate);
         Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null);
         IQueryable<TEntity> Query();
+        IQueryable<TEntity> QueryTracking();
         Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate);
         Task<TEntity?> FirstOrDefaultTrackingAsync(Expression<Func<TEntity, bool>> predicate);
         Task AddAsync(TEntity entity);
