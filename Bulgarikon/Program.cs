@@ -50,6 +50,7 @@ namespace Bulgarikon
             builder.Services.AddScoped<ICivilizationService, CivilizationService>();
             builder.Services.AddScoped<IFigureService, FigureService>();
             builder.Services.AddScoped<IEventService, EventService>();
+            builder.Services.AddScoped<IArtifactService, ArtifactService>();
 
             var app = builder.Build();
 

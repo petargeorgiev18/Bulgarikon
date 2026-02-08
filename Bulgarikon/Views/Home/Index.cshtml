@@ -72,35 +72,35 @@
     </div>
 
     <div class="home-grid">
-        <div class="home-card home-card-click" data-go="Eras/Index">
+        <div class="home-card home-card-click" data-go="@Url.Action("Index", "Eras")">
             <div class="home-card-icon">⏳</div>
             <div class="home-card-title">Времева линия</div>
             <div class="home-card-text">Подреди епохите по години, търси по ключови думи и виж връзки.</div>
             <div class="home-card-cta">Отвори епохи →</div>
         </div>
 
-        <div class="home-card home-card-click" data-go="Events/Index">
+        <div class="home-card home-card-click" data-go="@Url.Action("Index", "Events")">
             <div class="home-card-icon">📜</div>
             <div class="home-card-title">Събития</div>
             <div class="home-card-text">Преглеждай събития по период, тема, ключови думи и години.</div>
             <div class="home-card-cta">Отвори събития →</div>
         </div>
 
-        <div class="home-card home-card-click" data-go="Figures/Index">
+        <div class="home-card home-card-click" data-go="@Url.Action("Index", "Figures")">
             <div class="home-card-icon">👑</div>
             <div class="home-card-title">Личности</div>
             <div class="home-card-text">Личности с биографии, периоди и участие в ключови събития.</div>
             <div class="home-card-cta">Отвори личности →</div>
         </div>
 
-        <div class="home-card home-card-click" data-go="Artifacts/Index">
+        <div class="home-card home-card-click" data-go="@Url.Action("Index", "Artifacts")">
             <div class="home-card-icon">🏛️</div>
             <div class="home-card-title">Артефакти</div>
             <div class="home-card-text">Културно-историческо наследство – описания, периоди и снимки.</div>
             <div class="home-card-cta">Отвори артефакти →</div>
         </div>
 
-        <div class="home-card home-card-click" data-go="Quizzes/Index">
+        <div class="home-card home-card-click" data-go="@Url.Action("Index", "Quizzes")">
             <div class="home-card-icon">🧠</div>
             <div class="home-card-title">Куизове</div>
             <div class="home-card-text">Тествай знанията си и следи резултати. Подходящо за ученици.</div>
@@ -144,7 +144,7 @@
             document.querySelectorAll('.home-card-click').forEach(card => {
                 card.addEventListener('click', () => {
                     const path = card.getAttribute('data-go');
-                    window.location.href = '/' + path;
+                    window.location.href = path;
                 });
             });
 

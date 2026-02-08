@@ -1,0 +1,40 @@
+﻿@* Vanilla modal *@
+<div class="bk-modal" id="bkDeleteArtifactModal" aria-hidden="true" hidden>
+    <div class="bk-backdrop" data-bk-close></div>
+
+    <div class="bk-dialog" role="dialog" aria-modal="true" aria-labelledby="bkDeleteArtifactTitle">
+        <div class="bk-paper">
+            <div class="bk-head">
+                <div>
+                    <div class="bk-kicker">Потвърждение</div>
+                    <h3 class="bk-title" id="bkDeleteArtifactTitle">Изтриване на артефакт</h3>
+                </div>
+                <button type="button" class="bk-x" aria-label="Close" data-bk-close>✕</button>
+            </div>
+
+            <div class="bk-body">
+                <div class="bk-warning">
+                    <div class="bk-warning-icon">⚠</div>
+                    <div>
+                        <div class="bk-warning-title">Това действие е необратимо.</div>
+                        <div class="bk-warning-sub">
+                            Артефактът <strong id="bkDeleteArtifactName">—</strong> ще бъде премахнат от системата.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bk-foot">
+                <button type="button" class="btn btn-outline-secondary" data-bk-close>Отказ</button>
+
+                <form asp-controller="Artifacts" asp-action="Delete" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="bkDeleteArtifactId" />
+                    <input type="hidden" name="eraId" id="bkDeleteArtifactEraId" />
+                    <input type="hidden" name="civilizationId" id="bkDeleteArtifactCivId" />
+                    <button type="submit" class="btn btn-danger">Изтрий</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

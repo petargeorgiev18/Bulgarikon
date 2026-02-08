@@ -1,0 +1,143 @@
+﻿@model Bulgarikon.Core.DTOs.ArtifactDTOs.ArtifactDetailsDto
+
+@{
+    ViewData["Title"] = "Детайли";
+    bool isAdmin = User.IsInRole("Admin");
+
+    var civName = string.IsNullOrWhiteSpace(Model.CivilizationName) ? "Неизвестна" : Model.CivilizationName;
+    var yearLabel = Model.Year.HasValue ? Model.Year.Value.ToString() : "Неизвестна";
+}
+
+<div class="container py-3">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-2 mb-3">
+        <div>
+            <div class="text-muted small">Артефакт</div>
+            <h1 class="mb-1">@Model.Name</h1>
+            <div class="text-muted">
+                @yearLabel • @Model.Material • @Model.Location • @civName
+                @if (!string.IsNullOrWhiteSpace(Model.EraName))
+                {
+                    <span> • Епоха: @Model.EraName</span>
+                }
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-action="Index" asp-route-eraId="@Model.EraId" asp-route-civilizationId="@Model.CivilizationId"
+               class="btn btn-outline-secondary">← Назад</a>
+
+            @if (isAdmin)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Редактирай</a>
+
+                <button type="button"
+                        class="btn btn-outline-danger"
+                        data-bk-delete-artifact
+                        data-id="@Model.Id"
+                        data-name="@Model.Name"
+                        data-eraid="@Model.EraId"
+                        data-civid="@Model.CivilizationId">
+                    Изтрий
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
+    {
+        <div class="card shadow-sm mb-3">
+            <img src="@Model.ImageUrl" class="img-fluid rounded" alt="@Model.Name" style="max-height:420px; object-fit:cover;" />
+        </div>
+    }
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="text-muted small">Открит на</div>
+                    <div class="fw-semibold">@Model.DiscoveredAt.ToString("dd.MM.yyyy")</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Материал</div>
+                    <div class="fw-semibold">@Model.Material</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Локация</div>
+                    <div class="fw-semibold">@Model.Location</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm era-paper">
+        <div class="card-body">
+            <h5 class="mb-3">Описание</h5>
+
+            @if (string.IsNullOrWhiteSpace(Model.Description))
+            {
+                <div class="alert alert-info mb-0">Няма описание.</div>
+            }
+            else
+            {
+                <p class="mb-0 era-readable">@Model.Description</p>
+            }
+        </div>
+    </div>
+
+    @await Html.PartialAsync("Partials/_DeleteArtifactModal")
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const modal = document.getElementById('bkDeleteArtifactModal');
+            if (!modal) return;
+
+            const idInput = document.getElementById('bkDeleteArtifactId');
+            const eraIdInput = document.getElementById('bkDeleteArtifactEraId');
+            const civIdInput = document.getElementById('bkDeleteArtifactCivId');
+            const nameEl = document.getElementById('bkDeleteArtifactName');
+
+            function openModal({ id, name, eraId, civId }) {
+                if (idInput) idInput.value = id || '';
+                if (eraIdInput) eraIdInput.value = eraId || '';
+                if (civIdInput) civIdInput.value = civId || '';
+                if (nameEl) nameEl.textContent = name || '—';
+
+                modal.hidden = false;
+                modal.setAttribute('aria-hidden', 'false');
+                modal.classList.add('is-open');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeModal() {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+                modal.hidden = true;
+                document.body.style.overflow = '';
+            }
+
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-bk-delete-artifact]');
+                if (!btn) return;
+
+                openModal({
+                    id: btn.getAttribute('data-id'),
+                    name: btn.getAttribute('data-name'),
+                    eraId: btn.getAttribute('data-eraid'),
+                    civId: btn.getAttribute('data-civid')
+                });
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target.closest('[data-bk-close]')) closeModal();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal.hidden === false) closeModal();
+            });
+
+            closeModal();
+        })();
+    </script>
+}

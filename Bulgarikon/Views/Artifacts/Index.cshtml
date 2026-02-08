@@ -1,0 +1,220 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@model IEnumerable<Bulgarikon.Core.DTOs.ArtifactDTOs.ArtifactViewDto>
+
+@{
+    ViewData["Title"] = "Артефакти";
+    bool isAdmin = User.IsInRole("Admin");
+
+    Guid? eraId = ViewBag.EraId as Guid?;
+    Guid? civId = ViewBag.CivilizationId as Guid?;
+}
+
+<div class="era-shell">
+    <div class="era-header">
+        <div>
+            <div class="era-kicker">Bulgarikon • Артефакти</div>
+            <h1 class="era-h1">Артефакти</h1>
+            <div class="era-sub">Филтрирай по епоха/цивилизация, търси и подреждай.</div>
+        </div>
+
+        <div class="era-actions">
+            @if (isAdmin)
+            {
+                <a asp-action="Create" asp-route-eraId="@eraId" asp-route-civilizationId="@civId"
+                   class="btn btn-primary era-btn-primary">+ Добави артефакт</a>
+            }
+        </div>
+    </div>
+
+    <div class="era-toolbar card shadow-sm">
+        <div class="card-body era-toolbar-body" style="grid-template-columns: 1.2fr .9fr .9fr .8fr auto;">
+            <div class="era-field">
+                <label class="era-label">Търсене</label>
+                <input id="artSearch" class="form-control era-input" type="search"
+                       placeholder="Пример: „съкровище“, „монета“, „пръстен“…" />
+            </div>
+
+            <div class="era-field">
+                <label class="era-label">Епоха</label>
+                <select id="artEra" class="form-select era-input"
+                        onchange="location.href='@Url.Action("Index","Artifacts")' + buildQuery(this.value, document.getElementById('artCiv').value)">
+                    <option value="">Всички</option>
+                    @foreach (var e in (IEnumerable<SelectListItem>)ViewBag.Eras)
+                    {
+                        <option value="@e.Value" selected="@(e.Selected ? "selected" : null)">@e.Text</option>
+                    }
+                </select>
+            </div>
+
+            <div class="era-field">
+                <label class="era-label">Цивилизация</label>
+                <select id="artCiv" class="form-select era-input"
+                        onchange="location.href='@Url.Action("Index","Artifacts")' + buildQuery(document.getElementById('artEra').value, this.value)">
+                    <option value="">Всички</option>
+                    @foreach (var c in (IEnumerable<SelectListItem>)ViewBag.Civilizations)
+                    {
+                        <option value="@c.Value" selected="@(c.Selected ? "selected" : null)">@c.Text</option>
+                    }
+                </select>
+            </div>
+
+            <div class="era-field">
+                <label class="era-label">Подреди</label>
+                <select id="artSort" class="form-select era-input">
+                    <option value="yearAsc" selected>Година ↑</option>
+                    <option value="yearDesc">Година ↓</option>
+                    <option value="nameAsc">Име А–Я</option>
+                    <option value="nameDesc">Име Я–А</option>
+                </select>
+            </div>
+
+            <div class="era-field era-count">
+                <div class="era-count-box">
+                    <div class="era-count-num" id="artCount">0</div>
+                    <div class="era-count-label">показани</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info border-0 shadow-sm">Няма намерени артефакти.</div>
+    }
+    else
+    {
+        <div class="era-timeline" id="artTimeline">
+            @foreach (var a in Model)
+            {
+                var shortDesc = string.IsNullOrWhiteSpace(a.Description)
+                ? ""
+                : (a.Description.Length > 180 ? a.Description.Substring(0, 180) + "…" : a.Description);
+
+                var yearLabel = a.Year.HasValue ? a.Year.Value.ToString() : "Неизвестна";
+
+                <article class="era-node"
+                         data-name="@a.Name"
+                         data-desc="@a.Description"
+                         data-year="@(a.Year ?? int.MaxValue)">
+
+                    <div class="era-rail">
+                        <div class="era-dot"></div>
+                        <div class="era-line"></div>
+                    </div>
+
+                    <div class="card era-card shadow-sm">
+                        <div class="card-body">
+                            <div class="era-top">
+                                <div class="era-years">
+                                    <span class="era-year">@yearLabel</span>
+                                </div>
+
+                                <div class="era-title-wrap">
+                                    <div class="era-title">@a.Name</div>
+                                    <div class="era-meta">
+                                        <span class="era-chip">@a.Material</span>
+                                        <span class="era-chip">@a.Location</span>
+                                        @if (!string.IsNullOrWhiteSpace(a.EraName))
+                                        {
+                                            <span class="era-chip">@a.EraName</span>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(a.CivilizationName))
+                                        {
+                                            <span class="era-chip">@a.CivilizationName</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="era-chip">Неизвестна</span>
+                                        }
+                                    </div>
+                                </div>
+
+                                <div class="era-buttons">
+                                    <a asp-action="Details" asp-route-id="@a.Id"
+                                       class="btn btn-sm btn-outline-secondary">Детайли</a>
+
+                                    @if (isAdmin)
+                                    {
+                                        <a asp-action="Edit" asp-route-id="@a.Id"
+                                           class="btn btn-sm btn-outline-primary">Редакция</a>
+
+                                        <button type="button"
+                                                class="btn btn-sm btn-outline-danger"
+                                                data-bk-delete-artifact
+                                                data-id="@a.Id"
+                                                data-name="@a.Name"
+                                                data-eraid="@a.EraId"
+                                                data-civid="@a.CivilizationId">
+                                            Изтриване
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(shortDesc))
+                            {
+                                <div class="era-desc">@shortDesc</div>
+                            }
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+    @await Html.PartialAsync("Partials/_DeleteArtifactModal")
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const modal = document.getElementById('bkDeleteArtifactModal');
+            if (!modal) return;
+
+            const idInput = document.getElementById('bkDeleteArtifactId');
+            const eraIdInput = document.getElementById('bkDeleteArtifactEraId');
+            const civIdInput = document.getElementById('bkDeleteArtifactCivId');
+            const nameEl = document.getElementById('bkDeleteArtifactName');
+
+            function openModal({ id, name, eraId, civId }) {
+                if (idInput) idInput.value = id || '';
+                if (eraIdInput) eraIdInput.value = eraId || '';
+                if (civIdInput) civIdInput.value = civId || '';
+                if (nameEl) nameEl.textContent = name || '—';
+
+                modal.hidden = false;
+                modal.setAttribute('aria-hidden', 'false');
+                modal.classList.add('is-open');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeModal() {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+                modal.hidden = true;
+                document.body.style.overflow = '';
+            }
+
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-bk-delete-artifact]');
+                if (!btn) return;
+
+                openModal({
+                    id: btn.getAttribute('data-id'),
+                    name: btn.getAttribute('data-name'),
+                    eraId: btn.getAttribute('data-eraid'),
+                    civId: btn.getAttribute('data-civid')
+                });
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target.closest('[data-bk-close]')) closeModal();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal.hidden === false) closeModal();
+            });
+
+            closeModal();
+        })();
+    </script>
+}
