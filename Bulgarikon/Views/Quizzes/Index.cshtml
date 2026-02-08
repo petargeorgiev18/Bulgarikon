@@ -1,0 +1,64 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@model IEnumerable<Bulgarikon.Core.DTOs.QuizDTOs.QuizViewDto>
+
+@{
+    ViewData["Title"] = "Куизове";
+    bool isAdmin = User.IsInRole("Admin");
+    Guid? eraId = ViewBag.EraId as Guid?;
+}
+
+<div class="container py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <div class="text-muted small">Bulgarikon • Куизове</div>
+            <h1 class="mb-0">Куизове</h1>
+        </div>
+        @if (isAdmin)
+        {
+            <a asp-action="Create" asp-route-eraId="@eraId" class="btn btn-primary">+ Нов куиз</a>
+        }
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <label class="form-label">Епоха</label>
+            <select class="form-select" onchange="location.href='@Url.Action("Index","Quizzes")' + (this.value ? ('?eraId=' + this.value) : '')">
+                <option value="">Всички</option>
+                @foreach (var e in (IEnumerable<SelectListItem>)ViewBag.Eras)
+                {
+                    <option value="@e.Value" selected="@(e.Selected ? "selected" : null)">@e.Text</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">Няма куизове.</div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var q in Model)
+            {
+                <div class="col-md-6">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="text-muted small">@q.EraName</div>
+                            <h5 class="mb-2">@q.Title</h5>
+                            <div class="text-muted">Въпроси: @q.QuestionsCount</div>
+
+                            <div class="d-flex gap-2 mt-3 flex-wrap">
+                                <a asp-action="Details" asp-route-id="@q.Id" class="btn btn-outline-secondary">Детайли</a>
+                                @if (!isAdmin)
+                                {
+                                    <a asp-action="Take" asp-route-id="@q.Id" class="btn btn-primary">Започни</a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

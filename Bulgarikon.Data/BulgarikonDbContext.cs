@@ -70,6 +70,30 @@ namespace Bulgarikon.Data
                 .WithMany(f => f.EventFigures)
                 .HasForeignKey(ef => ef.FigureId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Question>()
+                .HasOne(q => q.Quiz)
+                .WithMany(z => z.Questions)
+                .HasForeignKey(q => q.QuizId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Answer>()
+                .HasOne(a => a.Question)
+                .WithMany(q => q.Answers)
+                .HasForeignKey(a => a.QuestionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<QuizResult>()
+                .HasOne(r => r.Quiz)
+                .WithMany()
+                .HasForeignKey(r => r.QuizId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<QuizResult>()
+                .HasOne(r => r.User)
+                .WithMany(u => u.QuizResults)
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

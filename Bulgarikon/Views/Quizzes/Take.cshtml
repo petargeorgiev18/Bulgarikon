@@ -1,0 +1,50 @@
+﻿@model Bulgarikon.Core.DTOs.QuizDTOs.QuizTakeDto
+@{
+    ViewData["Title"] = "Куиз";
+}
+
+<div class="container py-3">
+    <div class="mb-3">
+        <div class="text-muted small">Куиз • @Model.EraName</div>
+        <h1 class="mb-0">@Model.Title</h1>
+    </div>
+
+    <form asp-action="Submit" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="QuizId" value="@Model.QuizId" />
+
+        @for (int i = 0; i < Model.Questions.Count; i++)
+        {
+            var q = Model.Questions[i];
+
+            <div class="card shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="fw-semibold mb-2">@(i + 1). @q.Text</div>
+
+                    @foreach (var a in q.Answers)
+                    {
+                        var inputId = $"q_{q.QuestionId}__a_{a.AnswerId}";
+
+                        <div class="form-check mb-1">
+                            <input class="form-check-input"
+                                   type="radio"
+                                   name="Answers[@q.QuestionId]"
+                                   value="@a.AnswerId"
+                                   id="@inputId"
+                                   required />
+
+                            <label class="form-check-label" for="@inputId">
+                                @a.Text
+                            </label>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <div class="d-flex justify-content-end gap-2">
+            <a asp-action="Details" asp-route-id="@Model.QuizId" class="btn btn-outline-secondary">Отказ</a>
+            <button type="submit" class="btn btn-primary">Предай</button>
+        </div>
+    </form>
+</div>

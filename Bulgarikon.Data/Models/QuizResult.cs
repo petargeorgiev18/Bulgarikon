@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Threading.Channels;
 using static Bulgarikon.Common.DataModelsValidation.EntityClassesValidations.QuizResult;
 
 namespace Bulgarikon.Data.Models
@@ -17,7 +18,7 @@ namespace Bulgarikon.Data.Models
         public Guid QuizId { get; set; }
         public Quiz Quiz { get; set; } = null!;
         [Range(ScoreMinValue, ScoreMaxValue)]
-        public Guid Score { get; set; }
-        public DateTime DateTaken { get; set; }
+        public int Score { get; set; }
+        public DateTime DateTaken { get; set; } = DateTime.UtcNow;
     }
 }
