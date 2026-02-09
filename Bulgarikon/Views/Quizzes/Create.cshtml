@@ -1,0 +1,51 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@model Bulgarikon.Core.DTOs.QuizDTOs.QuizFormDto
+
+@{
+    ViewData["Title"] = "Нов куиз";
+}
+
+<div class="container py-3">
+    <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+        <div>
+            <div class="text-muted small">Админ • Добавяне</div>
+            <h1 class="mb-0">Нов куиз</h1>
+        </div>
+
+        <a asp-action="Index" class="btn btn-outline-secondary">← Назад</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <form asp-action="Create" method="post" autocomplete="off">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label fw-semibold">Заглавие</label>
+                    <input asp-for="Title" class="form-control" placeholder="Пример: България през Средновековието" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="EraId" class="form-label fw-semibold">Епоха</label>
+                    <select asp-for="EraId"
+                            class="form-select"
+                            asp-items="(IEnumerable<SelectListItem>)ViewBag.Eras">
+                        <option value="">-- Избери епоха --</option>
+                    </select>
+                    <span asp-validation-for="EraId" class="text-danger"></span>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <a asp-action="Index" class="btn btn-outline-secondary">Отказ</a>
+                    <button type="submit" class="btn btn-primary">Създай</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

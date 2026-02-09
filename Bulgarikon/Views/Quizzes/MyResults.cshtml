@@ -1,0 +1,70 @@
+﻿@model IEnumerable<Bulgarikon.Core.DTOs.QuizDTOs.QuizResultListItemDto>
+
+@{
+    ViewData["Title"] = "Моите резултати";
+}
+
+<div class="container py-3">
+    <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+        <div>
+            <h1 class="mb-1">Моите резултати</h1>
+            <div class="text-muted">История на решените куизове и резултатите ти.</div>
+        </div>
+        <a asp-controller="Quizzes" asp-action="Index" class="btn btn-outline-secondary">
+            ← Към куизовете
+        </a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info mb-0">
+            Все още нямаш решени куизове.
+            <div class="mt-2">
+                <a asp-controller="Quizzes" asp-action="Index" class="btn btn-sm btn-primary">Започни куиз</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-3">Куиз</th>
+                            <th>Резултат</th>
+                            <th>Процент</th>
+                            <th>Дата</th>
+                            <th class="text-end pe-3"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model)
+                        {
+                            var pct = r.MaxScore == 0 ? 0 : (int)Math.Round((r.Score * 100.0) / r.MaxScore);
+                            var badge = pct >= 80 ? "bg-success"
+                            : pct >= 50 ? "bg-warning text-dark"
+                            : "bg-danger";
+
+                            <tr>
+                                <td class="ps-3">@r.QuizTitle</td>
+                                <td><strong>@r.Score</strong> / @r.MaxScore</td>
+                                <td>
+                                    <span class="badge @badge">@pct%</span>
+                                </td>
+                                <td>@r.DateTaken.ToString("dd.MM.yyyy HH:mm")</td>
+                                <td class="text-end pe-3">
+                                    <a asp-action="Result"
+                                       asp-route-id="@r.Id"
+                                       class="btn btn-sm btn-outline-primary">
+                                        Детайли
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

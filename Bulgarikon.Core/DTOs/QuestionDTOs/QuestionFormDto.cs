@@ -14,6 +14,8 @@ namespace Bulgarikon.Core.DTOs.QuestionDTOs
         [Required]
         public Guid QuizId { get; set; }
 
+        public int CorrectAnswerIndex { get; set; } = 0;
+
         public List<AnswerFormDto> Answers { get; set; } = new()
         {
             new AnswerFormDto(),

@@ -1,6 +1,23 @@
 ﻿@model Bulgarikon.Core.DTOs.QuizDTOs.QuizResultViewDto
 @{
     ViewData["Title"] = "Резултат";
+
+    var max = Model.MaxScore <= 0 ? 1 : Model.MaxScore;
+    var percent = (int)Math.Round((Model.Score * 100.0) / max);
+
+    string gradeText =
+        percent >= 90 ? "Отличен" :
+        percent >= 70 ? "Много добър" :
+        percent >= 50 ? "Добър" :
+        percent >= 30 ? "Среден" :
+        "Слаб";
+
+    string gradeHint =
+        percent >= 90 ? "Браво! Много стабилно." :
+        percent >= 70 ? "Супер! Още малко и си топ." :
+        percent >= 50 ? "Добре е — пробвай пак за по-високо." :
+        percent >= 30 ? "Имаш база — преговори и опитай отново." :
+        "Спокойно — преговори и натискай пак.";
 }
 
 <div class="container py-3">
@@ -9,15 +26,37 @@
         <h1 class="mb-0">@Model.QuizTitle</h1>
     </div>
 
-    <div class="card shadow-sm">
+    <div class="card shadow-sm mb-3">
         <div class="card-body">
-            <div class="display-6 fw-bold">@Model.Score / @Model.MaxScore</div>
-            <div class="text-muted">Решен на: @Model.DateTaken.ToString("dd.MM.yyyy HH:mm")</div>
+            <div class="d-flex flex-column flex-md-row align-items-md-end justify-content-between gap-2">
+                <div>
+                    <div class="display-6 fw-bold mb-0">@Model.Score / @Model.MaxScore</div>
+                    <div class="text-muted">Решен на: @Model.DateTaken.ToString("dd.MM.yyyy HH:mm")</div>
+                </div>
+
+                <div class="text-md-end">
+                    <div class="fw-semibold">@percent%</div>
+                    <div class="text-muted small">@gradeText</div>
+                </div>
+            </div>
+
+            <div class="progress mt-3" style="height: 12px;">
+                <div class="progress-bar" role="progressbar"
+                     style="width: @percent%;"
+                     aria-valuenow="@percent" aria-valuemin="0" aria-valuemax="100">
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-3 mb-0">
+                <strong>@gradeText:</strong> @gradeHint
+            </div>
         </div>
     </div>
 
-    <div class="d-flex gap-2 mt-3">
+    <div class="d-flex gap-2 flex-wrap">
         <a asp-action="Details" asp-route-id="@Model.QuizId" class="btn btn-outline-secondary">Към куиза</a>
+        <a asp-action="Take" asp-route-id="@Model.QuizId" class="btn btn-primary">Опитай пак</a>
         <a asp-action="MyResults" class="btn btn-outline-primary">Моите резултати</a>
+        <a asp-action="Index" class="btn btn-outline-secondary">Всички куизове</a>
     </div>
 </div>

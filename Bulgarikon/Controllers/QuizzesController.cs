@@ -69,19 +69,44 @@ namespace Bulgarikon.Controllers
             if (!ModelState.IsValid)
                 return BadRequest();
 
-            var maxScore = await quizzes.GetQuestionsCountAsync(model.QuizId);
-            if (maxScore == 0) return NotFound();
+            var take = await quizzes.GetForTakeAsync(model.QuizId);
+            if (take == null) return NotFound();
 
-            var chosenAnswerIds = model.Answers.Values.ToList();
+            var maxScore = take.Questions.Count;
+            if (maxScore == 0)
+            {
+                TempData["Error"] = "Този куиз още няма въпроси.";
+                return RedirectToAction(nameof(Details), new { id = model.QuizId });
+            }
+
+            if (model.Answers == null || model.Answers.Count != maxScore)
+            {
+                TempData["Error"] = "Моля, отговори на всички въпроси.";
+                return RedirectToAction(nameof(Take), new { id = model.QuizId });
+            }
+
+            var allowedAnswerIds = take.Questions
+                .SelectMany(q => q.Answers)
+                .Select(a => a.AnswerId)
+                .ToHashSet();
+
+            var chosenAnswerIds = model.Answers.Values
+                .Where(id => allowedAnswerIds.Contains(id))
+                .ToList();
+
+            if (chosenAnswerIds.Count != maxScore)
+            {
+                TempData["Error"] = "Невалидни отговори. Опитай отново.";
+                return RedirectToAction(nameof(Take), new { id = model.QuizId });
+            }
+
             var score = await results.CountCorrectAsync(model.QuizId, chosenAnswerIds);
 
             var userId = Guid.Parse(userManager.GetUserId(User)!);
-
             var resultId = await results.SaveResultAsync(model.QuizId, userId, score);
 
             return RedirectToAction(nameof(Result), new { id = resultId });
         }
-
 
         [Authorize]
         [HttpGet]

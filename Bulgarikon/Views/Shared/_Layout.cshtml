@@ -25,7 +25,15 @@
                 </div>
             </a>
 
-            <div class="bk-header-right">
+            <div class="bk-header-right d-flex align-items-center gap-2">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a asp-controller="Quizzes" asp-action="MyResults"
+                       class="btn btn-sm btn-outline-secondary">
+                        Моите резултати
+                    </a>
+                }
+
                 <partial name="_LoginPartial" />
             </div>
         </div>

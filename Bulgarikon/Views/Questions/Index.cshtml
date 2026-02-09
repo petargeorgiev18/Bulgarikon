@@ -1,0 +1,75 @@
+﻿@model IEnumerable<Bulgarikon.Core.DTOs.QuestionDTOs.QuestionListItemDto>
+
+@{
+    ViewData["Title"] = "Въпроси";
+    var quizId = (Guid)ViewBag.QuizId;
+    var quizTitle = ViewBag.QuizTitle as string ?? "";
+}
+
+<div class="container py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <div class="text-muted small">Куиз</div>
+            <h2 class="mb-0">@quizTitle</h2>
+            <div class="text-muted">Въпроси</div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a asp-controller="Quizzes"
+               asp-action="Details"
+               asp-route-id="@quizId"
+               class="btn btn-outline-secondary">
+                ← Назад към куиза
+            </a>
+
+            <a asp-action="Create"
+               asp-route-quizId="@quizId"
+               class="btn btn-primary">
+                + Добави въпрос
+            </a>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            Няма добавени въпроси към този куиз.
+        </div>
+    }
+    else
+    {
+        <div class="list-group shadow-sm">
+            @foreach (var q in Model)
+            {
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-semibold">@q.Text</div>
+                        <div class="text-muted small">
+                            Отговори: @q.AnswersCount
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a asp-action="Edit"
+                           asp-route-id="@q.Id"
+                           class="btn btn-sm btn-outline-primary">
+                            Редакция
+                        </a>
+
+                        <form asp-action="Delete"
+                              method="post"
+                              asp-route-id="@q.Id"
+                              asp-route-quizId="@quizId"
+                              onsubmit="return confirm('Сигурен ли си, че искаш да изтриеш този въпрос?');">
+                            @Html.AntiForgeryToken()
+                            <button type="submit"
+                                    class="btn btn-sm btn-outline-danger">
+                                Изтрий
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

@@ -1,4 +1,5 @@
-﻿using Bulgarikon.Core.DTOs;
+﻿using System.ComponentModel.DataAnnotations;
+using Bulgarikon.Core.DTOs;
 using Bulgarikon.Core.DTOs.EventDTOs;
 using Bulgarikon.Core.Interfaces;
 using Bulgarikon.Models;
@@ -86,8 +87,23 @@ public class EventsController : Controller
             return View(model);
         }
 
-        var id = await eventsService.CreateAsync(model);
-        return RedirectToAction(nameof(Details), new { id });
+        try
+        {
+            var id = await eventsService.CreateAsync(model);
+            return RedirectToAction(nameof(Details), new { id });
+        }
+        catch (ValidationException ex)
+        {
+            AddYearErrorsToModelState(model, ex.Message);
+            await LoadDropdownsAsync(model.EraId);
+            return View(model);
+        }
+        catch (InvalidOperationException ex)
+        {
+            AddYearErrorsToModelState(model, ex.Message);
+            await LoadDropdownsAsync(model.EraId);
+            return View(model);
+        }
     }
 
     [Authorize(Roles = "Admin")]
@@ -115,8 +131,25 @@ public class EventsController : Controller
             return View(model);
         }
 
-        await eventsService.UpdateAsync(id, model);
-        return RedirectToAction(nameof(Details), new { id });
+        try
+        {
+            await eventsService.UpdateAsync(id, model);
+            return RedirectToAction(nameof(Details), new { id });
+        }
+        catch (ValidationException ex)
+        {
+            AddYearErrorsToModelState(model, ex.Message);
+            await LoadDropdownsAsync(model.EraId);
+            ViewBag.EventId = id;
+            return View(model);
+        }
+        catch (InvalidOperationException ex)
+        {
+            AddYearErrorsToModelState(model, ex.Message);
+            await LoadDropdownsAsync(model.EraId);
+            ViewBag.EventId = id;
+            return View(model);
+        }
     }
 
     [Authorize(Roles = "Admin")]
@@ -158,5 +191,13 @@ public class EventsController : Controller
             .OrderBy(f => f.Name)
             .Select(f => new SelectListItem { Text = f.Name, Value = f.Id.ToString() })
             .ToList();
+    }
+
+    // Вкарва грешката и в summary + под StartYear/EndYear
+    private void AddYearErrorsToModelState(EventFormDto model, string message)
+    {
+        ModelState.AddModelError(string.Empty, message);
+        ModelState.AddModelError(nameof(model.StartYear), message);
+        ModelState.AddModelError(nameof(model.EndYear), message);
     }
 }
