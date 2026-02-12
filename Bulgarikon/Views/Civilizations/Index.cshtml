@@ -117,6 +117,8 @@
                                                 data-bk-delete-civ
                                                 data-id="@c.Id"
                                                 data-name="@c.Name"
+                                                data-start="@c.StartYear"
+                                                data-end="@c.EndYear"
                                                 data-eraid="@c.EraId">
                                             Изтриване
                                         </button>
@@ -192,6 +194,62 @@
             sort?.addEventListener('change', apply);
             type?.addEventListener('change', apply);
             apply();
+        })();
+    </script>
+
+    <script>
+        (function () {
+            const modal = document.getElementById('bkDeleteCivilizationModal');
+            if (!modal) return;
+
+            const idInput = document.getElementById('bkDeleteCivId');
+            const eraIdInput = document.getElementById('bkDeleteCivEraId');
+            const nameEl = document.getElementById('bkDeleteCivName');
+            const periodEl = document.getElementById('bkDeleteCivPeriod');
+
+            function openModal({ id, name, start, end, eraId }) {
+                if (idInput) idInput.value = id || '';
+                if (eraIdInput) eraIdInput.value = eraId || '';
+                if (nameEl) nameEl.textContent = name || '—';
+
+                const s = (start ?? '').toString().trim();
+                const e = (end ?? '').toString().trim();
+                if (periodEl) periodEl.textContent = (s || e) ? `${s || '…'} – ${e || '…'}` : '—';
+
+                modal.hidden = false;
+                modal.setAttribute('aria-hidden', 'false');
+                modal.classList.add('is-open');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeModal() {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+                modal.hidden = true;
+                document.body.style.overflow = '';
+            }
+
+            document.addEventListener('click', function (e) {
+                const btn = e.target.closest('[data-bk-delete-civ]');
+                if (btn) {
+                    openModal({
+                        id: btn.dataset.id,
+                        name: btn.dataset.name,
+                        start: btn.dataset.start,
+                        end: btn.dataset.end,
+                        eraId: btn.dataset.eraid
+                    });
+                    return;
+                }
+
+                if (!modal.hidden && e.target.closest('[data-bk-close]')) {
+                    closeModal();
+                }
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && !modal.hidden) closeModal();
+            });
         })();
     </script>
 }

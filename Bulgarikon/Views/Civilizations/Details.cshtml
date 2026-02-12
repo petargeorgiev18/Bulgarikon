@@ -61,14 +61,18 @@
             }
         </div>
     </div>
-    @await Html.PartialAsync("Partials/_DeleteCivilizationModal")
+
+    <partial name="Partials/_DeleteCivilizationModal" />
 </div>
 
 @section Scripts {
     <script>
         (function () {
             const modal = document.getElementById('bkDeleteCivilizationModal');
-            if (!modal) return;
+            if (!modal) {
+                console.error("Delete modal not found in DOM.");
+                return;
+            }
 
             const idInput = document.getElementById('bkDeleteCivId');
             const eraIdInput = document.getElementById('bkDeleteCivEraId');
@@ -87,7 +91,6 @@
                 modal.hidden = false;
                 modal.setAttribute('aria-hidden', 'false');
                 modal.classList.add('is-open');
-                document.body.classList.add('bk-modal-open');
                 document.body.style.overflow = 'hidden';
             }
 
@@ -95,32 +98,30 @@
                 modal.classList.remove('is-open');
                 modal.setAttribute('aria-hidden', 'true');
                 modal.hidden = true;
-                document.body.classList.remove('bk-modal-open');
                 document.body.style.overflow = '';
             }
 
-            document.addEventListener('click', (e) => {
+            document.addEventListener('click', function (e) {
                 const btn = e.target.closest('[data-bk-delete-civ]');
-                if (!btn) return;
+                if (btn) {
+                    openModal({
+                        id: btn.dataset.id,
+                        name: btn.dataset.name,
+                        start: btn.dataset.start,
+                        end: btn.dataset.end,
+                        eraId: btn.dataset.eraid
+                    });
+                    return;
+                }
 
-                openModal({
-                    id: btn.getAttribute('data-id'),
-                    name: btn.getAttribute('data-name'),
-                    start: btn.getAttribute('data-start'),
-                    end: btn.getAttribute('data-end'),
-                    eraId: btn.getAttribute('data-eraid')
-                });
+                if (modal && !modal.hidden && e.target.closest('[data-bk-close]')) {
+                    closeModal();
+                }
             });
 
-            modal.addEventListener('click', (e) => {
-                if (e.target.closest('[data-bk-close]')) closeModal();
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && modal && !modal.hidden) closeModal();
             });
-
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && modal.hidden === false) closeModal();
-            });
-
-            closeModal();
         })();
     </script>
 }

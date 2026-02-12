@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Bulgarikon.Data.Configurations;
 
 namespace Bulgarikon.Data
 {
@@ -94,6 +95,15 @@ namespace Bulgarikon.Data
                 .WithMany(u => u.QuizResults)
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.ApplyConfiguration(new ArtifactConfiguration());
+            builder.ApplyConfiguration(new CivilizationConfiguration());
+            builder.ApplyConfiguration(new EraConfiguration());
+            builder.ApplyConfiguration(new EventConfiguration());
+            builder.ApplyConfiguration(new FigureConfiguration());
+            builder.ApplyConfiguration(new QuizConfiguration());
+            builder.ApplyConfiguration(new QuestionConfiguration());
+            builder.ApplyConfiguration(new AnswerConfiguration());
         }
     }
 }
