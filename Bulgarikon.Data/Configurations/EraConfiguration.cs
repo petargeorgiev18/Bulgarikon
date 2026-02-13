@@ -13,40 +13,40 @@ namespace Bulgarikon.Data.Configurations
                 new Era
                 {
                     Id = SeededIds.Era_Antiquity,
-                    Name = "Ancient Era",
-                    Description = "The Ancient Era encompasses the earliest periods of human history, including the rise of civilizations such as Mesopotamia, Ancient Egypt, and the Indus Valley. It is characterized by the development of writing, agriculture, and early forms of government.",
+                    Name = "Античност",
+                    Description = "Античността обхваща най-ранните периоди от човешката история и възхода на древните цивилизации. Характерна е с развитието на земеделие, градове, писменост и ранни форми на държавност.",
                     StartYear = -3000,
                     EndYear = 500
                 },
                 new Era
                 {
                     Id = SeededIds.Era_MigrationPeriod,
-                    Name = "Migration Period",
-                    Description = "The Migration Period, also known as the Barbarian Invasions, was a time of significant population movements in Europe, particularly during the decline of the Western Roman Empire. It saw the migration of various tribes such as the Goths, Vandals, and Huns.",
+                    Name = "Велико преселение на народите",
+                    Description = "Период на значителни миграции в Европа (IV–VII век), свързан с разместване на племена и народи и с упадъка на Западната Римска империя.",
                     StartYear = 300,
                     EndYear = 700
                 },
                 new Era
                 {
                     Id = SeededIds.Era_FirstBulgarianEmpire,
-                    Name = "First Bulgarian Empire",
-                    Description = "The First Bulgarian Empire was established in 681 AD and lasted until 1018 AD. It was a powerful state in the Balkans, known for its cultural achievements and military prowess, particularly under the rule of Khan Asparuh and Tsar Simeon the Great.",
+                    Name = "Първо българско царство",
+                    Description = "Държавата, утвърдена след 681 г., се превръща във водеща сила на Балканите. Периодът е белязан от християнизацията и културния разцвет, особено при цар Симеон Велики.",
                     StartYear = 681,
                     EndYear = 1018
                 },
                 new Era
                 {
                     Id = SeededIds.Era_SecondBulgarianEmpire,
-                    Name = "Second Bulgarian Empire",
-                    Description = "The Second Bulgarian Empire was established in 1185 AD and lasted until 1396 AD. It was a period of cultural revival and territorial expansion, particularly under the rule of Tsar Ivan Asen II. The empire eventually fell to the Ottoman Turks.",
+                    Name = "Второ българско царство",
+                    Description = "Възстановено през 1185 г., Второто българско царство преживява културен подем и териториално разширение, като значим владетел е цар Иван Асен II. Периодът завършва с османското завоевание.",
                     StartYear = 1185,
                     EndYear = 1396
                 },
                 new Era
                 {
                     Id = SeededIds.Era_OttomanPeriod,
-                    Name = "Ottoman Period",
-                    Description = "The Ottoman Period in Bulgarian history refers to the time when Bulgaria was under Ottoman rule, from 1396 AD until the liberation in 1878 AD. This era was marked by significant social, economic, and cultural changes, as well as resistance and uprisings against Ottoman authority.",
+                    Name = "Османско владичество",
+                    Description = "Периодът на османска власт над българските земи (края на XIV век – 1878 г.) е време на дълбоки социални и културни промени, но и на съпротива и националноосвободителни движения.",
                     StartYear = 1396,
                     EndYear = 1878
                 }

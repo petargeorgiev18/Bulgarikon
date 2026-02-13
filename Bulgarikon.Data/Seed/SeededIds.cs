@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Bulgarikon.Data.Seed
+﻿namespace Bulgarikon.Data.Seed
 {
     public static class SeededIds
     {
@@ -15,54 +9,101 @@ namespace Bulgarikon.Data.Seed
         public static readonly Guid Era_SecondBulgarianEmpire = Guid.Parse("471c687f-caef-4cf6-8a8b-3dad51058485");
         public static readonly Guid Era_OttomanPeriod = Guid.Parse("68a72d82-601f-49c1-821c-850a82646c21");
 
-        // Civilization IDs
+        // Civilization IDs 
         public static readonly Guid Civ_Thracians = Guid.Parse("d1a57a73-e7af-4db9-a713-eea9b9f579e2");
-        public static readonly Guid Civ_Bulgars = Guid.Parse("20000000-0000-0000-0000-000000000002");
+        public static readonly Guid Civ_Bulgars = Guid.Parse("2f0c3a11-7b8e-4f6a-9d10-5c6b7a8e9002"); // FIX: смесен
         public static readonly Guid Civ_Slavs = Guid.Parse("f1a57a73-e7af-4db9-a713-eea9b9f579e2");
         public static readonly Guid Civ_Byzantines = Guid.Parse("ad1d6a1a-6122-420d-908b-55fbe5eb18ca");
         public static readonly Guid Civ_Ottomans = Guid.Parse("9f578916-414a-4d35-92b3-fbc187d382dd");
 
-        // EventsIDs
-        public static readonly Guid Event_BattlePliska = Guid.Parse("91f06e17-4c8d-4f46-92b7-6e4d2a8c2001");
+        // Event IDs
+        public static readonly Guid Event_BattleOngal = Guid.Parse("91f06e17-4c8d-4f46-92b7-6e4d2a8c2001");
         public static readonly Guid Event_BattleVarbishkiProhod = Guid.Parse("a2f17f28-5d9e-4a37-a1c8-7f5e3b9d2002");
         public static readonly Guid Event_FallTurnovo = Guid.Parse("b3f28a39-6e1f-4b28-b2d9-8a6f4c1e2003");
         public static readonly Guid Event_AprilUprising = Guid.Parse("c4f39b4a-7f2a-4c19-83ea-9b7a5d2f2004");
         public static readonly Guid Event_Union1885 = Guid.Parse("d5f4ac5b-8a3b-4d10-94fb-ac8b6e3f2005");
 
-        // ArtifactsIDs
+        // Artifact IDs
         public static readonly Guid Artifact_GoldMask = Guid.Parse("47ab19c2-8d3f-4e91-a7c2-1f8e9b3d1001");
         public static readonly Guid Artifact_Sword = Guid.Parse("58bc2ad3-9e4f-4b82-b6d3-2a9f7c4e1002");
         public static readonly Guid Artifact_Inscription = Guid.Parse("69cd3be4-1f5a-4c73-95e4-3b1a8d5f1003");
         public static readonly Guid Artifact_Ring = Guid.Parse("7ade4cf5-2a6b-4d64-a4f5-4c2b9e6a1004");
         public static readonly Guid Artifact_Pottery = Guid.Parse("8bef5d06-3b7c-4e55-b3a6-5d3c1f7b1005");
 
-        // FiguresIDs
+        // Figure IDs
         public static readonly Guid Figure_KhanAsparuh = Guid.Parse("e6f5bd6c-9b4c-4e01-a5fc-bd9c7f4a3001");
         public static readonly Guid Figure_TzarSimeon = Guid.Parse("f7a6ce7d-1c5d-4f92-b6ad-ce1d8a5b3002");
         public static readonly Guid Figure_Levski = Guid.Parse("08b7df8e-2d6e-4a83-97be-df2e9b6c3003");
         public static readonly Guid Figure_Botev = Guid.Parse("19c8e09f-3e7f-4b74-a8cf-e03f1c7d3004");
         public static readonly Guid Figure_Kaloyan = Guid.Parse("2ad9f1a0-4f8a-4c65-b9d0-f14a2d8e3005");
 
-        // QuizzesIDs
+        // Quiz IDs
         public static readonly Guid Quiz_Antiquity_1 = Guid.Parse("5e16b7c8-1d9f-4a72-83e4-9f2c7b1d7001");
         public static readonly Guid Quiz_Antiquity_2 = Guid.Parse("6f27c8d9-3a5e-4b91-a6f2-1d8c7e2b7002");
         public static readonly Guid Quiz_FirstEmpire_1 = Guid.Parse("7a38d9e1-6b2c-4f83-b7d1-4e9c2f3a7003");
         public static readonly Guid Quiz_SecondEmpire_1 = Guid.Parse("8b49e1f2-7c3d-4a92-91e8-5f2a7d3c7004");
         public static readonly Guid Quiz_OttomanPeriod_1 = Guid.Parse("9c5af213-8d4e-4c71-a3f9-6b1e2d7f7005");
 
-        // QuestionsIDs
+        // Question IDs
         public static readonly Guid Question_1 = Guid.Parse("ad61b324-9e5f-4b82-b7d2-3c8e1f4a8001");
         public static readonly Guid Question_2 = Guid.Parse("be72c435-1f6a-4c91-92e3-4d9f2a5b8002");
         public static readonly Guid Question_3 = Guid.Parse("cf83d546-2a7b-4e13-a6f4-5e1c3b6d8003");
         public static readonly Guid Question_4 = Guid.Parse("d094e657-3b8c-4f24-b7a5-6f2d4c7e8004");
         public static readonly Guid Question_5 = Guid.Parse("e1a5f768-4c9d-4a35-91e6-7a3e5d8f8005");
 
+        public static readonly Guid Question_6 = Guid.Parse("f2b60789-5d1e-4b46-a7f8-8b4f6e9a8006");
+        public static readonly Guid Question_7 = Guid.Parse("03c7189a-6e2f-4c57-b9a1-9c5a7f1b8007");
+        public static readonly Guid Question_8 = Guid.Parse("14d829ab-7f3a-4d68-81b2-ad6b8c2c8008");
+        public static readonly Guid Question_9 = Guid.Parse("25e93abc-8a4b-4e79-92c3-be7c9d3d8009");
+        public static readonly Guid Question_10 = Guid.Parse("36fa4bcd-9b5c-4f8a-a3d4-cf8d1e4e8010");
 
-        // AnswersIDs
+        // Answer IDs
         public static readonly Guid Answer_1 = Guid.Parse("f2b60789-5d1e-4b46-a7f8-8b4f6e9a9001");
         public static readonly Guid Answer_2 = Guid.Parse("03c7189a-6e2f-4c57-b9a1-9c5a7f1b9002");
         public static readonly Guid Answer_3 = Guid.Parse("14d829ab-7f3a-4d68-81b2-ad6b8c2c9003");
         public static readonly Guid Answer_4 = Guid.Parse("25e93abc-8a4b-4e79-92c3-be7c9d3d9004");
         public static readonly Guid Answer_5 = Guid.Parse("36fa4bcd-9b5c-4f8a-a3d4-cf8d1e4e9005");
+
+        public static readonly Guid Answer_6 = Guid.Parse("47ab19c2-8d3f-4e91-a7c2-1f8e9b3d9006");
+        public static readonly Guid Answer_7 = Guid.Parse("58bc2ad3-9e4f-4b82-b6d3-2a9f7c4e9007");
+        public static readonly Guid Answer_8 = Guid.Parse("69cd3be4-1f5a-4c73-95e4-3b1a8d5f9008");
+        public static readonly Guid Answer_9 = Guid.Parse("7ade4cf5-2a6b-4d64-a4f5-4c2b9e6a9009");
+        public static readonly Guid Answer_10 = Guid.Parse("8bef5d06-3b7c-4e55-b3a6-5d3c1f7b9010");
+
+        public static readonly Guid Answer_11 = Guid.Parse("91f06e17-4c8d-4f46-92b7-6e4d2a8c9011");
+        public static readonly Guid Answer_12 = Guid.Parse("a2f17f28-5d9e-4a37-a1c8-7f5e3b9d9012");
+        public static readonly Guid Answer_13 = Guid.Parse("b3f28a39-6e1f-4b28-b2d9-8a6f4c1e9013");
+        public static readonly Guid Answer_14 = Guid.Parse("c4f39b4a-7f2a-4c19-83ea-9b7a5d2f9014");
+        public static readonly Guid Answer_15 = Guid.Parse("d5f4ac5b-8a3b-4d10-94fb-ac8b6e3f9015");
+
+        public static readonly Guid Answer_16 = Guid.Parse("e6f5bd6c-9b4c-4e01-a5fc-bd9c7f4a9016");
+        public static readonly Guid Answer_17 = Guid.Parse("f7a6ce7d-1c5d-4f92-b6ad-ce1d8a5b9017");
+        public static readonly Guid Answer_18 = Guid.Parse("08b7df8e-2d6e-4a83-97be-df2e9b6c9018");
+        public static readonly Guid Answer_19 = Guid.Parse("19c8e09f-3e7f-4b74-a8cf-e03f1c7d9019");
+        public static readonly Guid Answer_20 = Guid.Parse("2ad9f1a0-4f8a-4c65-b9d0-f14a2d8e9020");
+
+        public static readonly Guid Answer_21 = Guid.Parse("3beaf2b1-508b-4d56-a1e1-02b3c4d5e621");
+        public static readonly Guid Answer_22 = Guid.Parse("4cfb03c2-619c-4e67-b2f2-13c4d5e6f732");
+        public static readonly Guid Answer_23 = Guid.Parse("5d0c14d3-72ad-4f78-c3a3-24d5e6f70843");
+        public static readonly Guid Answer_24 = Guid.Parse("6e1d25e4-83be-4a89-d4b4-35e6f7081944");
+        public static readonly Guid Answer_25 = Guid.Parse("7f2e36f5-94cf-4b9a-e5c5-46f708192a55");
+
+        public static readonly Guid Answer_26 = Guid.Parse("802f47a6-a5d0-4c0b-f6d6-5708192b3b66");
+        public static readonly Guid Answer_27 = Guid.Parse("913058b7-b6e1-4d1c-07e7-68192a3c4c77");
+        public static readonly Guid Answer_28 = Guid.Parse("a24069c8-c7f2-4e2d-18f8-792a3b4d5d88");
+        public static readonly Guid Answer_29 = Guid.Parse("b3517ad9-d803-4f3e-29a9-8a3b4c5e6e99");
+        public static readonly Guid Answer_30 = Guid.Parse("c4628bea-e914-4a4f-3aba-9b4c5d6f7faa");
+
+        public static readonly Guid Answer_31 = Guid.Parse("d5739cfb-fa25-4b50-4bcb-ac5d6e7080bb");
+        public static readonly Guid Answer_32 = Guid.Parse("e684ad0c-0b36-4c61-5cdc-bd6e7f8191cc");
+        public static readonly Guid Answer_33 = Guid.Parse("f795be1d-1c47-4d72-6ded-ce7f8092a2dd");
+        public static readonly Guid Answer_34 = Guid.Parse("08a6cf2e-2d58-4e83-7efe-df8091a3b3ee");
+        public static readonly Guid Answer_35 = Guid.Parse("19b7d03f-3e69-4f94-80a0-e091a2b4c4ff");
+
+        public static readonly Guid Answer_36 = Guid.Parse("2ac8e150-4f7a-4a05-91b1-f1a2b3c5d500");
+        public static readonly Guid Answer_37 = Guid.Parse("3bd9f261-508b-4b16-a2c2-02b3c4d6e611");
+        public static readonly Guid Answer_38 = Guid.Parse("4cea0372-619c-4c27-b3d3-13c4d5e7f722");
+        public static readonly Guid Answer_39 = Guid.Parse("5dfb1483-72ad-4d38-c4e4-24d5e6f80833");
+        public static readonly Guid Answer_40 = Guid.Parse("6e0c2594-83be-4e49-d5f5-35e6f7081934");
     }
 }

@@ -23,14 +23,14 @@ namespace Bulgarikon.Core.Implementations
                 q = q.Where(x => x.EraId == eraId.Value);
 
             return await q
-                .Include(x => x.Era)
                 .OrderBy(x => x.Title)
                 .Select(x => new QuizViewDto
                 {
                     Id = x.Id,
                     Title = x.Title,
                     EraId = x.EraId,
-                    EraName = x.Era.Name
+                    EraName = x.Era.Name,
+                    QuestionsCount = x.Questions.Count()
                 })
                 .ToListAsync();
         }
@@ -38,7 +38,6 @@ namespace Bulgarikon.Core.Implementations
         public async Task<QuizDetailsDto?> GetDetailsAsync(Guid id)
         {
             return await context.Quizzes.AsNoTracking()
-                .Include(x => x.Era)
                 .Where(x => x.Id == id)
                 .Select(x => new QuizDetailsDto
                 {
@@ -46,7 +45,7 @@ namespace Bulgarikon.Core.Implementations
                     Title = x.Title,
                     EraId = x.EraId,
                     EraName = x.Era.Name,
-                    QuestionsCount = x.Questions.Count
+                    QuestionsCount = x.Questions.Count()
                 })
                 .FirstOrDefaultAsync();
         }
