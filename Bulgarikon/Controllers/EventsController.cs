@@ -29,11 +29,14 @@ namespace Bulgarikon.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(Guid? eraId)
         {
             var eras = (await erasService.GetAllAsync())
                 .OrderBy(e => e.StartYear)
                 .ToList();
+
+            if (eraId.HasValue && eraId.Value != Guid.Empty)
+                eras = eras.Where(e => e.Id == eraId.Value).ToList();
 
             var groups = new List<EventEraGroupViewModel>();
 
@@ -51,6 +54,7 @@ namespace Bulgarikon.Controllers
                 });
             }
 
+            ViewBag.EraId = eraId;
             return View(groups);
         }
 

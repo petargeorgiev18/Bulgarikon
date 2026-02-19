@@ -40,9 +40,9 @@
     </div>
 
     <div class="mt-3 d-flex gap-2 flex-wrap">
-        <a asp-controller="Events" asp-action="Index" class="btn btn-sm btn-outline-secondary">Събития</a>
-        <a asp-controller="Figures" asp-action="Index" class="btn btn-sm btn-outline-secondary">Личности</a>
-        <a asp-controller="Artifacts" asp-action="Index" class="btn btn-sm btn-outline-secondary">Артефакти</a>
+        <a asp-controller="Events" asp-action="Index" asp-route-eraId="@Model.Id" class="btn btn-sm btn-outline-secondary">Събития</a>
+        <a asp-controller="Figures" asp-action="Index" asp-route-eraId="@Model.Id" class="btn btn-sm btn-outline-secondary">Личности</a>
+        <a asp-controller="Artifacts" asp-action="Index" asp-route-eraId="@Model.Id" class="btn btn-sm btn-outline-secondary">Артефакти</a>
         <a asp-controller="Civilizations" asp-action="Index" asp-route-eraId="@Model.Id" class="btn btn-sm btn-outline-secondary">
             Цивилизации
         </a>
