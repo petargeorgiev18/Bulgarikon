@@ -29,18 +29,31 @@ namespace Bulgarikon
                 .AddRoles<IdentityRole<Guid>>()
                 .AddEntityFrameworkStores<BulgarikonDbContext>();
 
-            builder.Services.AddAuthentication()
-                .AddGoogle(options =>
-                {
-                    options.ClientId = builder.Configuration["Authentication:Google:ClientId"]!;
-                    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
-                    options.CallbackPath = "/signin-google";
-                })
-                .AddFacebook(options =>
-                {
-                    options.AppId = builder.Configuration["Authentication:Facebook:AppId"]!;
-                    options.AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"]!;
-                });
+            var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+            var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+
+            if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+            {
+                builder.Services.AddAuthentication()
+                    .AddGoogle(options =>
+                    {
+                        options.ClientId = googleClientId;
+                        options.ClientSecret = googleClientSecret;
+                    });
+            }
+
+            var fbAppId = builder.Configuration["Authentication:Facebook:AppId"];
+            var fbAppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
+
+            if (!string.IsNullOrWhiteSpace(fbAppId) && !string.IsNullOrWhiteSpace(fbAppSecret))
+            {
+                builder.Services.AddAuthentication()
+                    .AddFacebook(options =>
+                    {
+                        options.AppId = fbAppId;
+                        options.AppSecret = fbAppSecret;
+                    });
+            }
 
             builder.Services.AddControllersWithViews();
             builder.Services.AddRazorPages();
