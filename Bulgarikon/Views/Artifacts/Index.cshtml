@@ -95,7 +95,12 @@
                 <article class="era-node"
                          data-name="@a.Name"
                          data-desc="@a.Description"
-                         data-year="@(a.Year ?? int.MaxValue)">
+                         data-year="@(a.Year ?? int.MaxValue)"
+                         data-material="@a.Material"
+                         data-location="@a.Location"
+                         data-eraname="@a.EraName"
+                         data-civname="@(a.CivilizationName ?? "")"
+                         data-civid="@(a.CivilizationId?.ToString() ?? "")">
 
                     <div class="era-rail">
                         <div class="era-dot"></div>
@@ -215,6 +220,65 @@
             });
 
             closeModal();
+        })();
+    </script>
+
+    <script>
+        (function () {
+            const search = document.getElementById('artSearch');
+            const sort = document.getElementById('artSort');
+            const timeline = document.getElementById('artTimeline');
+            const countEl = document.getElementById('artCount');
+
+            if (!timeline) return;
+
+            const nodes = Array.from(timeline.querySelectorAll('.era-node'));
+
+            function normalize(s) { return (s || '').toString().toLowerCase().trim(); }
+
+            function apply() {
+                const q = normalize(search?.value);
+
+                let visible = nodes.filter(n => {
+                    const name = normalize(n.dataset.name);
+                    const desc = normalize(n.dataset.desc);
+                    const year = normalize(n.dataset.year);
+                    const material = normalize(n.dataset.material);
+                    const location = normalize(n.dataset.location);
+                    const eraName = normalize(n.dataset.eraname);
+                    const civName = normalize(n.dataset.civname);
+
+                    const hay = `${name} ${desc} ${year} ${material} ${location} ${eraName} ${civName}`;
+                    const okQ = !q || hay.includes(q);
+
+                    n.style.display = okQ ? '' : 'none';
+                    return okQ;
+                });
+
+                const mode = sort?.value || "yearAsc";
+
+                const sorter = {
+                    yearAsc: (a, b) => Number(a.dataset.year) - Number(b.dataset.year),
+                    yearDesc: (a, b) => Number(b.dataset.year) - Number(a.dataset.year),
+                    nameAsc: (a, b) => a.dataset.name.localeCompare(b.dataset.name),
+                    nameDesc: (a, b) => b.dataset.name.localeCompare(a.dataset.name),
+                }[mode];
+
+                visible.sort(sorter);
+
+                const frag = document.createDocumentFragment();
+                visible.forEach(n => frag.appendChild(n));
+
+                nodes.filter(n => !visible.includes(n)).forEach(n => frag.appendChild(n));
+                timeline.appendChild(frag);
+
+                if (countEl) countEl.textContent = String(visible.length);
+            }
+
+            search?.addEventListener('input', apply);
+            sort?.addEventListener('change', apply);
+
+            apply();
         })();
     </script>
 }

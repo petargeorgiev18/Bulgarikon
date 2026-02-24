@@ -54,6 +54,8 @@ namespace Bulgarikon
             builder.Services.AddScoped<IQuizService, QuizService>();
             builder.Services.AddScoped<IQuestionService, QuestionService>();
             builder.Services.AddScoped<IQuizResultService, QuizResultService>();
+            builder.Services.AddScoped<IFeedbackService, FeedbackService>();
+            builder.Services.AddScoped<IFeedbackNotificationService, FeedbackNotificationService>();
 
             var app = builder.Build();
 

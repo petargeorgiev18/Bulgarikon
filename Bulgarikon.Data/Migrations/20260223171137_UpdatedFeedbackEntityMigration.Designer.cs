@@ -4,6 +4,7 @@ using Bulgarikon.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Bulgarikon.Data.Migrations
 {
     [DbContext(typeof(BulgarikonDbContext))]
-    partial class BulgarikonDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260223171137_UpdatedFeedbackEntityMigration")]
+    partial class UpdatedFeedbackEntityMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -43,7 +46,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.ToTable("Answers", (string)null);
+                    b.ToTable("Answers");
 
                     b.HasData(
                         new
@@ -376,7 +379,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("EraId");
 
-                    b.ToTable("Artifacts", (string)null);
+                    b.ToTable("Artifacts");
 
                     b.HasData(
                         new
@@ -540,7 +543,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("EraId");
 
-                    b.ToTable("Civilizations", (string)null);
+                    b.ToTable("Civilizations");
 
                     b.HasData(
                         new
@@ -618,7 +621,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Eras", (string)null);
+                    b.ToTable("Eras");
 
                     b.HasData(
                         new
@@ -696,7 +699,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("EraId");
 
-                    b.ToTable("Events", (string)null);
+                    b.ToTable("Events");
 
                     b.HasData(
                         new
@@ -769,7 +772,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("EventId");
 
-                    b.ToTable("EventCivilizations", (string)null);
+                    b.ToTable("EventCivilizations");
                 });
 
             modelBuilder.Entity("Bulgarikon.Data.Models.EventFigure", b =>
@@ -790,7 +793,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("FigureId");
 
-                    b.ToTable("EventFigures", (string)null);
+                    b.ToTable("EventFigures");
                 });
 
             modelBuilder.Entity("Bulgarikon.Data.Models.Feedback", b =>
@@ -799,13 +802,10 @@ namespace Bulgarikon.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("AdminReply")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<int>("Category")
+                    b.Property<string>("Category")
+                        .IsRequired()
                         .HasMaxLength(30)
-                        .HasColumnType("int");
+                        .HasColumnType("nvarchar(30)");
 
                     b.Property<string>("Comment")
                         .IsRequired()
@@ -814,18 +814,6 @@ namespace Bulgarikon.Data.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsReplySeenByUser")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsSeenByAdmin")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("RepliedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("RepliedByUserId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Subject")
                         .IsRequired()
@@ -837,11 +825,9 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RepliedByUserId");
-
                     b.HasIndex("UserId");
 
-                    b.ToTable("Feedbacks", (string)null);
+                    b.ToTable("Feedbacks");
                 });
 
             modelBuilder.Entity("Bulgarikon.Data.Models.Figure", b =>
@@ -887,7 +873,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("EraId");
 
-                    b.ToTable("Figures", (string)null);
+                    b.ToTable("Figures");
 
                     b.HasData(
                         new
@@ -987,7 +973,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("FigureId");
 
-                    b.ToTable("Images", (string)null);
+                    b.ToTable("Images");
                 });
 
             modelBuilder.Entity("Bulgarikon.Data.Models.Question", b =>
@@ -1008,7 +994,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("QuizId");
 
-                    b.ToTable("Questions", (string)null);
+                    b.ToTable("Questions");
 
                     b.HasData(
                         new
@@ -1091,7 +1077,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("EraId");
 
-                    b.ToTable("Quizzes", (string)null);
+                    b.ToTable("Quizzes");
 
                     b.HasData(
                         new
@@ -1150,7 +1136,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("QuizResults", (string)null);
+                    b.ToTable("QuizResults");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
@@ -1378,18 +1364,11 @@ namespace Bulgarikon.Data.Migrations
 
             modelBuilder.Entity("Bulgarikon.Data.Models.Feedback", b =>
                 {
-                    b.HasOne("Bulgarikon.Data.Models.BulgarikonUser", "RepliedByUser")
-                        .WithMany("FeedbacksReplied")
-                        .HasForeignKey("RepliedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("Bulgarikon.Data.Models.BulgarikonUser", "User")
-                        .WithMany("FeedbacksCreated")
+                        .WithMany("Feedbacks")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("RepliedByUser");
 
                     b.Navigation("User");
                 });
@@ -1541,9 +1520,7 @@ namespace Bulgarikon.Data.Migrations
 
             modelBuilder.Entity("Bulgarikon.Data.Models.BulgarikonUser", b =>
                 {
-                    b.Navigation("FeedbacksCreated");
-
-                    b.Navigation("FeedbacksReplied");
+                    b.Navigation("Feedbacks");
 
                     b.Navigation("QuizResults");
                 });

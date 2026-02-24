@@ -1,4 +1,28 @@
-﻿<!DOCTYPE html>
+﻿@using System.Security.Claims
+@inject Bulgarikon.Core.Interfaces.IFeedbackService feedbackService
+
+@{
+    int adminNew = 0;
+    int userUnreadReplies = 0;
+
+    if (User.Identity?.IsAuthenticated == true)
+    {
+        var idStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (Guid.TryParse(idStr, out var uid))
+        {
+            if (User.IsInRole("Admin"))
+            {
+                adminNew = await feedbackService.GetAdminNewCountAsync();
+            }
+            else
+            {
+                userUnreadReplies = await feedbackService.GetUserUnreadRepliesCountAsync(uid);
+            }
+        }
+    }
+}
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -10,7 +34,8 @@
     <link rel="icon" href="~/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="~/logo.png" />
 </head>
-<body>
+
+<body class="bk-page">
     <header class="bk-header-simple">
         <div class="container bk-header-inner">
             <a asp-controller="Home" asp-action="Index" class="bk-header-brand">
@@ -28,32 +53,96 @@
             <div class="bk-header-right d-flex align-items-center gap-2">
                 @if (User.Identity?.IsAuthenticated == true)
                 {
-                    <a asp-controller="Quizzes" asp-action="MyResults"
-                       class="btn btn-sm btn-outline-secondary">
-                        Моите резултати
-                    </a>
+                    @if (!User.IsInRole("Admin"))
+                    {
+                        <a asp-controller="Quizzes" asp-action="MyResults"
+                           class="bk-navbtn">
+                            Моите резултати
+                        </a>
+                    }
+
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-controller="FeedbackAdmin" asp-action="Index"
+                           class="bk-navbtn @(adminNew > 0 ? "bk-navbtn-alert" : "")">
+                            Feedback
+                            @if (adminNew > 0)
+                            {
+                                <span class="bk-navbadge bk-navbadge-danger">@adminNew</span>
+                            }
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Feedback" asp-action="My"
+                           class="bk-navbtn @(userUnreadReplies > 0 ? "bk-navbtn-warn" : "")">
+                            Моите feedback-и
+                            @if (userUnreadReplies > 0)
+                            {
+                                <span class="bk-navbadge bk-navbadge-dark">@userUnreadReplies</span>
+                            }
+                        </a>
+                    }
                 }
 
                 <partial name="_LoginPartial" />
             </div>
         </div>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
+    <main class="bk-main">
         <div class="container">
-            &copy; 2025 - Bulgarikon - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            @if (User.Identity?.IsAuthenticated == true && !User.IsInRole("Admin") && userUnreadReplies > 0)
+            {
+                <div class="mt-3">
+                    <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center justify-content-between mb-3">
+                        <div>
+                            Имате <b>@userUnreadReplies</b> нов(и) отговор(и) от администратор.
+                        </div>
+                        <a asp-controller="Feedback" asp-action="My" class="btn btn-sm btn-dark">
+                            Виж
+                        </a>
+                    </div>
+                </div>
+            }
+            @RenderBody()
+        </div>
+    </main>
+
+    <footer class="bk-footer">
+        <div class="container bk-footer-inner">
+            <a asp-controller="Home" asp-action="Index" class="bk-footer-brand">
+                <img src="~/logo.png" alt="Bulgarikon" class="bk-footer-logo" />
+                <div class="bk-footer-text">
+                    <div class="bk-footer-kicker">Bulgarikon</div>
+                    <div class="bk-footer-title">
+                        Българската история, <span>разказана интерактивно</span>
+                    </div>
+                </div>
+            </a>
+
+            <div class="bk-footer-right">
+                <div class="bk-footer-links">
+                    <a asp-area="" asp-controller="Home" asp-action="Privacy" class="bk-footer-link">Privacy</a>
+
+                    @if (User.Identity?.IsAuthenticated == true && !User.IsInRole("Admin"))
+                    {
+                        <span class="bk-footer-dot">•</span>
+                        <a asp-controller="Quizzes" asp-action="MyResults" class="bk-footer-link">Моите резултати</a>
+                    }
+                </div>
+
+                <div class="bk-footer-copy">© @DateTime.Now.Year Bulgarikon</div>
+            </div>
         </div>
     </footer>
+
     <script>
         if (window.location.hash === '#_=_') {
             history.replaceState(null, null, window.location.pathname + window.location.search);
         }
     </script>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

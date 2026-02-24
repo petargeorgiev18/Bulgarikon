@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Bulgarikon.Core.DTOs;
+using Bulgarikon.Core.DTOs.CivilizaionDTOs;
 using Bulgarikon.Core.DTOs.EventDTOs;
 using Bulgarikon.Core.Interfaces;
 using Bulgarikon.Models;
@@ -29,8 +30,10 @@ namespace Bulgarikon.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(Guid? eraId)
+        public async Task<IActionResult> Index(Guid? eraId, string? search)
         {
+            search = (search ?? string.Empty).Trim();
+
             var eras = (await erasService.GetAllAsync())
                 .OrderBy(e => e.StartYear)
                 .ToList();
@@ -44,6 +47,19 @@ namespace Bulgarikon.Controllers
             {
                 var events = (await eventsService.GetByEraAsync(era.Id)).ToList();
 
+                if (!string.IsNullOrWhiteSpace(search))
+                {
+                    var s = search.ToLowerInvariant();
+
+                    events = events
+                        .Where(ev =>
+                            (!string.IsNullOrWhiteSpace(ev.Title) && ev.Title.ToLowerInvariant().Contains(s)) ||
+                            (!string.IsNullOrWhiteSpace(ev.Location) && ev.Location.ToLowerInvariant().Contains(s)) ||
+                            ev.StartYear.ToString().Contains(s) ||
+                            ev.EndYear.ToString().Contains(s))
+                        .ToList();
+                }
+
                 groups.Add(new EventEraGroupViewModel
                 {
                     EraId = era.Id,
@@ -54,7 +70,22 @@ namespace Bulgarikon.Controllers
                 });
             }
 
+            if (!string.IsNullOrWhiteSpace(search))
+                groups = groups.Where(g => g.Events.Any()).ToList();
+
             ViewBag.EraId = eraId;
+            ViewBag.Search = search;
+
+            ViewBag.Eras = (await erasService.GetAllAsync())
+                .OrderBy(e => e.StartYear)
+                .Select(e => new SelectListItem
+                {
+                    Text = $"{e.Name} ({e.StartYear}–{e.EndYear})",
+                    Value = e.Id.ToString(),
+                    Selected = eraId.HasValue && eraId.Value != Guid.Empty && e.Id == eraId.Value
+                })
+                .ToList();
+
             return View(groups);
         }
 
@@ -182,7 +213,7 @@ namespace Bulgarikon.Controllers
 
             var civs = selectedEraId.HasValue && selectedEraId.Value != Guid.Empty
                 ? await civilizationsService.GetByEraAsync(selectedEraId.Value)
-                : Enumerable.Empty<Bulgarikon.Core.DTOs.CivilizaionDTOs.CivilizationViewDto>();
+                : Enumerable.Empty<CivilizationViewDto>();
 
             ViewBag.Civilizations = civs
                 .OrderBy(c => c.Name)

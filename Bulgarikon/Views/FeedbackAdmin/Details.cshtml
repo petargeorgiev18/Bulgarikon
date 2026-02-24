@@ -1,0 +1,77 @@
+﻿@model Bulgarikon.Core.DTOs.FeedbackDTOs.FeedbackDetailsDto
+@using Bulgarikon.Core.DTOs.FeedbackDTOs
+@using Bulgarikon.Data.Models.Enums
+
+@{
+    ViewData["Title"] = "Feedback детайли (Admin)";
+    var replyModel = ViewBag.ReplyModel as FeedbackReplyDto ?? new FeedbackReplyDto { FeedbackId = Model.Id };
+
+    string Bg(FeedbackCategory c) => c switch
+    {
+        FeedbackCategory.Idea => "Идея",
+        FeedbackCategory.Bug => "Грешка",
+        FeedbackCategory.Question => "Въпрос",
+        _ => "Друго"
+    };
+}
+
+<div class="era-shell">
+    <div class="era-header">
+        <div>
+            <div class="era-kicker">Bulgarikon • Admin • Feedback</div>
+            <h1 class="era-h1">@Model.Subject</h1>
+            <div class="era-sub">@Bg(Model.Category) • @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm") • @Model.UserEmail</div>
+        </div>
+
+        <div class="era-actions">
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Назад</a>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3" style="border:1px solid var(--stroke); background:#fffdf8;">
+        <div class="card-body">
+            <h5 class="mb-2">Съобщение</h5>
+            <div class="p-3 rounded-3" style="background: rgba(255,255,255,.65); border:1px solid rgba(0,0,0,.10);">
+                @Model.Comment
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm" style="border:1px solid var(--stroke); background:#fffdf8;">
+        <div class="card-body">
+            <h5 class="mb-3">Отговор</h5>
+
+            @if (!string.IsNullOrWhiteSpace(Model.AdminReply))
+            {
+                <div class="alert alert-success">
+                    Има отговор. Можеш да го редактираш и да го запишеш отново.
+                </div>
+            }
+
+            <form asp-action="Reply" method="post">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="FeedbackId" value="@replyModel.FeedbackId" />
+
+                <div class="mb-2">
+                    <textarea name="AdminReply" class="form-control" rows="6"
+                              placeholder="Напиши отговор към потребителя...">@replyModel.AdminReply</textarea>
+                    <span class="text-danger">@Html.ValidationMessage("AdminReply")</span>
+                </div>
+
+                <button type="submit" class="btn btn-primary era-btn-primary">Запази отговор</button>
+
+                @if (Model.RepliedAt.HasValue)
+                {
+                    <div class="text-muted mt-2" style="font-size:.9rem;">
+                        Последно отговорено: @Model.RepliedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                    </div>
+                }
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

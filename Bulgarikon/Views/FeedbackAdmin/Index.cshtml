@@ -1,0 +1,75 @@
+﻿@model IReadOnlyList<Bulgarikon.Core.DTOs.FeedbackDTOs.FeedbackListItemDto>
+@using Bulgarikon.Data.Models.Enums
+
+@{
+    ViewData["Title"] = "Feedback (Admin)";
+    string Bg(FeedbackCategory c) => c switch
+    {
+        FeedbackCategory.Idea => "Идея",
+        FeedbackCategory.Bug => "Грешка",
+        FeedbackCategory.Question => "Въпрос",
+        _ => "Друго"
+    };
+}
+
+<div class="era-shell">
+    <div class="era-header">
+        <div>
+            <div class="era-kicker">Bulgarikon • Admin</div>
+            <h1 class="era-h1">Feedback входящи</h1>
+            <div class="era-sub">Прегледай и отговори на потребителите.</div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info border-0 shadow-sm">Няма feedback-и.</div>
+    }
+    else
+    {
+        <div class="card shadow-sm" style="border:1px solid var(--stroke); background:#fffdf8;">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Потребител</th>
+                                <th>Категория</th>
+                                <th>Тема</th>
+                                <th>Дата</th>
+                                <th>Статус</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var f in Model)
+                            {
+                                <tr>
+                                    <td>@f.UserEmail</td>
+                                    <td>@Bg(f.Category)</td>
+                                    <td>@f.Subject</td>
+                                    <td>@f.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td>
+                                        @if (f.IsReplied)
+                                        {
+                                            <span class="badge bg-success">Отговорено</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">Чака</span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        <a asp-action="Details" asp-route-id="@f.Id" class="btn btn-sm btn-outline-primary">
+                                            Отвори
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>

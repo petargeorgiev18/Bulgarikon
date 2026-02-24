@@ -50,12 +50,6 @@
                     </div>
 
                     <div class="d-flex gap-2">
-                        <a asp-action="Edit"
-                           asp-route-id="@q.Id"
-                           class="btn btn-sm btn-outline-primary">
-                            Редакция
-                        </a>
-
                         <form asp-action="Delete"
                               method="post"
                               asp-route-id="@q.Id"

@@ -1,64 +1,130 @@
 ﻿@page
 @model RegisterModel
+
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = "Регистрация";
 }
 
-<h1>@ViewData["Title"]</h1>
+<div class="auth-wrap">
+    <div class="auth-card card shadow-sm">
+        <div class="auth-head">
+            <div class="auth-kicker">Bulgarikon</div>
+            <h1 class="auth-title">Регистрация</h1>
+            <p class="auth-sub">Създай акаунт, за да решаваш тестове и да следиш резултатите си.</p>
+        </div>
 
-<div class="row">
-    <div class="col-md-4">
-        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-            <h2>Create a new account.</h2>
-            <hr />
-            <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                <label asp-for="Input.Email">Email</label>
-                <span asp-validation-for="Input.Email" class="text-danger"></span>
-            </div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label asp-for="Input.Password">Password</label>
-                <span asp-validation-for="Input.Password" class="text-danger"></span>
-            </div>
-            <div class="form-floating mb-3">
-                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                <label asp-for="Input.ConfirmPassword">Confirm Password</label>
-                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
-            </div>
-            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </form>
-    </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to register.</h3>
-            <hr />
-            @{
-                if ((Model.ExternalLogins?.Count ?? 0) == 0)
-                {
-                    <div>
-                        <p>
-                            There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article
-                            about setting up this ASP.NET application to support logging in via external services</a>.
-                        </p>
+        <div class="auth-grid">
+            <!-- Local register -->
+            <section class="auth-col">
+                <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="auth-form">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-2" role="alert"></div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.Email"
+                               class="form-control auth-input"
+                               autocomplete="username"
+                               aria-required="true"
+                               placeholder="name@example.com" />
+                        <label asp-for="Input.Email">Имейл</label>
+                        <span asp-validation-for="Input.Email" class="text-danger"></span>
                     </div>
-                }
-                else
-                {
-                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
-                        <div>
-                            <p>
-                                @foreach (var provider in Model.ExternalLogins!)
-                                {
-                                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
-                                }
-                            </p>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.Password"
+                               class="form-control auth-input"
+                               autocomplete="new-password"
+                               aria-required="true"
+                               placeholder="password" />
+                        <label asp-for="Input.Password">Парола</label>
+                        <span asp-validation-for="Input.Password" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input asp-for="Input.ConfirmPassword"
+                               class="form-control auth-input"
+                               autocomplete="new-password"
+                               aria-required="true"
+                               placeholder="password" />
+                        <label asp-for="Input.ConfirmPassword">Потвърди парола</label>
+                        <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                    </div>
+
+                    <button id="registerSubmit" type="submit" class="w-100 btn btn-lg auth-btn-primary">
+                        Регистрация
+                    </button>
+
+                    <div class="auth-divider"><span>или</span></div>
+
+                    <div class="auth-links">
+                        <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="auth-link">
+                            Имаш акаунт? Вход
+                        </a>
+                    </div>
+                </form>
+            </section>
+
+            <!-- External register -->
+            <section class="auth-col">
+                <div class="auth-ext">
+                    <h2 class="auth-h2">Регистрация с Google / Facebook</h2>
+                    <p class="auth-small auth-muted">Можеш да се регистрираш директно с профил.</p>
+
+                    @{
+                        var hasExternal = (Model.ExternalLogins?.Count ?? 0) > 0;
+                    }
+
+                    @if (!hasExternal)
+                    {
+                        <div class="alert alert-warning mb-0">
+                            Няма конфигурирани външни доставчици.
                         </div>
-                    </form>
-                }
-            }
-        </section>
+                    }
+                    else
+                    {
+                        <form asp-controller="Auth" asp-action="ExternalLogin" method="post" class="d-grid gap-2">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+
+                            @foreach (var provider in Model.ExternalLogins!)
+                            {
+                                var p = (provider.Name ?? "").ToLowerInvariant();
+                                var isGoogle = p.Contains("google");
+                                var isFacebook = p.Contains("facebook");
+
+                                <button type="submit"
+                                        class="btn auth-btn-provider @(isGoogle ? "is-google" : isFacebook ? "is-facebook" : "")"
+                                        name="provider"
+                                        value="@provider.Name">
+                                    <span class="auth-ico" aria-hidden="true">
+                                        @if (isGoogle)
+                                        {
+                                            <svg viewBox="0 0 48 48" width="20" height="20">
+                                                <path fill="#EA4335" d="M24 9.5c3.54 0 6.73 1.23 9.24 3.25l6.9-6.9C36.05 2.2 30.4 0 24 0 14.62 0 6.5 5.38 2.56 13.22l8.03 6.23C12.51 13.03 17.83 9.5 24 9.5z" />
+                                                <path fill="#4285F4" d="M46.5 24c0-1.64-.15-3.22-.43-4.74H24v9.01h12.65c-.55 2.96-2.21 5.47-4.69 7.16l7.19 5.56C43.53 36.97 46.5 30.98 46.5 24z" />
+                                                <path fill="#FBBC05" d="M10.59 28.45A14.9 14.9 0 0 1 9.8 24c0-1.54.27-3.02.79-4.45l-8.03-6.23A24 24 0 0 0 0 24c0 3.86.92 7.5 2.56 10.78l8.03-6.33z" />
+                                                <path fill="#34A853" d="M24 48c6.4 0 11.78-2.1 15.71-5.71l-7.19-5.56c-2 1.35-4.56 2.14-8.52 2.14-6.17 0-11.49-3.53-13.41-8.42l-8.03 6.33C6.5 42.62 14.62 48 24 48z" />
+                                            </svg>
+                                        }
+                                        else if (isFacebook)
+                                        {
+                                            <svg viewBox="0 0 24 24" width="20" height="20">
+                                                <path fill="#1877F2" d="M24 12.07C24 5.41 18.63 0 12 0S0 5.41 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.04 1.8-4.72 4.57-4.72 1.32 0 2.7.24 2.7.24v2.98h-1.52c-1.5 0-1.97.94-1.97 1.9v2.28h3.35l-.54 3.49h-2.81V24C19.61 23.1 24 18.1 24 12.07z" />
+                                            </svg>
+                                        }
+                                        else
+                                        {
+                                            <span>🔐</span>
+                                        }
+                                    </span>
+
+                                    <span>Продължи с @provider.DisplayName</span>
+                                </button>
+                            }
+                        </form>
+                    }
+                </div>
+            </section>
+        </div>
     </div>
 </div>
 

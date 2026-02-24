@@ -1,0 +1,55 @@
+﻿@model Bulgarikon.Core.DTOs.FeedbackDTOs.FeedbackDetailsDto
+@using Bulgarikon.Data.Models.Enums
+
+@{
+    ViewData["Title"] = "Feedback детайли";
+    string Bg(FeedbackCategory c) => c switch
+    {
+        FeedbackCategory.Idea => "Идея",
+        FeedbackCategory.Bug => "Грешка",
+        FeedbackCategory.Question => "Въпрос",
+        _ => "Друго"
+    };
+}
+
+<div class="bk-auth-wrap">
+    <div class="bk-auth-card">
+        <div class="bk-auth-head">
+            <div class="bk-auth-kicker">Bulgarikon • Feedback</div>
+            <h1 class="bk-auth-title">@Model.Subject</h1>
+            <p class="bk-auth-sub">@Bg(Model.Category) • @Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</p>
+        </div>
+
+        <div class="bk-field">
+            <label class="form-label">Твоето съобщение</label>
+            <div class="p-3 rounded-3" style="background: rgba(255,255,255,.55); border:1px solid rgba(0,0,0,.10);">
+                @Model.Comment
+            </div>
+        </div>
+
+        <div class="bk-field" style="margin-top:14px;">
+            <label class="form-label">Отговор от админ</label>
+
+            @if (string.IsNullOrWhiteSpace(Model.AdminReply))
+            {
+                <div class="alert alert-secondary mb-0">Още няма отговор.</div>
+            }
+            else
+            {
+                <div class="p-3 rounded-3" style="background: rgba(156,107,47,.06); border:1px solid rgba(156,107,47,.18);">
+                    <div>@Model.AdminReply</div>
+                    <div class="text-muted mt-2" style="font-size:.9rem;">
+                        @if (Model.RepliedAt.HasValue)
+                        {
+                            <span>Отговорено на @Model.RepliedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="bk-actions">
+            <a class="btn bk-btn-ghost" asp-action="My">Назад</a>
+        </div>
+    </div>
+</div>

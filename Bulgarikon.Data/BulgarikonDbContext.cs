@@ -96,6 +96,18 @@ namespace Bulgarikon.Data
                 .HasForeignKey(r => r.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            builder.Entity<Feedback>()
+                .HasOne(f => f.User)
+                .WithMany(u => u.FeedbacksCreated)
+                .HasForeignKey(f => f.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Feedback>()
+                .HasOne(f => f.RepliedByUser)
+                .WithMany(u => u.FeedbacksReplied)
+                .HasForeignKey(f => f.RepliedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             builder.ApplyConfiguration(new ArtifactConfiguration());
             builder.ApplyConfiguration(new CivilizationConfiguration());
             builder.ApplyConfiguration(new EraConfiguration());

@@ -1,0 +1,58 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@model Bulgarikon.Core.DTOs.FeedbackDTOs.FeedbackCreateDto
+
+@{
+    ViewData["Title"] = "Обратна връзка";
+}
+
+<div class="bk-auth-wrap">
+    <div class="bk-auth-card">
+        <div class="bk-auth-head">
+            <div class="bk-auth-kicker">Bulgarikon • Обратна връзка</div>
+            <h1 class="bk-auth-title">Изпрати feedback</h1>
+            <p class="bk-auth-sub">Сигнал за грешка, идея за подобрение или въпрос.</p>
+        </div>
+
+        <form asp-action="Create" method="post" class="bk-auth-form">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="bk-grid-2">
+                <div class="bk-field">
+                    <label asp-for="Category" class="form-label">Категория</label>
+                    <select asp-for="Category"
+                            asp-items="(IEnumerable<SelectListItem>)ViewBag.Categories"
+                            class="form-select bk-input">
+                    </select>
+                    <span asp-validation-for="Category" class="text-danger"></span>
+                </div>
+
+                <div class="bk-field">
+                    <label asp-for="Subject" class="form-label">Тема</label>
+                    <input asp-for="Subject"
+                           class="form-control bk-input"
+                           placeholder="Пример: Грешка в събитие / Идея за филтър..." />
+                    <span asp-validation-for="Subject" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="bk-field">
+                <label asp-for="Comment" class="form-label">Описание</label>
+                <textarea asp-for="Comment"
+                          class="form-control bk-input"
+                          rows="6"
+                          placeholder="Опиши проблема/идеята по-подробно..."></textarea>
+                <span asp-validation-for="Comment" class="text-danger"></span>
+            </div>
+
+            <div class="bk-actions">
+                <a class="btn bk-btn-ghost" asp-controller="Home" asp-action="Index">Назад</a>
+                <button type="submit" class="btn bk-btn-primary">Изпрати</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

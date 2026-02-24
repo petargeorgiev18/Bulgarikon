@@ -107,33 +107,11 @@
             <div class="home-card-cta">Отвори куизове →</div>
         </div>
 
-        <div class="home-card home-card-click" data-go="Feedback/Create">
+        <div class="home-card home-card-click" data-go="@Url.Action("Create", "Feedback")">
             <div class="home-card-icon">✉️</div>
             <div class="home-card-title">Обратна връзка</div>
             <div class="home-card-text">Предложи подобрение или сигнализирай за грешка в съдържанието.</div>
             <div class="home-card-cta">Изпрати →</div>
-        </div>
-    </div>
-</div>
-
-<div class="home-section">
-    <div class="home-section-head">
-        <div class="home-kicker">Бързо търсене</div>
-        <h2 class="home-h2">Намери нещо конкретно</h2>
-        <p class="home-p">Търси по години, имена, места и ключови думи (ако имаш Search контролер – супер).</p>
-    </div>
-
-    <div class="home-search card shadow-sm">
-        <div class="card-body d-flex flex-column flex-lg-row gap-2 align-items-lg-center">
-            <input id="homeSearch" class="form-control home-input" type="search"
-                   placeholder="Пример: 681, „Симеон“, „Плиска“, „Освобождение“..." />
-            <div class="d-flex gap-2 flex-wrap">
-                <a id="goSearch" class="btn home-btn-primary" href="#">Търси</a>
-                <a class="btn home-btn-ghost" asp-controller="Eras" asp-action="Index">Към епохите</a>
-            </div>
-        </div>
-        <div class="home-search-hint">
-            Съвет: използвай година + дума, напр. <span class="home-chip">1878</span> <span class="home-chip">Освобождение</span>
         </div>
     </div>
 </div>

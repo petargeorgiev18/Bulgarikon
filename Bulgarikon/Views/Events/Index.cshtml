@@ -1,167 +1,316 @@
-﻿@model IEnumerable<EventEraGroupViewModel>
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@model IEnumerable<EventEraGroupViewModel>
 
 @{
-	ViewData["Title"] = "Събития";
-	bool isAdmin = User.IsInRole("Admin");
+    ViewData["Title"] = "Събития";
+    bool isAdmin = User.IsInRole("Admin");
+
+    Guid? eraId = ViewBag.EraId as Guid?;
 }
 
 <div class="era-shell">
-	<div class="era-header">
-		<div>
-			<div class="era-kicker">Bulgarikon • Събития</div>
-			<h1 class="era-h1">Исторически събития</h1>
-			<div class="era-sub">Подредени по епохи (възходящо) и по години вътре.</div>
-		</div>
+    <div class="era-header">
+        <div>
+            <div class="era-kicker">Bulgarikon • Събития</div>
+            <h1 class="era-h1">Исторически събития</h1>
+            <div class="era-sub">Търси, филтрирай по епоха и подреждай.</div>
+        </div>
 
-		<div class="era-actions">
-			@if (isAdmin)
-			{
-				<a asp-action="Create" class="btn btn-primary era-btn-primary">+ Добави събитие</a>
-			}
-		</div>
-	</div>
+        <div class="era-actions">
+            @if (isAdmin)
+            {
+                <a asp-action="Create" class="btn btn-primary era-btn-primary">+ Добави събитие</a>
+            }
+        </div>
+    </div>
 
-	@if (!Model.Any())
-	{
-		<div class="alert alert-info border-0 shadow-sm">Няма събития.</div>
-	}
-	else
-	{
-		@foreach (var g in Model)
-		{
-			<div class="card shadow-sm mb-3" style="border:1px solid var(--stroke); background:#fffdf8;">
-				<div class="card-body">
-					<div class="d-flex flex-column flex-md-row justify-content-between gap-2">
-						<div>
-							<div class="era-kicker">Епоха</div>
-							<div class="era-title">@g.EraName</div>
-							<div class="era-sub">@g.EraStartYear – @g.EraEndYear</div>
-						</div>
+    <!-- TOOLBAR (LIKE FIGURES) -->
+    <div class="era-toolbar card shadow-sm">
+        <div class="card-body era-toolbar-body events-toolbar">
+            <div class="era-field">
+                <label class="era-label">Търсене</label>
+                <input id="evSearch" class="form-control era-input ev-search" type="search"
+                       placeholder="Пример: „Съединение“, „Търново“, 1878…" />
+            </div>
 
-						@if (isAdmin)
-						{
-							<div class="d-flex gap-2 flex-wrap align-items-start">
-								<a asp-controller="Eras" asp-action="Details" asp-route-id="@g.EraId"
-								   class="btn btn-sm btn-outline-secondary">Епоха детайли</a>
-								<a asp-action="Create" asp-route-eraId="@g.EraId"
-								   class="btn btn-sm btn-outline-primary">+ Събитие в епохата</a>
-							</div>
-						}
-					</div>
+            <div class="era-field">
+                <label class="era-label">Епоха</label>
+                <select id="evEra" class="form-select era-input">
+                    <option value="">Всички</option>
+                    @if (ViewBag.Eras != null)
+                    {
+                        foreach (var e in (IEnumerable<SelectListItem>)ViewBag.Eras)
+                        {
+                            <option value="@e.Value" selected="@(e.Selected ? "selected" : null)">@e.Text</option>
+                        }
+                    }
+                </select>
+            </div>
 
-					@if (!g.Events.Any())
-					{
-						<div class="alert alert-info mt-3 mb-0">Няма събития в тази епоха.</div>
-					}
-					else
-					{
-						<div class="era-timeline mt-3">
-							@foreach (var e in g.Events)
-							{
-								<article class="era-node">
-									<div class="era-rail">
-										<div class="era-dot"></div>
-										<div class="era-line"></div>
-									</div>
+            <div class="era-field">
+                <label class="era-label">Подреди</label>
+                <select id="evSort" class="form-select era-input">
+                    <option value="yearAsc" selected>Години ↑</option>
+                    <option value="yearDesc">Години ↓</option>
+                    <option value="titleAsc">Заглавие А–Я</option>
+                    <option value="titleDesc">Заглавие Я–А</option>
+                </select>
+            </div>
 
-									<div class="card era-card shadow-sm">
-										<div class="card-body">
-											<div class="era-top">
-												<div class="era-years">
-													<span class="era-year">@e.StartYear</span>
-													<span class="era-sep">—</span>
-													<span class="era-year">@e.EndYear</span>
-												</div>
+            <div class="era-field era-count">
+                <div class="era-count-box">
+                    <div class="era-count-num" id="evCount">0</div>
+                    <div class="era-count-label">показани</div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-												<div class="era-title-wrap">
-													<div class="era-title">@e.Title</div>
-													<div class="era-meta">
-														@if (!string.IsNullOrWhiteSpace(e.Location))
-														{
-															<span class="era-chip">@e.Location</span>
-														}
-													</div>
-												</div>
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info border-0 shadow-sm">Няма събития.</div>
+    }
+    else
+    {
+        <!-- WRAPPER THAT JS WILL CONTROL -->
+        <div id="evGroups">
+            @foreach (var g in Model)
+            {
+                <section class="card shadow-sm mb-3 ev-group"
+                         data-eraid="@g.EraId"
+                         data-eraname="@g.EraName"
+                         style="border:1px solid var(--stroke); background:#fffdf8;">
 
-												<div class="era-buttons">
-													<a asp-action="Details" asp-route-id="@e.Id"
-													   class="btn btn-sm btn-outline-secondary">Детайли</a>
+                    <div class="card-body">
+                        <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+                            <div>
+                                <div class="era-kicker">Епоха</div>
+                                <div class="era-title">@g.EraName</div>
+                                <div class="era-sub">@g.EraStartYear – @g.EraEndYear</div>
+                            </div>
 
-													@if (isAdmin)
-													{
-														<a asp-action="Edit" asp-route-id="@e.Id"
-														   class="btn btn-sm btn-outline-primary">Редакция</a>
+                            @if (isAdmin)
+                            {
+                                <div class="d-flex gap-2 flex-wrap align-items-start">
+                                    <a asp-controller="Eras" asp-action="Details" asp-route-id="@g.EraId"
+                                       class="btn btn-sm btn-outline-secondary">Епоха детайли</a>
 
-														<button type="button"
-																class="btn btn-sm btn-outline-danger"
-																data-bk-delete-event
-																data-id="@e.Id"
-																data-title="@e.Title">
-															Изтриване
-														</button>
-													}
-												</div>
-											</div>
-										</div>
-									</div>
-								</article>
-							}
-						</div>
-					}
-				</div>
-			</div>
-		}
+                                    <a asp-action="Create" asp-route-eraId="@g.EraId"
+                                       class="btn btn-sm btn-outline-primary">+ Събитие в епохата</a>
+                                </div>
+                            }
+                        </div>
 
-		@await Html.PartialAsync("Partials/_DeleteEventModal")
-	}
+                        @if (!g.Events.Any())
+                        {
+                            <div class="alert alert-info mt-3 mb-0">Няма събития в тази епоха.</div>
+                        }
+                        else
+                        {
+                            <div class="era-timeline mt-3 ev-timeline">
+                                @foreach (var e in g.Events)
+                                {
+                                    <article class="era-node ev-node"
+                                             data-eraid="@g.EraId"
+                                             data-title="@e.Title"
+                                             data-location="@e.Location"
+                                             data-start="@e.StartYear"
+                                             data-end="@e.EndYear">
+
+                                        <div class="era-rail">
+                                            <div class="era-dot"></div>
+                                            <div class="era-line"></div>
+                                        </div>
+
+                                        <div class="card era-card shadow-sm">
+                                            <div class="card-body">
+                                                <div class="era-top">
+                                                    <div class="era-years">
+                                                        <span class="era-year">@e.StartYear</span>
+                                                        <span class="era-sep">—</span>
+                                                        <span class="era-year">@e.EndYear</span>
+                                                    </div>
+
+                                                    <div class="era-title-wrap">
+                                                        <div class="era-title">@e.Title</div>
+                                                        <div class="era-meta">
+                                                            @if (!string.IsNullOrWhiteSpace(e.Location))
+                                                            {
+                                                                <span class="era-chip">@e.Location</span>
+                                                            }
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="era-buttons">
+                                                        <a asp-action="Details" asp-route-id="@e.Id"
+                                                           class="btn btn-sm btn-outline-secondary">Детайли</a>
+
+                                                        @if (isAdmin)
+                                                        {
+                                                            <a asp-action="Edit" asp-route-id="@e.Id"
+                                                               class="btn btn-sm btn-outline-primary">Редакция</a>
+
+                                                            <button type="button"
+                                                                    class="btn btn-sm btn-outline-danger"
+                                                                    data-bk-delete-event
+                                                                    data-id="@e.Id"
+                                                                    data-title="@e.Title">
+                                                                Изтриване
+                                                            </button>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </article>
+                                }
+                            </div>
+                        }
+                    </div>
+                </section>
+            }
+        </div>
+
+        @await Html.PartialAsync("Partials/_DeleteEventModal")
+    }
 </div>
 
 @section Scripts {
-	<script>
-		(function () {
-			const modal = document.getElementById('bkDeleteEventModal');
-			if (!modal) return;
+    <script>
+        (function () {
+            const search = document.getElementById('evSearch');
+            const sort = document.getElementById('evSort');
+            const era = document.getElementById('evEra');
+            const groupsWrap = document.getElementById('evGroups');
+            const countEl = document.getElementById('evCount');
 
-			const idInput = document.getElementById('bkDeleteEventId');
-			const titleEl = document.getElementById('bkDeleteEventTitle');
+            if (!groupsWrap) return;
 
-			function openModal({ id, title }) {
-				if (idInput) idInput.value = id || '';
-				if (titleEl) titleEl.textContent = title || '—';
+            const groups = Array.from(groupsWrap.querySelectorAll('.ev-group'));
+            const nodes = Array.from(groupsWrap.querySelectorAll('.ev-node'));
 
-				modal.hidden = false;
-				modal.setAttribute('aria-hidden', 'false');
-				modal.classList.add('is-open');
-				document.body.classList.add('bk-modal-open');
-				document.body.style.overflow = 'hidden';
-			}
+            function normalize(s) { return (s || '').toString().toLowerCase().trim(); }
+            function toNum(v, fallback) {
+                const n = Number(v);
+                return Number.isFinite(n) ? n : fallback;
+            }
 
-			function closeModal() {
-				modal.classList.remove('is-open');
-				modal.setAttribute('aria-hidden', 'true');
-				modal.hidden = true;
-				document.body.classList.remove('bk-modal-open');
-				document.body.style.overflow = '';
-			}
+            function apply() {
+                const q = normalize(search?.value);
+                const eraId = normalize(era?.value);
 
-			document.addEventListener('click', (e) => {
-				const btn = e.target.closest('[data-bk-delete-event]');
-				if (btn) {
-					openModal({
-						id: btn.getAttribute('data-id'),
-						title: btn.getAttribute('data-title')
-					});
-					return;
-				}
+                // filter nodes
+                let visibleNodes = nodes.filter(n => {
+                    const title = normalize(n.dataset.title);
+                    const loc = normalize(n.dataset.location);
+                    const start = String(n.dataset.start || '');
+                    const end = String(n.dataset.end || '');
+                    const nEra = normalize(n.dataset.eraid);
 
-				if (e.target.closest('[data-bk-close]')) closeModal();
-			});
+                    const hay = `${title} ${loc} ${start} ${end}`;
+                    const okQ = !q || hay.includes(q);
+                    const okEra = !eraId || nEra === eraId;
 
-			document.addEventListener('keydown', (e) => {
-				if (e.key === 'Escape' && modal.hidden === false) closeModal();
-			});
+                    n.style.display = (okQ && okEra) ? '' : 'none';
+                    return okQ && okEra;
+                });
 
-			closeModal();
-		})();
-	</script>
+                // hide/show groups depending on if they have visible nodes
+                groups.forEach(g => {
+                    const gEra = normalize(g.dataset.eraid);
+                    const hasVisibleInGroup = visibleNodes.some(n => normalize(n.dataset.eraid) === gEra);
+
+                    // if an era is selected, still hide others
+                    const okEra = !eraId || gEra === eraId;
+
+                    g.style.display = (hasVisibleInGroup && okEra) ? '' : 'none';
+                });
+
+                // sorting within each group
+                const mode = sort?.value || 'yearAsc';
+                const sorter = {
+                    yearAsc: (a, b) => toNum(a.dataset.start, 999999) - toNum(b.dataset.start, 999999),
+                    yearDesc: (a, b) => toNum(b.dataset.start, -999999) - toNum(a.dataset.start, -999999),
+                    titleAsc: (a, b) => (a.dataset.title || '').localeCompare(b.dataset.title || ''),
+                    titleDesc: (a, b) => (b.dataset.title || '').localeCompare(a.dataset.title || '')
+                }[mode];
+
+                // for each group timeline: reappend nodes based on visible first + sort
+                groups.forEach(g => {
+                    const timeline = g.querySelector('.ev-timeline');
+                    if (!timeline) return;
+
+                    const groupEra = normalize(g.dataset.eraid);
+                    const groupNodes = Array.from(timeline.querySelectorAll('.ev-node'));
+
+                    const visible = groupNodes.filter(n => n.style.display !== 'none');
+                    const hidden = groupNodes.filter(n => n.style.display === 'none');
+
+                    visible.sort(sorter);
+
+                    const frag = document.createDocumentFragment();
+                    visible.forEach(n => frag.appendChild(n));
+                    hidden.forEach(n => frag.appendChild(n));
+                    timeline.appendChild(frag);
+                });
+
+                if (countEl) countEl.textContent = String(visibleNodes.length);
+            }
+
+            search?.addEventListener('input', apply);
+            sort?.addEventListener('change', apply);
+            era?.addEventListener('change', apply);
+
+            apply();
+        })();
+    </script>
+
+    <!-- твоят delete modal script си остава -->
+    <script>
+        (function () {
+            const modal = document.getElementById('bkDeleteEventModal');
+            if (!modal) return;
+
+            const idInput = document.getElementById('bkDeleteEventId');
+            const titleEl = document.getElementById('bkDeleteEventTitle');
+
+            function openModal({ id, title }) {
+                if (idInput) idInput.value = id || '';
+                if (titleEl) titleEl.textContent = title || '—';
+
+                modal.hidden = false;
+                modal.setAttribute('aria-hidden', 'false');
+                modal.classList.add('is-open');
+                document.body.classList.add('bk-modal-open');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeModal() {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+                modal.hidden = true;
+                document.body.classList.remove('bk-modal-open');
+                document.body.style.overflow = '';
+            }
+
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-bk-delete-event]');
+                if (btn) {
+                    openModal({
+                        id: btn.getAttribute('data-id'),
+                        title: btn.getAttribute('data-title')
+                    });
+                    return;
+                }
+
+                if (e.target.closest('[data-bk-close]')) closeModal();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal.hidden === false) closeModal();
+            });
+
+            closeModal();
+        })();
+    </script>
 }

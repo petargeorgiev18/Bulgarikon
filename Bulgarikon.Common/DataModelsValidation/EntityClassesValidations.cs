@@ -104,8 +104,14 @@
         }
         public static class Feedback
         {
+            public const int SubjectMinLength = 2;
+            public const int SubjectMaxLength = 30;
+            public const int CategoryMinLength = 2;
+            public const int CategoryMaxLength = 30;
             public const int CommentMaxLength = 1000;
             public const int CommentMinLength = 10;
+            public const int ReplyMaxLength = 1000;
+            public const int ReplyMinLength = 2;
         }
     }
 }
