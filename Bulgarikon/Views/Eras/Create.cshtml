@@ -57,6 +57,17 @@
                             </div>
                         </div>
 
+                        <div class="mt-4">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h5 class="mb-0">Снимки (по желание)</h5>
+                                <button type="button" class="btn btn-sm btn-outline-dark" id="addEraImgBtn">+ Добави снимка</button>
+                            </div>
+
+                            <div class="text-muted small mt-1">URL + надпис. Можеш да добавиш повече от една.</div>
+
+                            <div id="eraImagesWrap" class="mt-3" style="display:grid; gap:12px;"></div>
+                        </div>
+
                         <div class="d-flex gap-2 flex-wrap mt-4">
                             <button type="submit" class="btn btn-primary px-4">Запази</button>
                             <a asp-action="Index" class="btn btn-outline-secondary">Откажи</a>
@@ -118,9 +129,7 @@
                 previewName.textContent = n || "Име на епохата…";
                 previewDesc.textContent = d || "Описанието ще се появи тук…";
 
-                previewPeriod.textContent = (s || e) ? `${s || "…"} – ${e || "…"}`
-                                                    : "Начало – Край";
-
+                previewPeriod.textContent = (s || e) ? `${s || "…"} – ${e || "…"}` : "Начало – Край";
                 descCount.textContent = String((descEl?.value || '').length);
 
                 const sNum = Number(s);
@@ -138,43 +147,70 @@
         })();
     </script>
 
-    <style>
-        .era-paper {
-            background: linear-gradient(180deg, #fffdf7, #f5ecd9);
-            border: 1px solid rgba(0,0,0,.10);
-        }
+    <script>
+        (function () {
+            const wrap = document.getElementById('eraImagesWrap');
+            const btn = document.getElementById('addEraImgBtn');
+            if (!wrap || !btn) return;
 
-        .era-kicker {
-            font-size: .78rem;
-            letter-spacing: .16em;
-            text-transform: uppercase;
-            color: rgba(140, 98, 25, .95);
-        }
+            let idx = 0;
 
-        .preview-box {
-            border: 1px dashed rgba(0,0,0,.18);
-            border-radius: 14px;
-            padding: 14px;
-            background: rgba(255,255,255,.65);
-        }
+            function esc(s) {
+                return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            }
 
-        .preview-title {
-            font-weight: 900;
-            font-size: 1.05rem;
-            color: #111;
-            margin-bottom: 2px;
-        }
+            function renderRow(i, urlVal, capVal) {
+                const row = document.createElement('div');
+                row.className = 'bk-imgrow';
+                row.innerHTML = `
+                    <div class="bk-imgrow-grid">
+                        <div>
+                            <label class="form-label fw-semibold">URL</label>
+                            <input class="form-control" name="Images[${i}].Url" value="${esc(urlVal)}" placeholder="https://..." />
+                        </div>
+                        <div>
+                            <label class="form-label fw-semibold">Надпис (по желание)</label>
+                            <input class="form-control" name="Images[${i}].Caption" value="${esc(capVal)}" placeholder="Кратък надпис..." />
+                        </div>
+                        <div class="bk-imgrow-actions">
+                            <label class="form-label fw-semibold d-block">Премахни</label>
+                            <button type="button" class="btn btn-outline-danger w-100" data-remove>Изтрий ред</button>
+                        </div>
+                    </div>
+                    <div class="bk-imgrow-preview" hidden>
+                        <img alt="preview" />
+                        <div class="bk-imgrow-cap"></div>
+                    </div>
+                `;
 
-        .preview-period {
-            color: rgba(0,0,0,.65);
-            font-size: .92rem;
-            margin-bottom: 10px;
-        }
+                const urlInput = row.querySelector(`input[name="Images[${i}].Url"]`);
+                const capInput = row.querySelector(`input[name="Images[${i}].Caption"]`);
+                const prev = row.querySelector('.bk-imgrow-preview');
+                const img = row.querySelector('img');
+                const cap = row.querySelector('.bk-imgrow-cap');
 
-        .preview-desc {
-            color: #141414;
-            line-height: 1.6;
-            white-space: pre-wrap;
-        }
-    </style>
+                function refreshPreview() {
+                    const u = (urlInput?.value || '').trim();
+                    const c = (capInput?.value || '').trim();
+                    if (!u) { prev.hidden = true; return; }
+                    img.src = u;
+                    cap.textContent = c;
+                    prev.hidden = false;
+                }
+
+                urlInput?.addEventListener('input', refreshPreview);
+                capInput?.addEventListener('input', refreshPreview);
+
+                row.querySelector('[data-remove]')?.addEventListener('click', () => row.remove());
+
+                wrap.appendChild(row);
+                refreshPreview();
+            }
+
+            btn.addEventListener('click', () => {
+                renderRow(idx, '', '');
+                idx++;
+            });
+        })();
+    </script>
 }

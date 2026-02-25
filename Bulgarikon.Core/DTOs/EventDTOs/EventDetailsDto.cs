@@ -1,4 +1,6 @@
-﻿namespace Bulgarikon.Core.DTOs.EventDTOs
+﻿using Bulgarikon.Core.DTOs.ImageDTOs;
+
+namespace Bulgarikon.Core.DTOs.EventDTOs
 {
     public class EventDetailsDto
     {
@@ -16,5 +18,7 @@
 
         public List<CivilizationChipDto> Civilizations { get; set; } = new();
         public List<FigureChipDto> Figures { get; set; } = new();
+
+        public List<ImageViewDto> Images { get; set; } = new();
     }
 }

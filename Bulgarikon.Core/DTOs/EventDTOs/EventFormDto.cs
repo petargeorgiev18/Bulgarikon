@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Bulgarikon.Core.DTOs.ImageDTOs;
+using System.ComponentModel.DataAnnotations;
 using static Bulgarikon.Common.DataModelsValidation.EntityClassesValidations.Event;
 
 namespace Bulgarikon.Core.DTOs.EventDTOs
@@ -29,5 +30,6 @@ namespace Bulgarikon.Core.DTOs.EventDTOs
 
         public List<Guid>? CivilizationIds { get; set; } = new();
         public List<Guid>? FigureIds { get; set; } = new();
+        public List<ImageEditDto> Images { get; set; } = new();
     }
 }

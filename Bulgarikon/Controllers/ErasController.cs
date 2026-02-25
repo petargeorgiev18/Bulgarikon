@@ -1,5 +1,6 @@
 ﻿using Bulgarikon.Core.DTOs;
 using Bulgarikon.Core.DTOs.EraDTOs;
+using Bulgarikon.Core.DTOs.ImageDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -78,7 +79,16 @@ namespace Bulgarikon.Controllers
                     Name = era.Name,
                     Description = era.Description ?? string.Empty,
                     StartYear = era.StartYear,
-                    EndYear = era.EndYear
+                    EndYear = era.EndYear,
+                    Images = (era.Images ?? new List<Bulgarikon.Core.DTOs.ImageDTOs.ImageViewDto>())
+                        .Select(i => new ImageEditDto
+                        {
+                            Id = i.Id,
+                            Url = i.Url,
+                            Caption = i.Caption,
+                            Remove = false
+                        })
+                        .ToList()
                 };
 
                 return View(model);

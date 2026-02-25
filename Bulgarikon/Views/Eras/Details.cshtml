@@ -1,52 +1,300 @@
 ﻿@model Bulgarikon.Core.DTOs.EraDTOs.EraViewDto
 
 @{
-    ViewData["Title"] = "Детайли";
+    ViewData["Title"] = "Епоха: " + Model.Name;
     bool isAdmin = User.IsInRole("Admin");
+
+    var yearsText = (Model.StartYear == Model.EndYear)
+        ? $"{Model.StartYear}"
+        : $"{Model.StartYear} – {Model.EndYear}";
+
+    var hasImages = Model.Images != null && Model.Images.Any();
+    var heroImg = hasImages ? Model.Images?.FirstOrDefault() : null;
+
+    var galleryJson = System.Text.Json.JsonSerializer.Serialize(
+        (Model.Images ?? new List<Bulgarikon.Core.DTOs.ImageDTOs.ImageViewDto>())
+            .Select(x => new { url = x.Url, caption = x.Caption })
+            .ToList()
+    );
 }
 
-<div class="container py-3">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-2 mb-3">
-        <div>
-            <div class="text-muted small">Епоха</div>
-            <h1 class="mb-1">@Model.Name</h1>
-            <div class="text-muted">@Model.StartYear – @Model.EndYear</div>
-        </div>
+<div class="bk-details">
+    <section class="bk-hero">
+        <div class="bk-hero-bg"></div>
 
-        <div class="d-flex gap-2 flex-wrap">
-            <a asp-action="Index" class="btn btn-outline-secondary">← Назад</a>
+        @if (heroImg != null)
+        {
+            <div class="bk-hero-media" aria-hidden="true">
+                <img src="@heroImg.Url"
+                     alt="@(!string.IsNullOrWhiteSpace(heroImg.Caption) ? heroImg.Caption : Model.Name)"
+                     class="bk-hero-img"
+                     loading="lazy" />
+                <div class="bk-hero-media-fade"></div>
+            </div>
+        }
 
-            @if (isAdmin)
+        <div class="bk-hero-inner">
+            <div class="bk-hero-top">
+                <div class="bk-hero-kicker">ЕПОХА</div>
+
+                <div class="bk-hero-actions">
+                    <a asp-action="Index" class="bk-navbtn">← Назад</a>
+
+                    @if (isAdmin)
+                    {
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="bk-navbtn bk-navbtn-warn">Редактирай</a>
+                        <a asp-action="Delete" asp-route-id="@Model.Id" class="bk-navbtn bk-navbtn-alert">Изтрий</a>
+                    }
+                </div>
+            </div>
+
+            <h1 class="bk-hero-title">@Model.Name</h1>
+
+            <div class="bk-hero-meta">
+                <span class="bk-chip">
+                    <span class="bk-chip-ico">🗓</span>
+                    @yearsText
+                </span>
+
+                @if (hasImages)
+                {
+                    <span class="bk-chip">
+                        <span class="bk-chip-ico">🖼️</span>
+                        @(Model.Images.Count) снимк@(Model.Images.Count == 1 ? "а" : "и")
+                    </span>
+                }
+            </div>
+
+            <div class="bk-hero-grid">
+                <div class="bk-card bk-card-raise">
+                    <div class="bk-card-head">
+                        <div>
+                            <div class="bk-card-kicker">Контекст</div>
+                            <div class="bk-card-title">Какво представлява епохата?</div>
+                        </div>
+                        <div class="bk-card-ico">🏛️</div>
+                    </div>
+
+                    @if (string.IsNullOrWhiteSpace(Model.Description))
+                    {
+                        <div class="bk-empty">
+                            Няма описание за тази епоха.
+                            <span class="bk-empty-sub">Админ може да добави кратък учебен текст от “Редактирай”.</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="bk-readable">@Model.Description</p>
+                    }
+                </div>
+
+                <div class="bk-card bk-card-side">
+                    <div class="bk-side-title">Какво да търсиш, докато учиш?</div>
+
+                    <ul class="bk-bullets">
+                        <li><b>Причини</b> — какво води до началото на епохата</li>
+                        <li><b>Ключови събития</b> — войни, договори, реформи</li>
+                        <li><b>Личности</b> — владетели, водачи, реформатори</li>
+                        <li><b>Артефакти</b> — доказателства от времето</li>
+                        <li><b>Цивилизации</b> — влияния и културен обмен</li>
+                    </ul>
+
+                    <div class="bk-tip">
+                        <div class="bk-tip-ico">💡</div>
+                        <div>
+                            <div class="bk-tip-title">Учебен трик</div>
+                            <div class="bk-tip-text">
+                                Запомни 3 неща: <b>събитие</b>, <b>личност</b>, <b>артефакт</b>.
+                                После ги свържи в едно изречение.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (hasImages)
             {
-                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Редактирай</a>
-                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">Изтрий</a>
+                <div class="bk-gallery mt-3" id="bkGallery" data-images='@galleryJson'>
+                    <div class="bk-gallery-head">
+                        <div class="bk-gallery-title">Галерия</div>
+                        <div class="bk-gallery-sub text-muted small">Кликни на снимка за преглед.</div>
+                    </div>
+
+                    <div class="bk-gallery-grid">
+                        @for (int i = 0; i < Model.Images.Count; i++)
+                        {
+                            var img = Model.Images[i];
+                            <button type="button" class="bk-gallery-item" data-bk-open-img="@i">
+                                <img src="@img.Url"
+                                     alt="@(!string.IsNullOrWhiteSpace(img.Caption) ? img.Caption : Model.Name)"
+                                     loading="lazy" />
+                                @if (!string.IsNullOrWhiteSpace(img.Caption))
+                                {
+                                    <div class="bk-gallery-cap">@img.Caption</div>
+                                }
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <div class="bk-modal" id="bkImgModal" aria-hidden="true" hidden>
+                    <div class="bk-backdrop" data-bk-close></div>
+
+                    <div class="bk-dialog" role="dialog" aria-modal="true" aria-labelledby="bkImgTitle">
+                        <div class="bk-paper bk-imgpaper">
+                            <div class="bk-head">
+                                <div>
+                                    <div class="bk-kicker">Галерия</div>
+                                    <h3 class="bk-title" id="bkImgTitle">Снимка</h3>
+                                </div>
+
+                                <div class="bk-img-actions">
+                                    <button type="button" class="bk-navbtn" id="bkImgPrev" aria-label="Previous">←</button>
+                                    <button type="button" class="bk-navbtn" id="bkImgNext" aria-label="Next">→</button>
+                                    <button type="button" class="bk-x" aria-label="Close" data-bk-close>✕</button>
+                                </div>
+                            </div>
+
+                            <div class="bk-body">
+                                <img id="bkImgEl" class="bk-img" alt="image" />
+                                <div id="bkImgCap" class="bk-imgcap"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             }
+
+            <div class="bk-quick">
+                <a asp-controller="Events" asp-action="Index" asp-route-eraId="@Model.Id" class="bk-quick-btn">
+                    <span class="bk-quick-ico">📍</span>
+                    <span class="bk-quick-text">
+                        <span class="bk-quick-title">Събития</span>
+                        <span class="bk-quick-sub">какво се случва</span>
+                    </span>
+                    <span class="bk-quick-go">→</span>
+                </a>
+
+                <a asp-controller="Figures" asp-action="Index" asp-route-eraId="@Model.Id" class="bk-quick-btn">
+                    <span class="bk-quick-ico">👤</span>
+                    <span class="bk-quick-text">
+                        <span class="bk-quick-title">Личности</span>
+                        <span class="bk-quick-sub">кой променя историята</span>
+                    </span>
+                    <span class="bk-quick-go">→</span>
+                </a>
+
+                <a asp-controller="Artifacts" asp-action="Index" asp-route-eraId="@Model.Id" class="bk-quick-btn">
+                    <span class="bk-quick-ico">🏺</span>
+                    <span class="bk-quick-text">
+                        <span class="bk-quick-title">Артефакти</span>
+                        <span class="bk-quick-sub">какво е останало</span>
+                    </span>
+                    <span class="bk-quick-go">→</span>
+                </a>
+
+                <a asp-controller="Civilizations" asp-action="Index" asp-route-eraId="@Model.Id" class="bk-quick-btn">
+                    <span class="bk-quick-ico">🧭</span>
+                    <span class="bk-quick-text">
+                        <span class="bk-quick-title">Цивилизации</span>
+                        <span class="bk-quick-sub">контекст и влияние</span>
+                    </span>
+                    <span class="bk-quick-go">→</span>
+                </a>
+            </div>
+
+            <div class="bk-mini-timeline">
+                <div class="bk-mini-item">
+                    <div class="bk-mini-dot"></div>
+                    <div>
+                        <div class="bk-mini-label">Начало</div>
+                        <div class="bk-mini-value">@Model.StartYear</div>
+                    </div>
+                </div>
+
+                <div class="bk-mini-line"></div>
+
+                <div class="bk-mini-item">
+                    <div class="bk-mini-dot"></div>
+                    <div>
+                        <div class="bk-mini-label">Край</div>
+                        <div class="bk-mini-value">@Model.EndYear</div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-
-    <div class="card shadow-sm era-paper">
-        <div class="card-body">
-            <h5 class="mb-3">Описание</h5>
-
-            @if (string.IsNullOrWhiteSpace(Model.Description))
-            {
-                <div class="alert alert-info mb-0">Няма описание.</div>
-            }
-            else
-            {
-                <p class="mb-0 era-readable">@Model.Description</p>
-            }
-        </div>
-    </div>
-
-    <div class="mt-3 d-flex gap-2 flex-wrap">
-        <a asp-controller="Events" asp-action="Index" asp-route-eraId="@Model.Id" class="btn btn-sm btn-outline-secondary">Събития</a>
-        <a asp-controller="Figures" asp-action="Index" asp-route-eraId="@Model.Id" class="btn btn-sm btn-outline-secondary">Личности</a>
-        <a asp-controller="Artifacts" asp-action="Index" asp-route-eraId="@Model.Id" class="btn btn-sm btn-outline-secondary">Артефакти</a>
-        <a asp-controller="Civilizations" asp-action="Index" asp-route-eraId="@Model.Id" class="btn btn-sm btn-outline-secondary">
-            Цивилизации
-        </a>
-    </div>
+    </section>
 </div>
 
 @await Html.PartialAsync("Partials/_DeleteEraModal")
+
+@section Scripts {
+    <script>
+        (function () {
+            const g = document.getElementById('bkGallery');
+            const modal = document.getElementById('bkImgModal');
+            if (!g || !modal) return;
+
+            const imgEl = document.getElementById('bkImgEl');
+            const capEl = document.getElementById('bkImgCap');
+            const titleEl = document.getElementById('bkImgTitle');
+            const prevBtn = document.getElementById('bkImgPrev');
+            const nextBtn = document.getElementById('bkImgNext');
+
+            let items = [];
+            try { items = JSON.parse(g.getAttribute('data-images') || '[]') || []; } catch { items = []; }
+            let idx = 0;
+
+            function openAt(i) {
+                if (!items.length) return;
+                idx = Math.max(0, Math.min(items.length - 1, i));
+                const it = items[idx];
+
+                imgEl.src = it.url;
+                capEl.textContent = it.caption || '';
+                titleEl.textContent = it.caption || `Снимка ${idx + 1} / ${items.length}`;
+
+                modal.hidden = false;
+                modal.setAttribute('aria-hidden', 'false');
+                modal.classList.add('is-open');
+                document.body.classList.add('bk-modal-open');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function close() {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+                modal.hidden = true;
+                document.body.classList.remove('bk-modal-open');
+                document.body.style.overflow = '';
+                imgEl.removeAttribute('src');
+            }
+
+            function prev() { openAt((idx - 1 + items.length) % items.length); }
+            function next() { openAt((idx + 1) % items.length); }
+
+            g.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-bk-open-img]');
+                if (!btn) return;
+                const i = Number(btn.getAttribute('data-bk-open-img') || '0');
+                openAt(isNaN(i) ? 0 : i);
+            });
+
+            prevBtn?.addEventListener('click', prev);
+            nextBtn?.addEventListener('click', next);
+
+            modal.addEventListener('click', (e) => {
+                if (e.target.closest('[data-bk-close]')) close();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (modal.hidden === false) {
+                    if (e.key === 'Escape') close();
+                    if (e.key === 'ArrowLeft') prev();
+                    if (e.key === 'ArrowRight') next();
+                }
+            });
+
+            close();
+        })();
+    </script>
+}

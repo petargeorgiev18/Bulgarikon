@@ -22,11 +22,6 @@
             <a class="btn btn-lg home-btn-ghost" asp-controller="Figures" asp-action="Index">Личности</a>
             <a class="btn btn-lg home-btn-ghost" asp-controller="Artifacts" asp-action="Index">Артефакти</a>
             <a class="btn btn-lg home-btn-ghost" asp-controller="Quizzes" asp-action="Index">Куизове</a>
-
-            @if (isAdmin)
-            {
-                <a class="btn btn-lg home-btn-admin" asp-controller="Eras" asp-action="Create">+ Добави епоха</a>
-            }
         </div>
 
         <div class="home-stats" id="homeStats">
@@ -36,15 +31,15 @@
             </div>
             <div class="home-stat">
                 <div class="home-stat-num" data-target="50">0</div>
-                <div class="home-stat-label">Събития (пример)</div>
+                <div class="home-stat-label">Събития</div>
             </div>
             <div class="home-stat">
                 <div class="home-stat-num" data-target="25">0</div>
-                <div class="home-stat-label">Личности (пример)</div>
+                <div class="home-stat-label">Личности</div>
             </div>
             <div class="home-stat">
                 <div class="home-stat-num" data-target="120">0</div>
-                <div class="home-stat-label">Артефакти (пример)</div>
+                <div class="home-stat-label">Артефакти</div>
             </div>
         </div>
     </div>

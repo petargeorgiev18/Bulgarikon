@@ -1,4 +1,6 @@
-﻿namespace Bulgarikon.Core.DTOs.EraDTOs
+﻿using Bulgarikon.Core.DTOs.ImageDTOs;
+
+namespace Bulgarikon.Core.DTOs.EraDTOs
 {
     public class EraViewDto
     {
@@ -7,5 +9,6 @@
         public string? Description { get; set; }
         public int StartYear { get; set; }
         public int EndYear { get; set; }
+        public List<ImageViewDto> Images { get; set; } = new();
     }
 }

@@ -94,6 +94,18 @@ namespace Bulgarikon.Controllers
         {
             var model = await eventsService.GetDetailsAsync(id);
             if (model == null) return NotFound();
+
+            await LoadDropdownsAsync(model.EraId);
+
+            var civItems = (List<SelectListItem>)ViewBag.Civilizations;
+            var figItems = (List<SelectListItem>)ViewBag.Figures;
+
+            var selectedCivIds = model.Civilizations.Select(c => c.Id.ToString()).ToHashSet();
+            var selectedFigIds = model.Figures.Select(f => f.Id.ToString()).ToHashSet();
+
+            ViewBag.Civilizations = civItems.Where(x => !selectedCivIds.Contains(x.Value!)).ToList();
+            ViewBag.Figures = figItems.Where(x => !selectedFigIds.Contains(x.Value!)).ToList();
+
             return View(model);
         }
 
@@ -198,6 +210,24 @@ namespace Bulgarikon.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddCivilization(Guid eventId, Guid civilizationId)
+        {
+            await eventsService.AddCivilizationAsync(eventId, civilizationId);
+            return RedirectToAction(nameof(Details), new { id = eventId });
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddFigure(Guid eventId, Guid figureId)
+        {
+            await eventsService.AddFigureAsync(eventId, figureId);
+            return RedirectToAction(nameof(Details), new { id = eventId });
+        }
+
         private async Task LoadDropdownsAsync(Guid? selectedEraId = null)
         {
             var eras = await erasService.GetAllAsync();
@@ -230,7 +260,6 @@ namespace Bulgarikon.Controllers
                 .ToList();
         }
 
-        // Вкарва грешката и в summary + под StartYear/EndYear
         private void AddYearErrorsToModelState(EventFormDto model, string message)
         {
             ModelState.AddModelError(string.Empty, message);

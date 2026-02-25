@@ -65,7 +65,7 @@
                     {
                         <a asp-controller="FeedbackAdmin" asp-action="Index"
                            class="bk-navbtn @(adminNew > 0 ? "bk-navbtn-alert" : "")">
-                            Feedback
+                            Обратни връзки
                             @if (adminNew > 0)
                             {
                                 <span class="bk-navbadge bk-navbadge-danger">@adminNew</span>
@@ -76,7 +76,7 @@
                     {
                         <a asp-controller="Feedback" asp-action="My"
                            class="bk-navbtn @(userUnreadReplies > 0 ? "bk-navbtn-warn" : "")">
-                            Моите feedback-и
+                            Моите обратни връзки
                             @if (userUnreadReplies > 0)
                             {
                                 <span class="bk-navbadge bk-navbadge-dark">@userUnreadReplies</span>

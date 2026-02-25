@@ -8,6 +8,8 @@ namespace Bulgarikon.Core.Interfaces
         Task<EventDetailsDto?> GetDetailsAsync(Guid id);
         Task<Guid> CreateAsync(EventFormDto model);
         Task<EventFormDto?> GetForEditAsync(Guid id);
+        Task AddCivilizationAsync(Guid eventId, Guid civilizationId);
+        Task AddFigureAsync(Guid eventId, Guid figureId);
         Task UpdateAsync(Guid id, EventFormDto model);
         Task DeleteAsync(Guid id);
     }

@@ -20,15 +20,15 @@ namespace Bulgarikon.Data.Models
         public ImageTargetType TargetType { get; set; }
         [ForeignKey(nameof(Figure))]
         public Guid? FigureId { get; set; }
-        public Figure Figure { get; set; } = null!;
+        public Figure? Figure { get; set; }
         [ForeignKey(nameof(Event))]
         public Guid? EventId { get; set; }
-        public Event Event { get; set; } = null!;
+        public Event? Event { get; set; }
         [ForeignKey(nameof(Era))]
         public Guid? EraId { get; set; }
-        public Era Era { get; set; } = null!;
+        public Era? Era { get; set; }
         [ForeignKey(nameof(Civilization))]
         public Guid? CivilizationId { get; set; }
-        public Civilization Civilization { get; set; } = null!;
+        public Civilization? Civilization { get; set; }
     }
 }
