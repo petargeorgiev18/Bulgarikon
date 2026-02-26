@@ -1,4 +1,5 @@
-﻿@model Bulgarikon.Core.DTOs.FigureDTOs.FigureViewDto
+﻿@using Bulgarikon.Common.Helpers
+@model Bulgarikon.Core.DTOs.FigureDTOs.FigureViewDto
 
 @{
     ViewData["Title"] = "Детайли";
@@ -18,13 +19,17 @@
     string centuryText = "—";
     if (birthYear.HasValue)
     {
-        var c = (int)Math.Ceiling(birthYear.Value / 100.0);
-        centuryText = $"{c}. век";
+        int abs = Math.Abs(birthYear.Value);
+        int c = (int)Math.Ceiling(abs / 100.0);
+        centuryText = birthYear.Value > 0 ? $"{c} век" : $"{c} век пр. Хр.";
     }
+
+    var birthLabel = birthYear.HasValue ? YearFormatter.Format(birthYear.Value) : "—";
+    var deathLabel = deathYear.HasValue ? YearFormatter.Format(deathYear.Value) : "—";
 
     string yearsText =
         (birthYear.HasValue || deathYear.HasValue)
-            ? $"{(birthYear?.ToString() ?? "—")} – {(deathYear?.ToString() ?? "—")}"
+            ? $"{birthLabel} – {deathLabel}"
             : "—";
 
     string birthDateBg = Model.BirthDate.HasValue ? Model.BirthDate.Value.ToString("dd.MM.yyyy") + " г." : "—";
@@ -75,14 +80,14 @@
                         data-id="@Model.Id"
                         data-name="@Model.Name"
                         data-eraid="@Model.EraId"
-                        data-civid="@Model.CivilizationId">
+                        data-civid="@Model.CivilizationId"
+                        data-periodlabel="@yearsText">
                     Изтрий
                 </button>
             }
         </div>
     </div>
 
-    <!-- Quick facts -->
     <div class="card shadow-sm era-toolbar mt-3">
         <div class="card-body" style="display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:12px;">
             <div class="era-count-box">
@@ -107,7 +112,6 @@
         </div>
     </div>
 
-    <!-- Overview only -->
     <div class="card shadow-sm era-paper mt-3">
         <div class="card-body">
             @if (hasImages)
@@ -187,6 +191,7 @@
         (function () {
             const g = document.getElementById('bkFigGallery');
             const modal = document.getElementById('bkFigImgModal');
+
             if (g && modal) {
                 const imgEl = document.getElementById('bkFigImgEl');
                 const capEl = document.getElementById('bkFigImgCap');
@@ -258,7 +263,7 @@
                 let highlighted = false;
                 const originalHtml = descEl.innerHTML;
 
-                function highlightYears() {
+                toggleBtn.addEventListener('click', () => {
                     if (highlighted) {
                         descEl.innerHTML = originalHtml;
                         highlighted = false;
@@ -266,15 +271,14 @@
                         return;
                     }
 
-                    const safe = originalHtml
-                        .replace(/\b(1[0-9]{3}|20[0-9]{2})\b/g, `<mark style="padding:0 4px; border-radius:6px;">$1</mark>`);
+                    descEl.innerHTML = originalHtml.replace(
+                        /\b(1[0-9]{3}|20[0-9]{2})\b/g,
+                        `<mark style="padding:0 4px; border-radius:6px;">$1</mark>`
+                    );
 
-                    descEl.innerHTML = safe;
                     highlighted = true;
                     toggleBtn.textContent = 'Махни подчертаване';
-                }
-
-                toggleBtn.addEventListener('click', highlightYears);
+                });
             }
         })();
     </script>

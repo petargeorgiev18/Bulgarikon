@@ -5,56 +5,103 @@
     ViewData["Title"] = "Куизове";
     bool isAdmin = User.IsInRole("Admin");
     Guid? eraId = ViewBag.EraId as Guid?;
+    var count = Model?.Count() ?? 0;
 }
 
-<div class="container py-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+<div class="era-shell">
+    <div class="era-header">
         <div>
-            <div class="text-muted small">Bulgarikon • Куизове</div>
-            <h1 class="mb-0">Куизове</h1>
+            <div class="era-kicker">Bulgarikon • Куизове</div>
+            <h1 class="era-h1">Куизове</h1>
+            <div class="era-sub">Филтрирай по епоха, отвори куиз и (ако не си админ) започни.</div>
         </div>
-        @if (isAdmin)
-        {
-            <a asp-action="Create" asp-route-eraId="@eraId" class="btn btn-primary">+ Нов куиз</a>
-        }
-    </div>
 
-    <div class="card shadow-sm mb-3">
-        <div class="card-body">
-            <label class="form-label">Епоха</label>
-            <select class="form-select" onchange="location.href='@Url.Action("Index","Quizzes")' + (this.value ? ('?eraId=' + this.value) : '')">
-                <option value="">Всички</option>
-                @foreach (var e in (IEnumerable<SelectListItem>)ViewBag.Eras)
-                {
-                    <option value="@e.Value" selected="@(e.Selected ? "selected" : null)">@e.Text</option>
-                }
-            </select>
+        <div class="era-actions">
+            @* Админ НЕ трябва да има опции да прави куиз *@
         </div>
     </div>
 
-    @if (!Model.Any())
+    <div class="era-toolbar card shadow-sm">
+        <div class="card-body era-toolbar-body" style="grid-template-columns: 1.2fr auto;">
+            <div class="era-field">
+                <label class="era-label">Епоха</label>
+                <select class="form-select era-input"
+                        onchange="location.href='@Url.Action("Index","Quizzes")' + (this.value ? ('?eraId=' + this.value) : '')">
+                    <option value="">Всички</option>
+                    @if (ViewBag.Eras != null)
+                    {
+                        foreach (var e in (IEnumerable<SelectListItem>)ViewBag.Eras)
+                        {
+                            <option value="@e.Value" selected="@(e.Selected ? "selected" : null)">@e.Text</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="era-field era-count">
+                <div class="era-count-box">
+                    <div class="era-count-num">@count</div>
+                    <div class="era-count-label">куиз(а)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model == null || !Model.Any())
     {
-        <div class="alert alert-info">Няма куизове.</div>
+        <div class="alert alert-info border-0 shadow-sm">Няма куизове.</div>
     }
     else
     {
-        <div class="row g-3">
+        <div class="row g-3 mt-1">
             @foreach (var q in Model)
             {
-                <div class="col-md-6">
-                    <div class="card shadow-sm h-100">
-                        <div class="card-body">
-                            <div class="text-muted small">@q.EraName</div>
-                            <h5 class="mb-2">@q.Title</h5>
-                            <div class="text-muted">Въпроси: @q.QuestionsCount</div>
+                var disabled = q.QuestionsCount <= 0;
 
-                            <div class="d-flex gap-2 mt-3 flex-wrap">
-                                <a asp-action="Details" asp-route-id="@q.Id" class="btn btn-outline-secondary">Детайли</a>
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card shadow-sm h-100 era-card" style="border-radius:16px;">
+                        <div class="card-body d-flex flex-column">
+                            <div class="d-flex align-items-start justify-content-between gap-2">
+                                <div class="era-years">
+                                    <span class="era-year">@q.EraName</span>
+                                </div>
+
+                                <span class="era-chip">Въпроси: @q.QuestionsCount</span>
+                            </div>
+
+                            <div class="era-title-wrap mt-2">
+                                <div class="era-title">@q.Title</div>
+                            </div>
+
+                            <div class="mt-auto d-flex gap-2 flex-wrap pt-3">
+                                <a asp-action="Details"
+                                   asp-route-id="@q.Id"
+                                   class="btn btn-sm btn-outline-secondary">
+                                    Детайли
+                                </a>
+
                                 @if (!isAdmin)
                                 {
-                                    <a asp-action="Take" asp-route-id="@q.Id" class="btn btn-primary">Започни</a>
+                                    if (!disabled)
+                                    {
+                                        <a asp-action="Take"
+                                           asp-route-id="@q.Id"
+                                           class="btn btn-sm btn-primary era-btn-primary">
+                                            Започни
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <a class="btn btn-sm btn-outline-secondary disabled"
+                                           aria-disabled="true"
+                                           tabindex="-1"
+                                           style="pointer-events:none; opacity:.55;">
+                                            Започни
+                                        </a>
+                                    }
                                 }
                             </div>
+
                         </div>
                     </div>
                 </div>

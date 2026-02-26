@@ -22,6 +22,7 @@
 
                 <div class="bk-card">
                     <div class="bk-card-title" id="bkDeleteFigureName">—</div>
+                    <div class="bk-card-sub" id="bkDeleteFigurePeriod">—</div>
                 </div>
             </div>
 
@@ -51,12 +52,16 @@
         const eraInput = document.getElementById('bkDeleteFigureEraId');
         const civInput = document.getElementById('bkDeleteFigureCivId');
         const nameEl = document.getElementById('bkDeleteFigureName');
+        const periodEl = document.getElementById('bkDeleteFigurePeriod');
 
-        function openModal({ id, name, eraId, civId }) {
-            if (idInput) idInput.value = id || '';
-            if (eraInput) eraInput.value = eraId || '';
-            if (civInput) civInput.value = civId || '';
-            if (nameEl) nameEl.textContent = name || '—';
+        function openModal(btn) {
+            if (idInput) idInput.value = btn.dataset.id || '';
+            if (eraInput) eraInput.value = btn.dataset.eraid || '';
+            if (civInput) civInput.value = btn.dataset.civid || '';
+            if (nameEl) nameEl.textContent = btn.dataset.name || '—';
+
+            const p = (btn.dataset.periodlabel || '').trim();
+            if (periodEl) periodEl.textContent = p || '—';
 
             modal.hidden = false;
             modal.setAttribute('aria-hidden', 'false');
@@ -75,15 +80,7 @@
 
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('[data-bk-delete-figure]');
-            if (btn) {
-                openModal({
-                    id: btn.getAttribute('data-id'),
-                    name: btn.getAttribute('data-name'),
-                    eraId: btn.getAttribute('data-eraid'),
-                    civId: btn.getAttribute('data-civid')
-                });
-                return;
-            }
+            if (btn) { openModal(btn); return; }
 
             if (e.target.closest('[data-bk-close]')) closeModal();
         });

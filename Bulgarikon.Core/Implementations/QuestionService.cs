@@ -97,15 +97,25 @@ namespace Bulgarikon.Core.Implementations
 
             q.Text = model.Text.Trim();
 
-            context.Answers.RemoveRange(q.Answers);
+            var existing = q.Answers?.ToList() ?? new List<Answer>();
+            if (existing.Count > 0)
+            {
+                context.Answers.RemoveRange(existing);
+                q.Answers.Clear();
+                await context.SaveChangesAsync();
+            }
 
-            q.Answers = model.Answers.Select(a => new Answer
+            var newAnswers = model.Answers.Select(a => new Answer
             {
                 Id = Guid.NewGuid(),
                 Text = a.Text.Trim(),
                 IsCorrect = a.IsCorrect,
                 QuestionId = q.Id
-            }).ToHashSet();
+            }).ToList();
+
+            await context.Answers.AddRangeAsync(newAnswers);
+
+            q.Answers = newAnswers.ToHashSet();
 
             await context.SaveChangesAsync();
         }

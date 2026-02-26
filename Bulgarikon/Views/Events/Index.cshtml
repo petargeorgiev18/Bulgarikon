@@ -4,7 +4,6 @@
 @{
     ViewData["Title"] = "Събития";
     bool isAdmin = User.IsInRole("Admin");
-
     Guid? eraId = ViewBag.EraId as Guid?;
 }
 
@@ -24,7 +23,6 @@
         </div>
     </div>
 
-    <!-- TOOLBAR (LIKE FIGURES) -->
     <div class="era-toolbar card shadow-sm">
         <div class="card-body era-toolbar-body events-toolbar">
             <div class="era-field">
@@ -72,10 +70,12 @@
     }
     else
     {
-        <!-- WRAPPER THAT JS WILL CONTROL -->
         <div id="evGroups">
             @foreach (var g in Model)
             {
+                var eraStartLabel = YearFormatter.Format(g.EraStartYear);
+                var eraEndLabel = YearFormatter.Format(g.EraEndYear);
+
                 <section class="card shadow-sm mb-3 ev-group"
                          data-eraid="@g.EraId"
                          data-eraname="@g.EraName"
@@ -86,7 +86,7 @@
                             <div>
                                 <div class="era-kicker">Епоха</div>
                                 <div class="era-title">@g.EraName</div>
-                                <div class="era-sub">@g.EraStartYear – @g.EraEndYear</div>
+                                <div class="era-sub">@eraStartLabel – @eraEndLabel</div>
                             </div>
 
                             @if (isAdmin)
@@ -110,12 +110,16 @@
                             <div class="era-timeline mt-3 ev-timeline">
                                 @foreach (var e in g.Events)
                                 {
+                                    var sLabel = e.StartYear.HasValue ? YearFormatter.Format(e.StartYear.Value) : "—";
+                                    var enLabel = e.EndYear.HasValue ? YearFormatter.Format(e.EndYear.Value) : "—";
+                                    var periodLabel = $"{sLabel} – {enLabel}";
+
                                     <article class="era-node ev-node"
                                              data-eraid="@g.EraId"
                                              data-title="@e.Title"
                                              data-location="@e.Location"
-                                             data-start="@e.StartYear"
-                                             data-end="@e.EndYear">
+                                             data-start="@(e.StartYear ?? int.MaxValue)"
+                                             data-end="@(e.EndYear ?? int.MaxValue)">
 
                                         <div class="era-rail">
                                             <div class="era-dot"></div>
@@ -126,9 +130,9 @@
                                             <div class="card-body">
                                                 <div class="era-top">
                                                     <div class="era-years">
-                                                        <span class="era-year">@e.StartYear</span>
+                                                        <span class="era-year">@sLabel</span>
                                                         <span class="era-sep">—</span>
-                                                        <span class="era-year">@e.EndYear</span>
+                                                        <span class="era-year">@enLabel</span>
                                                     </div>
 
                                                     <div class="era-title-wrap">
@@ -154,7 +158,8 @@
                                                                     class="btn btn-sm btn-outline-danger"
                                                                     data-bk-delete-event
                                                                     data-id="@e.Id"
-                                                                    data-title="@e.Title">
+                                                                    data-title="@e.Title"
+                                                                    data-periodlabel="@periodLabel">
                                                                 Изтриване
                                                             </button>
                                                         }

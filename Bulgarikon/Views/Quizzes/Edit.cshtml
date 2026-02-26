@@ -6,17 +6,24 @@
     var quizId = (Guid?)ViewBag.QuizId;
 }
 
-<div class="container py-3">
-    <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+<div class="era-shell">
+    <div class="era-header">
         <div>
-            <div class="text-muted small">Админ • Редакция</div>
-            <h1 class="mb-0">Редакция на куиз</h1>
+            <div class="era-kicker">Админ • Куизове</div>
+            <h1 class="era-h1">Редакция на куиз</h1>
+            <div class="era-sub">Промени заглавие/епоха.</div>
         </div>
 
-        @if (quizId != null)
-        {
+        <div class="era-actions">
+            @if (quizId != null)
+            {
                 <a asp-action="Details" asp-route-id="@quizId" class="btn btn-outline-secondary">← Детайли</a>
-        }
+            }
+            else
+            {
+                <a asp-action="Index" class="btn btn-outline-secondary">← Назад</a>
+            }
+        </div>
     </div>
 
     <div class="card shadow-sm">
@@ -27,14 +34,14 @@
 
                 <div class="mb-3">
                     <label asp-for="Title" class="form-label fw-semibold">Заглавие</label>
-                    <input asp-for="Title" class="form-control" />
+                    <input asp-for="Title" class="form-control era-input" />
                     <span asp-validation-for="Title" class="text-danger"></span>
                 </div>
 
                 <div class="mb-3">
                     <label asp-for="EraId" class="form-label fw-semibold">Епоха</label>
                     <select asp-for="EraId"
-                            class="form-select"
+                            class="form-select era-input"
                             asp-items="(IEnumerable<SelectListItem>)ViewBag.Eras">
                         <option value="">-- Избери епоха --</option>
                     </select>
@@ -44,11 +51,11 @@
                 <div class="d-flex justify-content-end gap-2 mt-4">
                     @if (quizId != null)
                     {
-                            <a asp-action="Details" asp-route-id="@quizId" class="btn btn-outline-secondary">Отказ</a>
+                        <a asp-action="Details" asp-route-id="@quizId" class="btn btn-outline-secondary">Отказ</a>
                     }
                     else
                     {
-                            <a asp-action="Index" class="btn btn-outline-secondary">Отказ</a>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Отказ</a>
                     }
                     <button type="submit" class="btn btn-primary">Запази</button>
                 </div>
@@ -58,5 +65,5 @@
 </div>
 
 @section Scripts {
-        <partial name="_ValidationScriptsPartial" />
+    <partial name="_ValidationScriptsPartial" />
 }

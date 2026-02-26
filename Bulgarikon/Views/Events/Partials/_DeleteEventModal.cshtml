@@ -22,6 +22,7 @@
 
                 <div class="bk-card">
                     <div class="bk-card-title" id="bkDeleteEventTitle">—</div>
+                    <div class="bk-card-sub" id="bkDeleteEventPeriod">—</div>
                 </div>
             </div>
 
@@ -45,10 +46,14 @@
 
         const idInput = document.getElementById('bkDeleteEventId');
         const titleEl = document.getElementById('bkDeleteEventTitle');
+        const periodEl = document.getElementById('bkDeleteEventPeriod');
 
-        function openModal({ id, title }) {
-            if (idInput) idInput.value = id || '';
-            if (titleEl) titleEl.textContent = title || '—';
+        function openModal(btn) {
+            if (idInput) idInput.value = btn.dataset.id || '';
+            if (titleEl) titleEl.textContent = btn.dataset.title || '—';
+
+            const p = (btn.dataset.periodlabel || '').trim();
+            if (periodEl) periodEl.textContent = p || '—';
 
             modal.hidden = false;
             modal.setAttribute('aria-hidden', 'false');
@@ -67,14 +72,7 @@
 
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('[data-bk-delete-event]');
-            if (btn) {
-                openModal({
-                    id: btn.getAttribute('data-id'),
-                    title: btn.getAttribute('data-title')
-                });
-                return;
-            }
-
+            if (btn) { openModal(btn); return; }
             if (e.target.closest('[data-bk-close]')) closeModal();
         });
 

@@ -43,15 +43,7 @@
                     @if (isAdmin)
                     {
                         <a asp-action="Edit" asp-route-id="@Model.Id" class="bk-navbtn bk-navbtn-warn">Редактирай</a>
-                        <button type="button"
-                                class="bk-navbtn bk-navbtn-alert"
-                                data-bk-delete-era
-                                data-id="@Model.Id"
-                                data-name="@Model.Name"
-                                data-start="@Model.StartYear"
-                                data-end="@Model.EndYear">
-                            Изтрий
-                        </button>
+                        <a asp-action="Delete" asp-route-id="@Model.Id" class="bk-navbtn bk-navbtn-alert">Изтрий</a>
                     }
                 </div>
             </div>

@@ -5,14 +5,17 @@
     ViewData["Title"] = "Нов куиз";
 }
 
-<div class="container py-3">
-    <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
+<div class="era-shell">
+    <div class="era-header">
         <div>
-            <div class="text-muted small">Админ • Добавяне</div>
-            <h1 class="mb-0">Нов куиз</h1>
+            <div class="era-kicker">Админ • Куизове</div>
+            <h1 class="era-h1">Нов куиз</h1>
+            <div class="era-sub">Създай куиз и после добави въпроси.</div>
         </div>
 
-        <a asp-action="Index" class="btn btn-outline-secondary">← Назад</a>
+        <div class="era-actions">
+            <a asp-action="Index" class="btn btn-outline-secondary">← Назад</a>
+        </div>
     </div>
 
     <div class="card shadow-sm">
@@ -23,14 +26,14 @@
 
                 <div class="mb-3">
                     <label asp-for="Title" class="form-label fw-semibold">Заглавие</label>
-                    <input asp-for="Title" class="form-control" placeholder="Пример: България през Средновековието" />
+                    <input asp-for="Title" class="form-control era-input" placeholder="Пример: България през Средновековието" />
                     <span asp-validation-for="Title" class="text-danger"></span>
                 </div>
 
                 <div class="mb-3">
                     <label asp-for="EraId" class="form-label fw-semibold">Епоха</label>
                     <select asp-for="EraId"
-                            class="form-select"
+                            class="form-select era-input"
                             asp-items="(IEnumerable<SelectListItem>)ViewBag.Eras">
                         <option value="">-- Избери епоха --</option>
                     </select>

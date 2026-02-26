@@ -1,4 +1,5 @@
-﻿@using Microsoft.AspNetCore.Mvc.Rendering
+﻿@using Bulgarikon.Common.Helpers
+@using Microsoft.AspNetCore.Mvc.Rendering
 @model IEnumerable<Bulgarikon.Core.DTOs.FigureDTOs.FigureViewDto>
 
 @{
@@ -92,10 +93,9 @@
         <div class="era-timeline" id="figTimeline">
             @foreach (var f in Model)
             {
-                var years =
-                (f.BirthYear.HasValue || f.DeathYear.HasValue)
-                ? $"{(f.BirthYear?.ToString() ?? "—")} – {(f.DeathYear?.ToString() ?? "—")}"
-                : "—";
+                var birthLabel = f.BirthYear.HasValue ? YearFormatter.Format(f.BirthYear.Value) : "—";
+                var deathLabel = f.DeathYear.HasValue ? YearFormatter.Format(f.DeathYear.Value) : "—";
+                var yearsText = (f.BirthYear.HasValue || f.DeathYear.HasValue) ? $"{birthLabel} – {deathLabel}" : "—";
 
                 var shortDesc = string.IsNullOrWhiteSpace(f.Description)
                 ? ""
@@ -116,7 +116,7 @@
                         <div class="card-body">
                             <div class="era-top">
                                 <div class="era-years">
-                                    <span class="era-year">@years</span>
+                                    <span class="era-year">@yearsText</span>
                                 </div>
 
                                 <div class="era-title-wrap">
@@ -148,7 +148,8 @@
                                                 data-id="@f.Id"
                                                 data-name="@f.Name"
                                                 data-eraid="@f.EraId"
-                                                data-civid="@f.CivilizationId">
+                                                data-civid="@f.CivilizationId"
+                                                data-periodlabel="@yearsText">
                                             Изтриване
                                         </button>
                                     }

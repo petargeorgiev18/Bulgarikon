@@ -90,7 +90,7 @@
                 ? ""
                 : (a.Description.Length > 180 ? a.Description.Substring(0, 180) + "…" : a.Description);
 
-                var yearLabel = a.Year.HasValue ? a.Year.Value.ToString() : "Неизвестна";
+                var yearLabel = a.Year.HasValue ? YearFormatter.Format(a.Year.Value) : "Неизвестна";
 
                 <article class="era-node"
                          data-name="@a.Name"
@@ -148,6 +148,7 @@
                                                 data-bk-delete-artifact
                                                 data-id="@a.Id"
                                                 data-name="@a.Name"
+                                                data-yearlabel="@(a.Year.HasValue ? YearFormatter.Format(a.Year.Value) : "Неизвестна")"
                                                 data-eraid="@a.EraId"
                                                 data-civid="@a.CivilizationId">
                                             Изтриване
@@ -188,13 +189,14 @@
             const eraIdInput = document.getElementById('bkDeleteArtifactEraId');
             const civIdInput = document.getElementById('bkDeleteArtifactCivId');
             const nameEl = document.getElementById('bkDeleteArtifactName');
+            const yearEl = document.getElementById('bkDeleteArtifactYear');
 
             function openModal({ id, name, eraId, civId }) {
                 if (idInput) idInput.value = id || '';
                 if (eraIdInput) eraIdInput.value = eraId || '';
                 if (civIdInput) civIdInput.value = civId || '';
                 if (nameEl) nameEl.textContent = name || '—';
-
+                if (yearEl) yearEl.textContent = year || '—';
                 modal.hidden = false;
                 modal.setAttribute('aria-hidden', 'false');
                 modal.classList.add('is-open');
@@ -215,6 +217,7 @@
                 openModal({
                     id: btn.getAttribute('data-id'),
                     name: btn.getAttribute('data-name'),
+                    year: btn.getAttribute('data-yearlabel'),
                     eraId: btn.getAttribute('data-eraid'),
                     civId: btn.getAttribute('data-civid')
                 });

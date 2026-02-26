@@ -90,9 +90,9 @@
                         <div class="card-body">
                             <div class="era-top">
                                 <div class="era-years">
-                                    <span class="era-year">@c.StartYear</span>
+                                    <span class="era-year">@YearFormatter.Format(c.StartYear)</span>
                                     <span class="era-sep">—</span>
-                                    <span class="era-year">@c.EndYear</span>
+                                    <span class="era-year">@YearFormatter.Format(c.EndYear)</span>
                                 </div>
 
                                 <div class="era-title-wrap">
@@ -117,8 +117,8 @@
                                                 data-bk-delete-civ
                                                 data-id="@c.Id"
                                                 data-name="@c.Name"
-                                                data-start="@c.StartYear"
-                                                data-end="@c.EndYear"
+                                                data-startlabel="@YearFormatter.Format(c.StartYear)"
+                                                data-endlabel="@YearFormatter.Format(c.EndYear)"
                                                 data-eraid="@c.EraId">
                                             Изтриване
                                         </button>
@@ -232,13 +232,13 @@
             document.addEventListener('click', function (e) {
                 const btn = e.target.closest('[data-bk-delete-civ]');
                 if (btn) {
-                    openModal({
-                        id: btn.dataset.id,
-                        name: btn.dataset.name,
-                        start: btn.dataset.start,
-                        end: btn.dataset.end,
-                        eraId: btn.dataset.eraid
-                    });
+                openModal({
+                    id: btn.dataset.id,
+                    name: btn.dataset.name,
+                    start: btn.dataset.startlabel,
+                    end: btn.dataset.endlabel,
+                    eraId: btn.dataset.eraid
+                });
                     return;
                 }
 

@@ -61,6 +61,10 @@
                 ? ""
                 : (era.Description.Length > 180 ? era.Description.Substring(0, 180) + "…" : era.Description);
 
+                var startLabel = YearFormatter.Format(era.StartYear);
+                var endLabel = YearFormatter.Format(era.EndYear);
+                var periodLabel = $"{startLabel} – {endLabel}";
+
                 <article class="era-node"
                          data-name="@era.Name"
                          data-start="@era.StartYear"
@@ -76,9 +80,9 @@
                         <div class="card-body">
                             <div class="era-top">
                                 <div class="era-years">
-                                    <span class="era-year">@era.StartYear</span>
+                                    <span class="era-year">@startLabel</span>
                                     <span class="era-sep">—</span>
-                                    <span class="era-year">@era.EndYear</span>
+                                    <span class="era-year">@endLabel</span>
                                 </div>
 
                                 <div class="era-title-wrap">
@@ -97,36 +101,22 @@
                                     {
                                         <a asp-action="Edit" asp-route-id="@era.Id"
                                            class="btn btn-sm btn-outline-primary">Редакция</a>
+
                                         <button type="button"
                                                 class="btn btn-sm btn-outline-danger"
                                                 data-bk-delete-era
                                                 data-id="@era.Id"
                                                 data-name="@era.Name"
-                                                data-start="@era.StartYear"
-                                                data-end="@era.EndYear">
+                                                data-periodlabel="@periodLabel">
                                             Изтриване
                                         </button>
                                     }
                                 </div>
                             </div>
 
-                            @if (!string.IsNullOrWhiteSpace(era.Description))
+                            @if (!string.IsNullOrWhiteSpace(shortDesc))
                             {
-                                <div class="era-desc">
-                                    <div class="era-desc-short">@shortDesc</div>
-
-                                    <div class="collapse era-desc-full" id="desc-@era.Id">
-                                        @era.Description
-                                    </div>
-
-                                    <button type="button"
-                                            class="btn btn-sm btn-link era-toggle"
-                                            data-bs-toggle="collapse"
-                                            data-bs-target="#desc-@era.Id"
-                                            aria-expanded="false">
-                                        Прочети още
-                                    </button>
-                                </div>
+                                <div class="era-desc">@shortDesc</div>
                             }
                         </div>
                     </div>
@@ -147,10 +137,7 @@
             if (!timeline) return;
 
             const nodes = Array.from(timeline.querySelectorAll('.era-node'));
-
-            function normalize(s) {
-                return (s || '').toString().toLowerCase().trim();
-            }
+            function normalize(s) { return (s || '').toString().toLowerCase().trim(); }
 
             function applyFilterAndSort() {
                 const q = normalize(search.value);
@@ -183,19 +170,6 @@
 
                 if (countEl) countEl.textContent = String(visible.length);
             }
-
-            // Само превключване на текста на бутона "Прочети още"
-            timeline.addEventListener('click', (e) => {
-                const btn = e.target.closest('.era-toggle');
-                if (!btn) return;
-
-                setTimeout(() => {
-                    const targetSel = btn.getAttribute('data-bs-target');
-                    const target = targetSel ? document.querySelector(targetSel) : null;
-                    const expanded = target && target.classList.contains('show');
-                    btn.textContent = expanded ? 'Скрий' : 'Прочети още';
-                }, 60);
-            });
 
             search?.addEventListener('input', applyFilterAndSort);
             sort?.addEventListener('change', applyFilterAndSort);

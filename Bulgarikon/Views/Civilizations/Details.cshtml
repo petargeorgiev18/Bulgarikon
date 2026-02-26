@@ -1,118 +1,226 @@
-﻿@model Bulgarikon.Core.DTOs.CivilizaionDTOs.CivilizationViewDto
+﻿@using Bulgarikon.Common.Helpers
+@model Bulgarikon.Core.DTOs.CivilizaionDTOs.CivilizationViewDto
 
 @{
-    ViewData["Title"] = "Детайли";
+    ViewData["Title"] = "Цивилизация: " + Model.Name;
     bool isAdmin = User.IsInRole("Admin");
 
-    var duration = Model.EndYear - Model.StartYear;
-    var durationText = duration >= 0 ? $"{duration} г." : "—";
     var hasImage = !string.IsNullOrWhiteSpace(Model.ImageUrl);
+
+    var startLabel = YearFormatter.Format(Model.StartYear);
+    var endLabel = YearFormatter.Format(Model.EndYear);
+    var yearsText = $"{startLabel} – {endLabel}";
+
+    string durationText;
+    if (Model.StartYear > 0 && Model.EndYear > 0 && Model.EndYear >= Model.StartYear)
+    {
+        durationText = $"{Model.EndYear - Model.StartYear} г.";
+    }
+    else
+    {
+        durationText = "—";
+    }
+
+    var hasDesc = !string.IsNullOrWhiteSpace(Model.Description);
 }
 
-<div class="era-shell">
-    <div class="era-header">
-        <div>
-            <div class="era-kicker">Bulgarikon • Цивилизация</div>
-            <h1 class="era-h1">@Model.Name</h1>
+<div class="bk-details">
+    <section class="bk-hero">
+        <div class="bk-hero-bg"></div>
 
-            <div class="era-sub">
-                <span class="era-chip">@Model.StartYear – @Model.EndYear</span>
-                <span class="era-chip">@Model.Type</span>
+        @if (hasImage)
+        {
+            <div class="bk-hero-media" aria-hidden="true">
+                <img src="@Model.ImageUrl"
+                     alt="@Model.Name"
+                     class="bk-hero-img"
+                     loading="lazy" />
+                <div class="bk-hero-media-fade"></div>
+            </div>
+        }
+
+        <div class="bk-hero-inner">
+            <div class="bk-hero-top">
+                <div class="bk-hero-kicker">ЦИВИЛИЗАЦИЯ</div>
+
+                <div class="bk-hero-actions">
+                    <a asp-action="Index" asp-route-eraId="@Model.EraId" class="bk-navbtn">← Назад</a>
+
+                    @if (isAdmin)
+                    {
+                        <a asp-action="Edit" asp-route-id="@Model.Id" class="bk-navbtn bk-navbtn-warn">Редактирай</a>
+
+                        <button type="button"
+                                class="bk-navbtn bk-navbtn-alert"
+                                data-bk-delete-civ
+                                data-id="@Model.Id"
+                                data-name="@Model.Name"
+                                data-startlabel="@startLabel"
+                                data-endlabel="@endLabel"
+                                data-eraid="@Model.EraId">
+                            Изтрий
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <h1 class="bk-hero-title">@Model.Name</h1>
+
+            <div class="bk-hero-meta">
+                <span class="bk-chip">
+                    <span class="bk-chip-ico">🗓</span>
+                    @yearsText
+                </span>
+
+                <span class="bk-chip">
+                    <span class="bk-chip-ico">🏷️</span>
+                    @Model.Type
+                </span>
 
                 @if (!string.IsNullOrWhiteSpace(Model.EraName))
                 {
-                    <span class="era-chip">Епоха: @Model.EraName</span>
+                    <span class="bk-chip">
+                        <span class="bk-chip-ico">⏳</span>
+                        Епоха: @Model.EraName
+                    </span>
+                }
+
+                @if (hasImage)
+                {
+                    <span class="bk-chip">
+                        <span class="bk-chip-ico">🖼️</span>
+                        1 снимка
+                    </span>
                 }
             </div>
-        </div>
 
-        <div class="era-actions">
-            <a asp-action="Index" asp-route-eraId="@Model.EraId" class="btn btn-outline-secondary">← Назад</a>
+            <div class="bk-hero-grid">
+                <div class="bk-card bk-card-raise">
+                    <div class="bk-card-head">
+                        <div>
+                            <div class="bk-card-kicker">Контекст</div>
+                            <div class="bk-card-title">Какво представлява цивилизацията?</div>
+                        </div>
+                        <div class="bk-card-ico">🏛️</div>
+                    </div>
 
-            @if (isAdmin)
-            {
-                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Редактирай</a>
+                    @if (!hasDesc)
+                    {
+                        <div class="bk-empty">
+                            Няма описание за тази цивилизация.
+                            <span class="bk-empty-sub">Админ може да добави учебен текст от “Редактирай”.</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="bk-readable" id="bkDescText">@Model.Description</p>
+                    }
 
-                <button type="button"
-                        class="btn btn-outline-danger"
-                        data-bk-delete-civ
-                        data-id="@Model.Id"
-                        data-name="@Model.Name"
-                        data-start="@Model.StartYear"
-                        data-end="@Model.EndYear"
-                        data-eraid="@Model.EraId">
-                    Изтрий
-                </button>
-            }
-        </div>
-    </div>
+                    @if (hasDesc)
+                    {
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
+                            <button type="button" class="bk-navbtn bk-navbtn--sm" id="bkToggleHighlights">
+                                Подчертай години
+                            </button>
 
-    <div class="card shadow-sm era-toolbar mt-3">
-        <div class="card-body" style="display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:12px;">
-            <div class="era-count-box">
-                <div class="era-count-num">@Model.StartYear</div>
-                <div class="era-count-label">Начало</div>
+                            @if (hasImage)
+                            {
+                                <a class="bk-navbtn bk-navbtn--sm" href="@Model.ImageUrl" target="_blank" rel="noreferrer">
+                                    Отвори снимка →
+                                </a>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <div class="bk-card bk-card-side">
+                    <div class="bk-side-title">Бързи факти</div>
+
+                    <ul class="bk-bullets">
+                        <li><b>Период</b> — @yearsText</li>
+                        <li><b>Продължителност</b> — @durationText</li>
+                        <li><b>Тип</b> — @Model.Type</li>
+                        @if (!string.IsNullOrWhiteSpace(Model.EraName))
+                        {
+                            <li><b>Епоха</b> — @Model.EraName</li>
+                        }
+                    </ul>
+
+                    <div class="bk-tip">
+                        <div class="bk-tip-ico">💡</div>
+                        <div>
+                            <div class="bk-tip-title">Учебен трик</div>
+                            <div class="bk-tip-text">
+                                Запомни 3 неща: <b>период</b>, <b>тип</b>, <b>ключово събитие</b> (пример от урока).
+                                После ги свържи в 1 изречение.
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="era-count-box">
-                <div class="era-count-num">@Model.EndYear</div>
-                <div class="era-count-label">Край</div>
+            <div class="bk-quick">
+                <a asp-controller="Figures" asp-action="Index" asp-route-civilizationId="@Model.Id" class="bk-quick-btn">
+                    <span class="bk-quick-ico">👤</span>
+                    <span class="bk-quick-text">
+                        <span class="bk-quick-title">Личности</span>
+                        <span class="bk-quick-sub">важни хора</span>
+                    </span>
+                    <span class="bk-quick-go">→</span>
+                </a>
+
+                <a asp-controller="Artifacts" asp-action="Index" asp-route-civilizationId="@Model.Id" class="bk-quick-btn">
+                    <span class="bk-quick-ico">🏺</span>
+                    <span class="bk-quick-text">
+                        <span class="bk-quick-title">Артефакти</span>
+                        <span class="bk-quick-sub">какво е останало</span>
+                    </span>
+                    <span class="bk-quick-go">→</span>
+                </a>
+
+                @if (!string.IsNullOrWhiteSpace(Model.EraName))
+                {
+                    <a asp-controller="Eras" asp-action="Details" asp-route-id="@Model.EraId" class="bk-quick-btn">
+                        <span class="bk-quick-ico">⏳</span>
+                        <span class="bk-quick-text">
+                            <span class="bk-quick-title">Епоха</span>
+                            <span class="bk-quick-sub">@Model.EraName</span>
+                        </span>
+                        <span class="bk-quick-go">→</span>
+                    </a>
+                }
             </div>
 
-            <div class="era-count-box">
-                <div class="era-count-num">@durationText</div>
-                <div class="era-count-label">Продължителност</div>
-            </div>
+            <div class="bk-mini-timeline">
+                <div class="bk-mini-item">
+                    <div class="bk-mini-dot"></div>
+                    <div>
+                        <div class="bk-mini-label">Начало</div>
+                        <div class="bk-mini-value">@startLabel</div>
+                    </div>
+                </div>
 
-            <div class="era-count-box">
-                <div class="era-count-num">@(hasImage ? "1" : "0")</div>
-                <div class="era-count-label">Снимки</div>
+                <div class="bk-mini-line"></div>
+
+                <div class="bk-mini-item">
+                    <div class="bk-mini-dot"></div>
+                    <div>
+                        <div class="bk-mini-label">Край</div>
+                        <div class="bk-mini-value">@endLabel</div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-
-    <div class="card shadow-sm era-paper mt-3">
-        <div class="card-body">
-            <h5 class="mb-2">Снимка</h5>
-
-            @if (!hasImage)
-            {
-                <div class="text-muted small">Няма снимка.</div>
-            }
-            else
-            {
-                <img src="@Model.ImageUrl"
-                     alt="@Model.Name"
-                     style="width:100%; max-height:340px; object-fit:cover; border-radius:16px;" />
-            }
-        </div>
-    </div>
-
-    <div class="card shadow-sm era-paper mt-3">
-        <div class="card-body">
-            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
-                <h5 class="mb-0">Описание</h5>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="bkToggleHighlights">Подчертай години</button>
-            </div>
-
-            @if (string.IsNullOrWhiteSpace(Model.Description))
-            {
-                <div class="alert alert-info mt-3 mb-0">Няма описание.</div>
-            }
-            else
-            {
-                <div class="mt-3 era-readable" id="bkDesc">@Model.Description</div>
-            }
-        </div>
-    </div>
-
-    @await Html.PartialAsync("Partials/_DeleteCivilizationModal")
+    </section>
 </div>
+
+@await Html.PartialAsync("Partials/_DeleteCivilizationModal")
 
 @section Scripts {
     <script>
         (function () {
-            const descEl = document.getElementById('bkDesc');
+            // highlight years (only if we have description)
+            const descEl = document.getElementById('bkDescText');
             const toggleBtn = document.getElementById('bkToggleHighlights');
 
             if (descEl && toggleBtn) {
@@ -136,6 +244,63 @@
                     toggleBtn.textContent = 'Махни подчертаване';
                 });
             }
+
+            // delete modal wiring (same pattern as your other pages)
+            const modal = document.getElementById('bkDeleteCivilizationModal');
+            if (!modal) return;
+
+            const idInput = document.getElementById('bkDeleteCivId');
+            const eraIdInput = document.getElementById('bkDeleteCivEraId');
+            const nameEl = document.getElementById('bkDeleteCivName');
+            const periodEl = document.getElementById('bkDeleteCivPeriod');
+
+            function openModal({ id, name, start, end, eraId }) {
+                if (idInput) idInput.value = id || '';
+                if (eraIdInput) eraIdInput.value = eraId || '';
+                if (nameEl) nameEl.textContent = name || '—';
+
+                const s = (start ?? '').toString().trim();
+                const e = (end ?? '').toString().trim();
+                if (periodEl) periodEl.textContent = (s || e) ? `${s || '…'} – ${e || '…'}` : '—';
+
+                modal.hidden = false;
+                modal.setAttribute('aria-hidden', 'false');
+                modal.classList.add('is-open');
+                document.body.classList.add('bk-modal-open');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeModal() {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+                modal.hidden = true;
+                document.body.classList.remove('bk-modal-open');
+                document.body.style.overflow = '';
+            }
+
+            document.addEventListener('click', function (e) {
+                const btn = e.target.closest('[data-bk-delete-civ]');
+                if (btn) {
+                    openModal({
+                        id: btn.dataset.id,
+                        name: btn.dataset.name,
+                        start: btn.dataset.startlabel,
+                        end: btn.dataset.endlabel,
+                        eraId: btn.dataset.eraid
+                    });
+                    return;
+                }
+
+                if (!modal.hidden && e.target.closest('[data-bk-close]')) {
+                    closeModal();
+                }
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && !modal.hidden) closeModal();
+            });
+
+            closeModal();
         })();
     </script>
 }

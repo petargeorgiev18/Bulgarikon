@@ -29,7 +29,7 @@
             <div class="bk-foot">
                 <button type="button" class="bk-btn bk-btn-ghost" data-bk-close>Отказ</button>
 
-                <form asp-controller="Eras" asp-action="Delete" method="post" class="bk-inline" id="bkDeleteEraForm">
+                <form asp-controller="Eras" asp-action="Delete" method="post" class="bk-inline">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" id="bkDeleteEraId" />
                     <button type="submit" class="bk-btn bk-btn-danger">Изтрий</button>
@@ -48,15 +48,12 @@
         const nameEl = document.getElementById('bkDeleteEraName');
         const periodEl = document.getElementById('bkDeleteEraPeriod');
 
-        function openModal({ id, name, start, end }) {
-            if (idInput) idInput.value = id || '';
-            if (nameEl) nameEl.textContent = name || '—';
+        function openModal(btn) {
+            if (idInput) idInput.value = btn.dataset.id || '';
+            if (nameEl) nameEl.textContent = btn.dataset.name || '—';
 
-            const s = (start ?? '').toString().trim();
-            const e = (end ?? '').toString().trim();
-            if (periodEl) {
-                periodEl.textContent = (s || e) ? `${s || '…'} – ${e || '…'}` : '—';
-            }
+            const p = (btn.dataset.periodlabel || '').trim();
+            if (periodEl) periodEl.textContent = p || '—';
 
             modal.hidden = false;
             modal.setAttribute('aria-hidden', 'false');
@@ -73,25 +70,16 @@
             document.body.style.overflow = '';
         }
 
-
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('[data-bk-delete-era]');
-            if (!btn) return;
-
-            openModal({
-                id: btn.getAttribute('data-id'),
-                name: btn.getAttribute('data-name'),
-                start: btn.getAttribute('data-start'),
-                end: btn.getAttribute('data-end')
-            });
-        });
-
-        modal.addEventListener('click', (e) => {
+            if (btn) { openModal(btn); return; }
             if (e.target.closest('[data-bk-close]')) closeModal();
         });
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && modal.hidden === false) closeModal();
         });
+
+        closeModal();
     })();
 </script>
