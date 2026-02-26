@@ -1,28 +1,33 @@
-﻿@model Bulgarikon.Core.DTOs.CivilizaionDTOs.CivilizationFormDto
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@model Bulgarikon.Core.DTOs.CivilizaionDTOs.CivilizationFormDto
 
 @{
     ViewData["Title"] = "Създай цивилизация";
+    var hasErrors = ViewData.ModelState.ErrorCount > 0;
 }
 
-<div class="container py-4">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-2 mb-3">
+<div class="era-shell">
+    <div class="era-header">
         <div>
-            <div class="era-kicker">Админ • Създаване</div>
-            <h1 class="mb-1">Нова цивилизация</h1>
-            <div class="text-muted">Добави цивилизация към епоха.</div>
+            <div class="era-kicker">Bulgarikon • Цивилизации</div>
+            <h1 class="era-h1">Нова цивилизация</h1>
+            <div class="era-sub">Добави цивилизация към епоха и 1 снимка (URL).</div>
         </div>
 
-        <div class="d-flex gap-2 flex-wrap">
-            <a asp-action="Index" asp-route-eraId="@Model.EraId" class="btn btn-outline-secondary">Към списъка</a>
+        <div class="era-actions">
+            <a asp-action="Index" asp-route-eraId="@Model.EraId" class="btn btn-outline-secondary">← Назад</a>
         </div>
     </div>
 
-    <div class="card shadow-sm era-paper">
+    <div class="card shadow-sm era-paper mt-3">
         <div class="card-body p-4">
             <form asp-action="Create" method="post" autocomplete="off">
                 @Html.AntiForgeryToken()
 
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3"></div>
+                @if (hasErrors)
+                {
+                    <div asp-validation-summary="All" class="alert alert-danger py-2 mb-3"></div>
+                }
 
                 <input type="hidden" asp-for="EraId" />
 
@@ -41,23 +46,13 @@
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label asp-for="Type" class="form-label fw-semibold">Тип</label>
-                        <select asp-for="Type" class="form-select">
-                            @foreach (var t in (IEnumerable<SelectListItem>)ViewBag.CivilizationTypes)
-                            {
-                                <option value="@t.Value">@t.Text</option>
-                            }
-                        </select>
+                        <select asp-for="Type" class="form-select" asp-items="(IEnumerable<SelectListItem>)ViewBag.CivilizationTypes"></select>
                         <span asp-validation-for="Type" class="text-danger"></span>
                     </div>
 
                     <div class="col-md-6">
                         <label asp-for="EraId" class="form-label fw-semibold">Епоха</label>
-                        <select asp-for="EraId" class="form-select">
-                            @foreach (var e in (IEnumerable<SelectListItem>)ViewBag.Eras)
-                            {
-                                <option value="@e.Value" selected="@e.Selected">@e.Text</option>
-                            }
-                        </select>
+                        <select asp-for="EraId" class="form-select" asp-items="(IEnumerable<SelectListItem>)ViewBag.Eras"></select>
                         <span asp-validation-for="EraId" class="text-danger"></span>
                     </div>
                 </div>
@@ -76,10 +71,26 @@
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label asp-for="ImageUrl" class="form-label fw-semibold">Image URL (по избор)</label>
-                    <input asp-for="ImageUrl" class="form-control" />
-                    <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                <hr class="my-4" />
+
+                <h5 class="mb-2">Снимка (URL)</h5>
+
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-8">
+                        <label asp-for="ImageUrl" class="form-label fw-semibold">Image URL (по избор)</label>
+                        <input asp-for="ImageUrl" class="form-control" placeholder="https://..." id="civImageUrl" />
+                        <span asp-validation-for="ImageUrl" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-outline-secondary w-100" id="civClearImg">Изчисти</button>
+                    </div>
+                </div>
+
+                <div class="mt-3" id="civImgPreviewWrap" hidden>
+                    <img id="civImgPreview"
+                         alt="preview"
+                         style="width:100%; max-height:280px; object-fit:cover; border-radius:16px;" />
                 </div>
 
                 <div class="d-flex gap-2 flex-wrap mt-4">
@@ -93,4 +104,31 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function () {
+            const input = document.getElementById('civImageUrl');
+            const clearBtn = document.getElementById('civClearImg');
+            const wrap = document.getElementById('civImgPreviewWrap');
+            const img = document.getElementById('civImgPreview');
+
+            if (!input || !wrap || !img) return;
+
+            function refresh() {
+                const u = (input.value || '').trim();
+                if (!u) {
+                    wrap.hidden = true;
+                    img.removeAttribute('src');
+                    return;
+                }
+                img.src = u;
+                wrap.hidden = false;
+            }
+
+            input.addEventListener('input', refresh);
+            clearBtn?.addEventListener('click', () => { input.value = ''; refresh(); });
+
+            refresh();
+        })();
+    </script>
 }

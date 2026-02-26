@@ -3,23 +3,30 @@
 @{
     ViewData["Title"] = "Детайли";
     bool isAdmin = User.IsInRole("Admin");
+
+    var duration = Model.EndYear - Model.StartYear;
+    var durationText = duration >= 0 ? $"{duration} г." : "—";
+    var hasImage = !string.IsNullOrWhiteSpace(Model.ImageUrl);
 }
 
-<div class="container py-3">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-2 mb-3">
+<div class="era-shell">
+    <div class="era-header">
         <div>
-            <div class="text-muted small">Цивилизация</div>
-            <h1 class="mb-1">@Model.Name</h1>
-            <div class="text-muted">
-                @Model.StartYear – @Model.EndYear • @Model.Type
+            <div class="era-kicker">Bulgarikon • Цивилизация</div>
+            <h1 class="era-h1">@Model.Name</h1>
+
+            <div class="era-sub">
+                <span class="era-chip">@Model.StartYear – @Model.EndYear</span>
+                <span class="era-chip">@Model.Type</span>
+
                 @if (!string.IsNullOrWhiteSpace(Model.EraName))
                 {
-                    <span> • Епоха: @Model.EraName</span>
+                    <span class="era-chip">Епоха: @Model.EraName</span>
                 }
             </div>
         </div>
 
-        <div class="d-flex gap-2 flex-wrap">
+        <div class="era-actions">
             <a asp-action="Index" asp-route-eraId="@Model.EraId" class="btn btn-outline-secondary">← Назад</a>
 
             @if (isAdmin)
@@ -40,88 +47,95 @@
         </div>
     </div>
 
-    @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
-    {
-        <div class="card shadow-sm mb-3">
-            <img src="@Model.ImageUrl" class="img-fluid rounded" alt="@Model.Name" style="max-height:420px; object-fit:cover;" />
+    <div class="card shadow-sm era-toolbar mt-3">
+        <div class="card-body" style="display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:12px;">
+            <div class="era-count-box">
+                <div class="era-count-num">@Model.StartYear</div>
+                <div class="era-count-label">Начало</div>
+            </div>
+
+            <div class="era-count-box">
+                <div class="era-count-num">@Model.EndYear</div>
+                <div class="era-count-label">Край</div>
+            </div>
+
+            <div class="era-count-box">
+                <div class="era-count-num">@durationText</div>
+                <div class="era-count-label">Продължителност</div>
+            </div>
+
+            <div class="era-count-box">
+                <div class="era-count-num">@(hasImage ? "1" : "0")</div>
+                <div class="era-count-label">Снимки</div>
+            </div>
         </div>
-    }
+    </div>
 
-    <div class="card shadow-sm era-paper">
+    <div class="card shadow-sm era-paper mt-3">
         <div class="card-body">
-            <h5 class="mb-3">Описание</h5>
+            <h5 class="mb-2">Снимка</h5>
 
-            @if (string.IsNullOrWhiteSpace(Model.Description))
+            @if (!hasImage)
             {
-                <div class="alert alert-info mb-0">Няма описание.</div>
+                <div class="text-muted small">Няма снимка.</div>
             }
             else
             {
-                <p class="mb-0 era-readable">@Model.Description</p>
+                <img src="@Model.ImageUrl"
+                     alt="@Model.Name"
+                     style="width:100%; max-height:340px; object-fit:cover; border-radius:16px;" />
             }
         </div>
     </div>
 
-    <partial name="Partials/_DeleteCivilizationModal" />
+    <div class="card shadow-sm era-paper mt-3">
+        <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                <h5 class="mb-0">Описание</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="bkToggleHighlights">Подчертай години</button>
+            </div>
+
+            @if (string.IsNullOrWhiteSpace(Model.Description))
+            {
+                <div class="alert alert-info mt-3 mb-0">Няма описание.</div>
+            }
+            else
+            {
+                <div class="mt-3 era-readable" id="bkDesc">@Model.Description</div>
+            }
+        </div>
+    </div>
+
+    @await Html.PartialAsync("Partials/_DeleteCivilizationModal")
 </div>
 
 @section Scripts {
     <script>
         (function () {
-            const modal = document.getElementById('bkDeleteCivilizationModal');
-            if (!modal) {
-                console.error("Delete modal not found in DOM.");
-                return;
+            const descEl = document.getElementById('bkDesc');
+            const toggleBtn = document.getElementById('bkToggleHighlights');
+
+            if (descEl && toggleBtn) {
+                let highlighted = false;
+                const originalHtml = descEl.innerHTML;
+
+                toggleBtn.addEventListener('click', () => {
+                    if (highlighted) {
+                        descEl.innerHTML = originalHtml;
+                        highlighted = false;
+                        toggleBtn.textContent = 'Подчертай години';
+                        return;
+                    }
+
+                    descEl.innerHTML = originalHtml.replace(
+                        /\b(1[0-9]{3}|20[0-9]{2})\b/g,
+                        `<mark style="padding:0 4px; border-radius:6px;">$1</mark>`
+                    );
+
+                    highlighted = true;
+                    toggleBtn.textContent = 'Махни подчертаване';
+                });
             }
-
-            const idInput = document.getElementById('bkDeleteCivId');
-            const eraIdInput = document.getElementById('bkDeleteCivEraId');
-            const nameEl = document.getElementById('bkDeleteCivName');
-            const periodEl = document.getElementById('bkDeleteCivPeriod');
-
-            function openModal({ id, name, start, end, eraId }) {
-                if (idInput) idInput.value = id || '';
-                if (eraIdInput) eraIdInput.value = eraId || '';
-                if (nameEl) nameEl.textContent = name || '—';
-
-                const s = (start ?? '').toString().trim();
-                const e = (end ?? '').toString().trim();
-                if (periodEl) periodEl.textContent = (s || e) ? `${s || '…'} – ${e || '…'}` : '—';
-
-                modal.hidden = false;
-                modal.setAttribute('aria-hidden', 'false');
-                modal.classList.add('is-open');
-                document.body.style.overflow = 'hidden';
-            }
-
-            function closeModal() {
-                modal.classList.remove('is-open');
-                modal.setAttribute('aria-hidden', 'true');
-                modal.hidden = true;
-                document.body.style.overflow = '';
-            }
-
-            document.addEventListener('click', function (e) {
-                const btn = e.target.closest('[data-bk-delete-civ]');
-                if (btn) {
-                    openModal({
-                        id: btn.dataset.id,
-                        name: btn.dataset.name,
-                        start: btn.dataset.start,
-                        end: btn.dataset.end,
-                        eraId: btn.dataset.eraid
-                    });
-                    return;
-                }
-
-                if (modal && !modal.hidden && e.target.closest('[data-bk-close]')) {
-                    closeModal();
-                }
-            });
-
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'Escape' && modal && !modal.hidden) closeModal();
-            });
         })();
     </script>
 }

@@ -19,7 +19,6 @@ namespace Bulgarikon.Data.Configurations
                     Type = CivilizationType.Kingdom,
                     StartYear = -1500,
                     EndYear = 46,
-                    ImageUrl = null,
                     EraId = SeededIds.Era_Antiquity
                 },
                 new Civilization
@@ -30,7 +29,6 @@ namespace Bulgarikon.Data.Configurations
                     Type = CivilizationType.Kingdom,
                     StartYear = 600,
                     EndYear = 900,
-                    ImageUrl = null,
                     EraId = SeededIds.Era_FirstBulgarianEmpire
                 },
                 new Civilization
@@ -41,7 +39,6 @@ namespace Bulgarikon.Data.Configurations
                     Type = CivilizationType.Unknown,
                     StartYear = 500,
                     EndYear = 900,
-                    ImageUrl = null,
                     EraId = SeededIds.Era_MigrationPeriod
                 },
                 new Civilization
@@ -52,7 +49,6 @@ namespace Bulgarikon.Data.Configurations
                     Type = CivilizationType.Empire,
                     StartYear = 330,
                     EndYear = 1453,
-                    ImageUrl = null,
                     EraId = SeededIds.Era_FirstBulgarianEmpire
                 },
                 new Civilization
@@ -63,7 +59,6 @@ namespace Bulgarikon.Data.Configurations
                     Type = CivilizationType.ForeignPower,
                     StartYear = 1299,
                     EndYear = 1922,
-                    ImageUrl = null,
                     EraId = SeededIds.Era_OttomanPeriod
                 }
             );

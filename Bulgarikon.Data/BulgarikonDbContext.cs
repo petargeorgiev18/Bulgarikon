@@ -1,8 +1,8 @@
-﻿using Bulgarikon.Data.Models;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Bulgarikon.Data.Configurations;
+using Bulgarikon.Data.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Bulgarikon.Data.Configurations;
 
 namespace Bulgarikon.Data
 {

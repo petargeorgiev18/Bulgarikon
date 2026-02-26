@@ -9,7 +9,6 @@
         public string Material { get; set; } = null!;
         public string Location { get; set; } = null!;
         public string? ImageUrl { get; set; }
-
         public Guid EraId { get; set; }
         public string EraName { get; set; } = "";
 

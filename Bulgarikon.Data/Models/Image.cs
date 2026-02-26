@@ -30,5 +30,8 @@ namespace Bulgarikon.Data.Models
         [ForeignKey(nameof(Civilization))]
         public Guid? CivilizationId { get; set; }
         public Civilization? Civilization { get; set; }
+        [ForeignKey(nameof(Artifact))]
+        public Guid? ArtifactId { get; set; }
+        public Artifact? Artifact { get; set; }
     }
 }

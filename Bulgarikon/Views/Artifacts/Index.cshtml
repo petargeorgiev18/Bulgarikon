@@ -171,6 +171,15 @@
 
 @section Scripts {
     <script>
+        function buildQuery(eraId, civId) {
+            const qs = new URLSearchParams();
+            if (eraId) qs.set('eraId', eraId);
+            if (civId) qs.set('civilizationId', civId);
+            const s = qs.toString();
+            return s ? ('?' + s) : '';
+        }
+    </script>
+    <script>
         (function () {
             const modal = document.getElementById('bkDeleteArtifactModal');
             if (!modal) return;

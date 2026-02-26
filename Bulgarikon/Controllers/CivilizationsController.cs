@@ -42,12 +42,10 @@ namespace Bulgarikon.Controllers
         {
             await LoadDropdownsAsync(selectedEraId: eraId);
 
-            var model = new CivilizationFormDto
+            return View(new CivilizationFormDto
             {
                 EraId = eraId
-            };
-
-            return View(model);
+            });
         }
 
         [Authorize]

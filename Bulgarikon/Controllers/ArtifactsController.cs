@@ -68,7 +68,8 @@ namespace Bulgarikon.Controllers
             {
                 EraId = defaultEraId.Value,
                 CivilizationId = civilizationId,
-                DiscoveredAt = DateTime.Today
+                DiscoveredAt = DateTime.Today,
+                ImageUrl = null // ✅ само една снимка
             });
         }
 

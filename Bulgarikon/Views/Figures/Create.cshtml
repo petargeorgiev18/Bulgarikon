@@ -3,6 +3,7 @@
 
 @{
     ViewData["Title"] = "Добави личност";
+    var hasErrors = ViewData.ModelState.ErrorCount > 0;
 }
 
 <div class="container py-4">
@@ -10,7 +11,7 @@
         <div>
             <div class="era-kicker">Админ • Създаване</div>
             <h1 class="mb-1">Добави личност</h1>
-            <div class="text-muted">Име, описание, дати/години и принадлежност.</div>
+            <div class="text-muted">Име, описание, дати/години, принадлежност и снимки.</div>
         </div>
 
         <a asp-action="Index" asp-route-eraId="@Model.EraId" asp-route-civilizationId="@Model.CivilizationId"
@@ -21,7 +22,11 @@
         <div class="card-body p-4">
             <form asp-action="Create" method="post" autocomplete="off">
                 @Html.AntiForgeryToken()
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3"></div>
+
+                @if (hasErrors)
+                {
+                    <div asp-validation-summary="All" class="alert alert-danger py-2 mb-3"></div>
+                }
 
                 <div class="mb-3">
                     <label asp-for="Name" class="form-label fw-semibold">Име</label>
@@ -61,12 +66,6 @@
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label asp-for="ImageUrl" class="form-label fw-semibold">Image URL</label>
-                    <input asp-for="ImageUrl" class="form-control" />
-                    <span asp-validation-for="ImageUrl" class="text-danger"></span>
-                </div>
-
                 <div class="row g-3 mb-2">
                     <div class="col-md-6">
                         <label asp-for="EraId" class="form-label fw-semibold">Епоха</label>
@@ -83,6 +82,19 @@
                     </div>
                 </div>
 
+                <hr class="my-4" />
+
+                <div class="d-flex align-items-center justify-content-between">
+                    <h5 class="mb-0">Снимки</h5>
+                    <button type="button" class="btn btn-sm btn-outline-dark" id="addFigImgBtn">+ Добави снимка</button>
+                </div>
+
+                <div id="figImagesWrap" class="mt-3" style="display:grid; gap:12px;"></div>
+
+                <div class="text-muted small mt-2">
+                    (По избор) Добави URL и надпис. Може да оставиш празно.
+                </div>
+
                 <div class="d-flex gap-2 flex-wrap mt-4">
                     <button type="submit" class="btn btn-primary px-4">Запази</button>
                     <a asp-action="Index" asp-route-eraId="@Model.EraId" asp-route-civilizationId="@Model.CivilizationId"
@@ -95,4 +107,121 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function () {
+            const wrap = document.getElementById('figImagesWrap');
+            const btn = document.getElementById('addFigImgBtn');
+            if (!wrap || !btn) return;
+
+            function esc(s) {
+                return (s ?? '').toString().replace(/[&<>"']/g, c => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                }[c]));
+            }
+
+            function newKey() {
+                return 'k' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+            }
+
+            function renderRow(key, idVal, urlVal, capVal, removeVal) {
+                const row = document.createElement('div');
+                row.className = 'bk-imgrow';
+                row.dataset.key = key;
+
+                row.innerHTML = `
+                    <input type="hidden" name="Images.Index" value="${esc(key)}" />
+                    <input type="hidden" name="Images[${esc(key)}].Id" value="${esc(idVal)}" />
+                    <input type="hidden" name="Images[${esc(key)}].Remove" value="${removeVal ? 'true' : 'false'}" />
+
+                    <div class="bk-card" style="border-radius:16px;">
+                        <div class="p-3" style="display:grid; gap:12px;">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">URL (по избор)</label>
+                                    <input class="form-control" name="Images[${esc(key)}].Url" value="${esc(urlVal)}" placeholder="https://..." />
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">Надпис (по избор)</label>
+                                    <input class="form-control" name="Images[${esc(key)}].Caption" value="${esc(capVal)}" placeholder="Кратък надпис..." />
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label fw-semibold d-block">Действия</label>
+                                    <div class="d-grid gap-2">
+                                        <button type="button" class="btn btn-outline-danger" data-remove-btn>Премахни</button>
+                                        <button type="button" class="btn btn-outline-secondary" data-undo-btn style="display:none;">Върни</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bk-imgrow-preview" hidden>
+                                <img alt="preview" style="width:100%; max-height:260px; object-fit:cover; border-radius:14px;" />
+                                <div class="text-muted small mt-2 bk-imgrow-cap"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                const urlInput = row.querySelector(`input[name="Images[${key}].Url"]`);
+                const capInput = row.querySelector(`input[name="Images[${key}].Caption"]`);
+                const removeHidden = row.querySelector(`input[name="Images[${key}].Remove"]`);
+
+                const prev = row.querySelector('.bk-imgrow-preview');
+                const img = row.querySelector('img');
+                const cap = row.querySelector('.bk-imgrow-cap');
+
+                const removeBtn = row.querySelector('[data-remove-btn]');
+                const undoBtn = row.querySelector('[data-undo-btn]');
+
+                function setRemoved(isRemoved) {
+                    removeHidden.value = isRemoved ? 'true' : 'false';
+                    row.style.opacity = isRemoved ? '0.5' : '1';
+                    row.style.filter = isRemoved ? 'grayscale(0.4)' : '';
+                    removeBtn.style.display = isRemoved ? 'none' : '';
+                    undoBtn.style.display = isRemoved ? '' : 'none';
+                }
+
+                function refreshPreview() {
+                    const u = (urlInput?.value || '').trim();
+                    const c = (capInput?.value || '').trim();
+
+                    if (!u) { prev.hidden = true; return; }
+                    img.src = u;
+                    cap.textContent = c;
+                    prev.hidden = false;
+                }
+
+                urlInput?.addEventListener('input', refreshPreview);
+                capInput?.addEventListener('input', refreshPreview);
+                removeBtn?.addEventListener('click', () => setRemoved(true));
+                undoBtn?.addEventListener('click', () => setRemoved(false));
+
+                wrap.appendChild(row);
+                setRemoved(!!removeVal);
+                refreshPreview();
+            }
+
+            const initial = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Images ?? new List<Bulgarikon.Core.DTOs.ImageDTOs.ImageEditDto>()));
+
+            if (initial && initial.length) {
+                initial.forEach(x => {
+                    renderRow(
+                        newKey(),
+                        x.id || x.Id || '',
+                        x.url || x.Url || '',
+                        x.caption || x.Caption || '',
+                        x.remove || x.Remove || false
+                    );
+                });
+            } else {
+                renderRow(newKey(), '', '', '', false);
+            }
+
+            btn.addEventListener('click', () => {
+                renderRow(newKey(), '', '', '', false);
+            });
+        })();
+    </script>
 }

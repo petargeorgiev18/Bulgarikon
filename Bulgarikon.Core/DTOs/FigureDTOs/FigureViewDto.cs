@@ -1,4 +1,6 @@
-﻿namespace Bulgarikon.Core.DTOs.FigureDTOs
+﻿using Bulgarikon.Core.DTOs.ImageDTOs;
+
+namespace Bulgarikon.Core.DTOs.FigureDTOs
 {
     public class FigureViewDto
     {
@@ -13,12 +15,11 @@
         public int? BirthYear { get; set; }
         public int? DeathYear { get; set; }
 
-        public string? ImageUrl { get; set; }
-
         public Guid EraId { get; set; }
         public string? EraName { get; set; }
 
         public Guid? CivilizationId { get; set; }
         public string? CivilizationName { get; set; }
+        public List<ImageViewDto> Images { get; set; } = new();
     }
 }

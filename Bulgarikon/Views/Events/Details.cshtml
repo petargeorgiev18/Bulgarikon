@@ -1,5 +1,4 @@
 ﻿@model Bulgarikon.Core.DTOs.EventDTOs.EventDetailsDto
-
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
@@ -10,7 +9,6 @@
     var hasEra = !string.IsNullOrWhiteSpace(Model.EraName);
 
     int duration = 0;
-
     if (Model.StartYear.HasValue && Model.EndYear.HasValue)
     {
         duration = Model.EndYear.Value - Model.StartYear.Value;
@@ -40,7 +38,6 @@
     var civOptions = ViewBag.Civilizations as List<SelectListItem> ?? new List<SelectListItem>();
     var figOptions = ViewBag.Figures as List<SelectListItem> ?? new List<SelectListItem>();
 
-    // ✅ Gallery
     var hasImages = Model.Images != null && Model.Images.Any();
     var galleryJson = System.Text.Json.JsonSerializer.Serialize(
         (Model.Images ?? new List<Bulgarikon.Core.DTOs.ImageDTOs.ImageViewDto>())
@@ -50,6 +47,7 @@
 }
 
 <div class="container py-3">
+
     <div class="home-hero mb-3">
         <div class="home-hero-inner">
             <div class="home-badge">
@@ -65,9 +63,7 @@
                 }
             </div>
 
-            <h1 class="home-title">
-                @Model.Title
-            </h1>
+            <h1 class="home-title">@Model.Title</h1>
 
             <p class="home-subtitle">
                 Продължителност: <b>@durationLabel</b>.
@@ -98,6 +94,58 @@
         </div>
     </div>
 
+    @if (hasImages)
+    {
+        <div class="bk-gallery bk-gallery--event mt-3" id="bkEventGallery" data-images='@galleryJson'>
+            <div class="bk-gallery-head">
+                <div class="bk-gallery-title">Галерия</div>
+                <div class="bk-gallery-sub text-muted small">Кликни на снимка за преглед.</div>
+            </div>
+
+            <div class="bk-gallery-grid">
+                @for (int i = 0; i < Model.Images.Count; i++)
+                {
+                    var img = Model.Images[i];
+                    <button type="button" class="bk-gallery-item" data-bk-open-img="@i">
+                        <img src="@img.Url"
+                             alt="@(!string.IsNullOrWhiteSpace(img.Caption) ? img.Caption : Model.Title)"
+                             loading="lazy" />
+                        @if (!string.IsNullOrWhiteSpace(img.Caption))
+                        {
+                            <div class="bk-gallery-cap">@img.Caption</div>
+                        }
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="bk-modal" id="bkEventImgModal" aria-hidden="true" hidden>
+            <div class="bk-backdrop" data-bk-close></div>
+
+            <div class="bk-dialog" role="dialog" aria-modal="true" aria-labelledby="bkEventImgTitle">
+                <div class="bk-paper bk-imgpaper">
+                    <div class="bk-head">
+                        <div>
+                            <div class="bk-kicker">Галерия</div>
+                            <h3 class="bk-title" id="bkEventImgTitle">Снимка</h3>
+                        </div>
+
+                        <div class="bk-img-actions">
+                            <button type="button" class="bk-navbtn" id="bkEventImgPrev" aria-label="Previous">←</button>
+                            <button type="button" class="bk-navbtn" id="bkEventImgNext" aria-label="Next">→</button>
+                            <button type="button" class="bk-x" aria-label="Close" data-bk-close>✕</button>
+                        </div>
+                    </div>
+
+                    <div class="bk-body">
+                        <img id="bkEventImgEl" class="bk-img" alt="image" />
+                        <div id="bkEventImgCap" class="bk-imgcap"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
     <div class="row g-3 mb-3">
         <div class="col-lg-8">
             <div class="card shadow-sm era-paper h-100">
@@ -120,59 +168,6 @@
                     }
                 </div>
             </div>
-
-            @* ✅ Gallery under description *@
-            @if (hasImages)
-            {
-                <div class="bk-gallery mt-3" id="bkGallery" data-images='@galleryJson'>
-                    <div class="bk-gallery-head">
-                        <div class="bk-gallery-title">Галерия</div>
-                        <div class="bk-gallery-sub text-muted small">Кликни на снимка за преглед.</div>
-                    </div>
-
-                    <div class="bk-gallery-grid">
-                        @for (int i = 0; i < Model.Images.Count; i++)
-                        {
-                            var img = Model.Images[i];
-                            <button type="button" class="bk-gallery-item" data-bk-open-img="@i">
-                                <img src="@img.Url"
-                                     alt="@(!string.IsNullOrWhiteSpace(img.Caption) ? img.Caption : Model.Title)"
-                                     loading="lazy" />
-                                @if (!string.IsNullOrWhiteSpace(img.Caption))
-                                {
-                                    <div class="bk-gallery-cap">@img.Caption</div>
-                                }
-                            </button>
-                        }
-                    </div>
-                </div>
-
-                <div class="bk-modal" id="bkImgModal" aria-hidden="true" hidden>
-                    <div class="bk-backdrop" data-bk-close></div>
-
-                    <div class="bk-dialog" role="dialog" aria-modal="true" aria-labelledby="bkImgTitle">
-                        <div class="bk-paper bk-imgpaper">
-                            <div class="bk-head">
-                                <div>
-                                    <div class="bk-kicker">Галерия</div>
-                                    <h3 class="bk-title" id="bkImgTitle">Снимка</h3>
-                                </div>
-
-                                <div class="bk-img-actions">
-                                    <button type="button" class="bk-navbtn" id="bkImgPrev" aria-label="Previous">←</button>
-                                    <button type="button" class="bk-navbtn" id="bkImgNext" aria-label="Next">→</button>
-                                    <button type="button" class="bk-x" aria-label="Close" data-bk-close>✕</button>
-                                </div>
-                            </div>
-
-                            <div class="bk-body">
-                                <img id="bkImgEl" class="bk-img" alt="image" />
-                                <div id="bkImgCap" class="bk-imgcap"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            }
         </div>
 
         <div class="col-lg-4">
@@ -221,249 +216,34 @@
         </div>
     </div>
 
-    <div class="era-timeline mb-3">
-        <div class="era-node">
-            <div class="era-rail">
-                <div class="era-line"></div>
-                <div class="era-dot"></div>
-            </div>
-            <div class="card era-card">
-                <div class="card-body">
-                    <div class="era-kicker">Хронология</div>
-                    <div class="era-title">Как се позиционира във времето?</div>
-                    <div class="era-desc">
-                        Това събитие се развива между <b>@Model.StartYear</b> и <b>@Model.EndYear</b>.
-                        Помисли какво се случва непосредствено <b>преди</b> и <b>след</b> него в същата епоха.
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="era-node">
-            <div class="era-rail">
-                <div class="era-line"></div>
-                <div class="era-dot"></div>
-            </div>
-            <div class="card era-card">
-                <div class="card-body">
-                    <div class="era-kicker">Причини и последици</div>
-                    <div class="era-title">Учебна рамка</div>
-                    <div class="era-desc">
-                        Запиши си 3 точки:
-                        <ul class="mb-0 mt-2">
-                            <li><b>Причина:</b> защо започва?</li>
-                            <li><b>Събитие:</b> какво точно става?</li>
-                            <li><b>Последица:</b> какво се променя след това?</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="era-node">
-            <div class="era-rail">
-                <div class="era-line"></div>
-                <div class="era-dot"></div>
-            </div>
-            <div class="card era-card">
-                <div class="card-body">
-                    <div class="era-kicker">Проверка</div>
-                    <div class="era-title">Мини-въпрос</div>
-                    <div class="era-desc">
-                        Ако трябва да обясниш събитието с 1 изречение на съученик — как би звучало?
-                        <span class="d-block mt-2 text-muted">Подсказка: „В периода … се случва … което води до …“</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-3">
-        <div class="col-lg-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between gap-2">
-                        <h5 class="mb-0">Цивилизации</h5>
-                        <span class="home-chip">@(Model.Civilizations?.Count() ?? 0)</span>
-                    </div>
-
-                    <div class="text-muted small mt-1">
-                        Кои общества/държави са свързани със събитието?
-                    </div>
-
-                    @if (isAdmin)
-                    {
-                        <div class="mt-3">
-                            <form asp-action="AddCivilization" method="post" class="d-flex gap-2 flex-wrap">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="eventId" value="@Model.Id" />
-
-                                <select id="bkCivSelect" name="civilizationId" class="form-select" style="max-width: 320px;"
-                                        @(civOptions.Any() ? "" : "disabled")>
-                                    <option value="">+ Добави цивилизация от епохата…</option>
-                                    @foreach (var opt in civOptions)
-                                    {
-                                        <option value="@opt.Value">@opt.Text</option>
-                                    }
-                                </select>
-
-                                <button id="bkCivAddBtn" type="submit" class="bk-navbtn bk-navbtn-primary"
-                                        @(civOptions.Any() ? "" : "disabled")>
-                                    Добави
-                                </button>
-                            </form>
-
-                            <div class="text-muted small mt-2">
-                                Показват се цивилизациите, които са в епохата на събитието.
-                            </div>
-                        </div>
-                    }
-
-                    <div class="mt-3">
-                        @if (Model.Civilizations == null || !Model.Civilizations.Any())
-                        {
-                            <div class="text-muted">Няма.</div>
-                        }
-                        else
-                        {
-                            <div class="d-flex flex-wrap gap-2">
-                                @foreach (var c in Model.Civilizations)
-                                {
-                                    <a class="bk-navbtn"
-                                       asp-controller="Civilizations"
-                                       asp-action="Details"
-                                       asp-route-id="@c.Id">
-                                        @c.Name
-                                    </a>
-                                }
-                            </div>
-                        }
-                    </div>
-
-                    <div class="mt-3 text-muted small">
-                        Подсказка: свържи цивилизация → интереси → действия.
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-6">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex align-items-center justify-content-between gap-2">
-                        <h5 class="mb-0">Личности</h5>
-                        <span class="home-chip">@(Model.Figures?.Count() ?? 0)</span>
-                    </div>
-
-                    <div class="text-muted small mt-1">
-                        Кои ключови хора участват/влияят?
-                    </div>
-
-                    @if (isAdmin)
-                    {
-                        <div class="mt-3">
-                            <form asp-action="AddFigure" method="post" class="d-flex gap-2 flex-wrap">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="eventId" value="@Model.Id" />
-
-                                <select id="bkFigSelect" name="figureId" class="form-select" style="max-width: 320px;"
-                                        @(figOptions.Any() ? "" : "disabled")>
-                                    <option value="">+ Добави личност от епохата…</option>
-                                    @foreach (var opt in figOptions)
-                                    {
-                                        <option value="@opt.Value">@opt.Text</option>
-                                    }
-                                </select>
-
-                                <button id="bkFigAddBtn" type="submit" class="bk-navbtn bk-navbtn-primary"
-                                        @(figOptions.Any() ? "" : "disabled")>
-                                    Добави
-                                </button>
-                            </form>
-
-                            <div class="text-muted small mt-2">
-                                Показват се личностите, които са в епохата на събитието.
-                            </div>
-                        </div>
-                    }
-
-                    <div class="mt-3">
-                        @if (Model.Figures == null || !Model.Figures.Any())
-                        {
-                            <div class="text-muted">Няма.</div>
-                        }
-                        else
-                        {
-                            <div class="d-flex flex-wrap gap-2">
-                                @foreach (var f in Model.Figures)
-                                {
-                                    <a class="bk-navbtn"
-                                       asp-controller="Figures"
-                                       asp-action="Details"
-                                       asp-route-id="@f.Id">
-                                        @f.Name
-                                    </a>
-                                }
-                            </div>
-                        }
-                    </div>
-
-                    <div class="mt-3 text-muted small">
-                        Подсказка: личност → цел → решение → резултат.
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     @await Html.PartialAsync("Partials/_DeleteEventModal")
 </div>
 
 @section Scripts {
     <script>
         (function () {
-            const civSelect = document.getElementById('bkCivSelect');
-            const civBtn = document.getElementById('bkCivAddBtn');
+            const g = document.getElementById('bkEventGallery');
+            const modal = document.getElementById('bkEventImgModal');
+            if (!g || !modal) return;
 
-            const figSelect = document.getElementById('bkFigSelect');
-            const figBtn = document.getElementById('bkFigAddBtn');
+            const imgEl = document.getElementById('bkEventImgEl');
+            const capEl = document.getElementById('bkEventImgCap');
+            const titleEl = document.getElementById('bkEventImgTitle');
+            const prevBtn = document.getElementById('bkEventImgPrev');
+            const nextBtn = document.getElementById('bkEventImgNext');
 
-            function toggleBtn(selectEl, btnEl) {
-                if (!selectEl || !btnEl) return;
+            let items = [];
+            try { items = JSON.parse(g.getAttribute('data-images') || '[]') || []; } catch { items = []; }
+            let idx = 0;
 
-                if (selectEl.disabled) {
-                    btnEl.disabled = true;
-                    return;
-                }
+            function openAt(i) {
+                if (!items.length) return;
+                idx = Math.max(0, Math.min(items.length - 1, i));
+                const it = items[idx];
 
-                btnEl.disabled = !selectEl.value;
-            }
-
-            if (civSelect && civBtn) {
-                civBtn.disabled = true;
-                toggleBtn(civSelect, civBtn);
-                civSelect.addEventListener('change', () => toggleBtn(civSelect, civBtn));
-            }
-
-            if (figSelect && figBtn) {
-                figBtn.disabled = true;
-                toggleBtn(figSelect, figBtn);
-                figSelect.addEventListener('change', () => toggleBtn(figSelect, figBtn));
-            }
-        })();
-    </script>
-
-    <script>
-        (function () {
-            const modal = document.getElementById('bkDeleteEventModal');
-            if (!modal) return;
-
-            const idInput = document.getElementById('bkDeleteEventId');
-            const titleEl = document.getElementById('bkDeleteEventTitle');
-
-            function openModal({ id, title }) {
-                if (idInput) idInput.value = id || '';
-                if (titleEl) titleEl.textContent = title || '—';
+                imgEl.src = it.url;
+                capEl.textContent = it.caption || '';
+                titleEl.textContent = it.caption || `Снимка ${idx + 1} / ${items.length}`;
 
                 modal.hidden = false;
                 modal.setAttribute('aria-hidden', 'false');
@@ -472,106 +252,41 @@
                 document.body.style.overflow = 'hidden';
             }
 
-            function closeModal() {
+            function close() {
                 modal.classList.remove('is-open');
                 modal.setAttribute('aria-hidden', 'true');
                 modal.hidden = true;
                 document.body.classList.remove('bk-modal-open');
                 document.body.style.overflow = '';
+                imgEl.removeAttribute('src');
             }
 
-            document.addEventListener('click', (e) => {
-                const btn = e.target.closest('[data-bk-delete-event]');
-                if (btn) {
-                    openModal({
-                        id: btn.getAttribute('data-id'),
-                        title: btn.getAttribute('data-title')
-                    });
-                    return;
-                }
+            function prev() { openAt((idx - 1 + items.length) % items.length); }
+            function next() { openAt((idx + 1) % items.length); }
 
-                if (e.target.closest('[data-bk-close]')) closeModal();
+            g.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-bk-open-img]');
+                if (!btn) return;
+                const i = Number(btn.getAttribute('data-bk-open-img') || '0');
+                openAt(isNaN(i) ? 0 : i);
+            });
+
+            prevBtn?.addEventListener('click', prev);
+            nextBtn?.addEventListener('click', next);
+
+            modal.addEventListener('click', (e) => {
+                if (e.target.closest('[data-bk-close]')) close();
             });
 
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && modal.hidden === false) closeModal();
+                if (modal.hidden === false) {
+                    if (e.key === 'Escape') close();
+                    if (e.key === 'ArrowLeft') prev();
+                    if (e.key === 'ArrowRight') next();
+                }
             });
 
-            closeModal();
+            close();
         })();
     </script>
-
-    @* ✅ Gallery modal script *@
-    @if (hasImages)
-    {
-        <script>
-            (function () {
-                const g = document.getElementById('bkGallery');
-                const modal = document.getElementById('bkImgModal');
-                if (!g || !modal) return;
-
-                const imgEl = document.getElementById('bkImgEl');
-                const capEl = document.getElementById('bkImgCap');
-                const titleEl = document.getElementById('bkImgTitle');
-                const prevBtn = document.getElementById('bkImgPrev');
-                const nextBtn = document.getElementById('bkImgNext');
-
-                let items = [];
-                try { items = JSON.parse(g.getAttribute('data-images') || '[]') || []; } catch { items = []; }
-                let idx = 0;
-
-                function openAt(i) {
-                    if (!items.length) return;
-                    idx = Math.max(0, Math.min(items.length - 1, i));
-                    const it = items[idx];
-
-                    imgEl.src = it.url;
-                    capEl.textContent = it.caption || '';
-                    titleEl.textContent = it.caption || `Снимка ${idx + 1} / ${items.length}`;
-
-                    modal.hidden = false;
-                    modal.setAttribute('aria-hidden', 'false');
-                    modal.classList.add('is-open');
-                    document.body.classList.add('bk-modal-open');
-                    document.body.style.overflow = 'hidden';
-                }
-
-                function close() {
-                    modal.classList.remove('is-open');
-                    modal.setAttribute('aria-hidden', 'true');
-                    modal.hidden = true;
-                    document.body.classList.remove('bk-modal-open');
-                    document.body.style.overflow = '';
-                    imgEl.removeAttribute('src');
-                }
-
-                function prev() { openAt((idx - 1 + items.length) % items.length); }
-                function next() { openAt((idx + 1) % items.length); }
-
-                g.addEventListener('click', (e) => {
-                    const btn = e.target.closest('[data-bk-open-img]');
-                    if (!btn) return;
-                    const i = Number(btn.getAttribute('data-bk-open-img') || '0');
-                    openAt(isNaN(i) ? 0 : i);
-                });
-
-                prevBtn?.addEventListener('click', prev);
-                nextBtn?.addEventListener('click', next);
-
-                modal.addEventListener('click', (e) => {
-                    if (e.target.closest('[data-bk-close]')) close();
-                });
-
-                document.addEventListener('keydown', (e) => {
-                    if (modal.hidden === false) {
-                        if (e.key === 'Escape') close();
-                        if (e.key === 'ArrowLeft') prev();
-                        if (e.key === 'ArrowRight') next();
-                    }
-                });
-
-                close();
-            })();
-        </script>
-    }
 }

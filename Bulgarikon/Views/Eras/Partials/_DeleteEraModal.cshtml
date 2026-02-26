@@ -29,7 +29,7 @@
             <div class="bk-foot">
                 <button type="button" class="bk-btn bk-btn-ghost" data-bk-close>Отказ</button>
 
-                <form asp-controller="Eras" asp-action="Delete" method="post" class="bk-inline">
+                <form asp-controller="Eras" asp-action="Delete" method="post" class="bk-inline" id="bkDeleteEraForm">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" id="bkDeleteEraId" />
                     <button type="submit" class="bk-btn bk-btn-danger">Изтрий</button>
@@ -93,7 +93,5 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && modal.hidden === false) closeModal();
         });
-
-        closeModal();
     })();
 </script>

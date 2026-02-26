@@ -13,6 +13,7 @@ namespace Bulgarikon.Core.DTOs.ArtifactDTOs
         [MaxLength(DescriptionMaxLength)]
         public string Description { get; set; } = null!;
 
+        [Url]
         [MaxLength(ImageUrlMaxLength)]
         public string? ImageUrl { get; set; }
 

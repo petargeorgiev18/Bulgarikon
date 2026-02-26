@@ -6,23 +6,36 @@
 
     var civName = string.IsNullOrWhiteSpace(Model.CivilizationName) ? "Неизвестна" : Model.CivilizationName;
     var yearLabel = Model.Year.HasValue ? Model.Year.Value.ToString() : "Неизвестна";
+
+    var centuryText = "—";
+    if (Model.Year.HasValue)
+    {
+        var c = (int)Math.Ceiling(Model.Year.Value / 100.0);
+        centuryText = $"{c}. век";
+    }
+
+    var hasImage = !string.IsNullOrWhiteSpace(Model.ImageUrl);
 }
 
-<div class="container py-3">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-2 mb-3">
+<div class="era-shell">
+    <div class="era-header">
         <div>
-            <div class="text-muted small">Артефакт</div>
-            <h1 class="mb-1">@Model.Name</h1>
-            <div class="text-muted">
-                @yearLabel • @Model.Material • @Model.Location • @civName
+            <div class="era-kicker">Bulgarikon • Артефакт</div>
+            <h1 class="era-h1">@Model.Name</h1>
+
+            <div class="era-sub">
+                <span class="era-chip">@yearLabel</span>
+                <span class="era-chip">@Model.Material</span>
+                <span class="era-chip">@Model.Location</span>
+                <span class="era-chip">@civName</span>
                 @if (!string.IsNullOrWhiteSpace(Model.EraName))
                 {
-                    <span> • Епоха: @Model.EraName</span>
+                    <span class="era-chip">Епоха: @Model.EraName</span>
                 }
             </div>
         </div>
 
-        <div class="d-flex gap-2 flex-wrap">
+        <div class="era-actions">
             <a asp-action="Index" asp-route-eraId="@Model.EraId" asp-route-civilizationId="@Model.CivilizationId"
                class="btn btn-outline-secondary">← Назад</a>
 
@@ -43,44 +56,69 @@
         </div>
     </div>
 
-    @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
-    {
-        <div class="card shadow-sm mb-3">
-            <img src="@Model.ImageUrl" class="img-fluid rounded" alt="@Model.Name" style="max-height:420px; object-fit:cover;" />
-        </div>
-    }
-
-    <div class="card shadow-sm mb-3">
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="text-muted small">Открит на</div>
-                    <div class="fw-semibold">@Model.DiscoveredAt.ToString("dd.MM.yyyy")</div>
-                </div>
-                <div class="col-md-4">
-                    <div class="text-muted small">Материал</div>
-                    <div class="fw-semibold">@Model.Material</div>
-                </div>
-                <div class="col-md-4">
-                    <div class="text-muted small">Локация</div>
-                    <div class="fw-semibold">@Model.Location</div>
-                </div>
+    <div class="card shadow-sm era-toolbar mt-3">
+        <div class="card-body" style="display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:12px;">
+            <div class="era-count-box">
+                <div class="era-count-num">@Model.DiscoveredAt.ToString("dd.MM.yyyy 'г.'")</div>
+                <div class="era-count-label">Открит</div>
+            </div>
+            <div class="era-count-box">
+                <div class="era-count-num">@centuryText</div>
+                <div class="era-count-label">Век (по год.)</div>
+            </div>
+            <div class="era-count-box">
+                <div class="era-count-num">@civName</div>
+                <div class="era-count-label">Цивилизация</div>
+            </div>
+            <div class="era-count-box">
+                <div class="era-count-num">@((hasImage) ? "1" : "0")</div>
+                <div class="era-count-label">Снимка</div>
             </div>
         </div>
     </div>
 
-    <div class="card shadow-sm era-paper">
+    @if (hasImage)
+    {
+        <div class="card shadow-sm era-paper mt-3">
+            <div class="card-body">
+                <h5 class="mb-3">Снимка</h5>
+                <img src="@Model.ImageUrl"
+                     alt="@Model.Name"
+                     style="width:100%; max-height:420px; object-fit:cover; border-radius:14px;" />
+            </div>
+        </div>
+    }
+
+    <div class="card shadow-sm era-paper mt-3">
         <div class="card-body">
-            <h5 class="mb-3">Описание</h5>
+            <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                <h5 class="mb-0">Описание</h5>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="bkToggleHighlights">Подчертай години</button>
+                    <button type="button" class="btn btn-sm btn-outline-dark" id="bkCopyNotes">Копирай бележки</button>
+                </div>
+            </div>
 
             @if (string.IsNullOrWhiteSpace(Model.Description))
             {
-                <div class="alert alert-info mb-0">Няма описание.</div>
+                <div class="alert alert-info mt-3 mb-0">Няма описание.</div>
             }
             else
             {
-                <p class="mb-0 era-readable">@Model.Description</p>
+                <div class="mt-3 era-readable" id="bkDesc">@Model.Description</div>
             }
+        </div>
+    </div>
+
+    <div class="card shadow-sm era-paper mt-3">
+        <div class="card-body">
+            <div class="text-muted small">Автоматични учебни бележки (първите изречения от текста).</div>
+            <ul class="mt-3 mb-0" id="bkNotes" style="display:grid; gap:10px;"></ul>
+
+            <hr class="my-3" />
+
+            <div class="fw-semibold">Открити години (1000–2099)</div>
+            <div id="bkYearsCloud" class="mt-2" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
         </div>
     </div>
 
@@ -90,54 +128,138 @@
 @section Scripts {
     <script>
         (function () {
-            const modal = document.getElementById('bkDeleteArtifactModal');
-            if (!modal) return;
+            // ===== Education tools =====
+            const descEl = document.getElementById('bkDesc');
+            const toggleBtn = document.getElementById('bkToggleHighlights');
+            const notesEl = document.getElementById('bkNotes');
+            const copyBtn = document.getElementById('bkCopyNotes');
+            const yearsCloud = document.getElementById('bkYearsCloud');
 
-            const idInput = document.getElementById('bkDeleteArtifactId');
-            const eraIdInput = document.getElementById('bkDeleteArtifactEraId');
-            const civIdInput = document.getElementById('bkDeleteArtifactCivId');
-            const nameEl = document.getElementById('bkDeleteArtifactName');
+            if (descEl) {
+                const rawText = (descEl.textContent || '').trim();
+                const originalHtml = descEl.innerHTML;
+                let highlighted = false;
 
-            function openModal({ id, name, eraId, civId }) {
-                if (idInput) idInput.value = id || '';
-                if (eraIdInput) eraIdInput.value = eraId || '';
-                if (civIdInput) civIdInput.value = civId || '';
-                if (nameEl) nameEl.textContent = name || '—';
+                function buildNotes(text) {
+                    if (!notesEl) return;
+                    const parts = text
+                        .split(/(?<=[.!?])\s+/g)
+                        .map(s => s.trim())
+                        .filter(Boolean);
 
-                modal.hidden = false;
-                modal.setAttribute('aria-hidden', 'false');
-                modal.classList.add('is-open');
-                document.body.style.overflow = 'hidden';
-            }
+                    const top = parts.slice(0, 5);
+                    notesEl.innerHTML = '';
 
-            function closeModal() {
-                modal.classList.remove('is-open');
-                modal.setAttribute('aria-hidden', 'true');
-                modal.hidden = true;
-                document.body.style.overflow = '';
-            }
+                    if (!top.length) {
+                        notesEl.innerHTML = '<li class="text-muted small">Няма текст за бележки.</li>';
+                        return;
+                    }
 
-            document.addEventListener('click', (e) => {
-                const btn = e.target.closest('[data-bk-delete-artifact]');
-                if (!btn) return;
+                    top.forEach(s => {
+                        const li = document.createElement('li');
+                        li.textContent = s;
+                        notesEl.appendChild(li);
+                    });
+                }
 
-                openModal({
-                    id: btn.getAttribute('data-id'),
-                    name: btn.getAttribute('data-name'),
-                    eraId: btn.getAttribute('data-eraid'),
-                    civId: btn.getAttribute('data-civid')
+                function buildYears(text) {
+                    if (!yearsCloud) return;
+
+                    const matches = (text.match(/\b(1[0-9]{3}|20[0-9]{2})\b/g) || []);
+                    const uniq = Array.from(new Set(matches)).slice(0, 24);
+
+                    yearsCloud.innerHTML = '';
+
+                    if (!uniq.length) {
+                        yearsCloud.innerHTML = '<span class="text-muted small">Няма открити години.</span>';
+                        return;
+                    }
+
+                    uniq.forEach(y => {
+                        const chip = document.createElement('span');
+                        chip.className = 'era-chip';
+                        chip.textContent = y;
+                        yearsCloud.appendChild(chip);
+                    });
+                }
+
+                function highlightYears() {
+                    if (!toggleBtn) return;
+
+                    if (highlighted) {
+                        descEl.innerHTML = originalHtml;
+                        highlighted = false;
+                        toggleBtn.textContent = 'Подчертай години';
+                        return;
+                    }
+
+                    descEl.innerHTML = originalHtml.replace(
+                        /\b(1[0-9]{3}|20[0-9]{2})\b/g,
+                        `<mark style="padding:0 4px; border-radius:6px;">$1</mark>`
+                    );
+
+                    highlighted = true;
+                    toggleBtn.textContent = 'Махни подчертаване';
+                }
+
+                toggleBtn?.addEventListener('click', highlightYears);
+
+                copyBtn?.addEventListener('click', async () => {
+                    const lines = Array.from(notesEl?.querySelectorAll('li') || []).map(li => `• ${li.textContent}`);
+                    const payload = lines.join('\n').trim();
+                    if (!payload) return;
+
+                    try {
+                        await navigator.clipboard.writeText(payload);
+                        copyBtn.textContent = 'Копирано ✓';
+                    } catch { }
+
+                    setTimeout(() => copyBtn.textContent = 'Копирай бележки', 1200);
                 });
-            });
 
-            modal.addEventListener('click', (e) => {
-                if (e.target.closest('[data-bk-close]')) closeModal();
-            });
+                buildNotes(rawText);
+                buildYears(rawText);
+            }
 
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && modal.hidden === false) closeModal();
-            });
+            // ===== Delete modal wiring =====
+            const delModal = document.getElementById('bkDeleteArtifactModal');
+            if (delModal) {
+                const idInput = document.getElementById('bkDeleteArtifactId');
+                const eraIdInput = document.getElementById('bkDeleteArtifactEraId');
+                const civIdInput = document.getElementById('bkDeleteArtifactCivId');
+                const nameEl = document.getElementById('bkDeleteArtifactName');
 
-            closeModal();
+                function openDel(btn) {
+                    idInput && (idInput.value = btn.dataset.id || '');
+                    eraIdInput && (eraIdInput.value = btn.dataset.eraid || '');
+                    civIdInput && (civIdInput.value = btn.dataset.civid || '');
+                    nameEl && (nameEl.textContent = btn.dataset.name || '—');
+
+                    delModal.hidden = false;
+                    delModal.setAttribute('aria-hidden', 'false');
+                    delModal.classList.add('is-open');
+                    document.body.style.overflow = 'hidden';
+                }
+
+                function closeDel() {
+                    delModal.classList.remove('is-open');
+                    delModal.setAttribute('aria-hidden', 'true');
+                    delModal.hidden = true;
+                    document.body.style.overflow = '';
+                }
+
+                document.addEventListener('click', (e) => {
+                    const b = e.target.closest('[data-bk-delete-artifact]');
+                    if (b) { openDel(b); return; }
+                    if (!delModal.hidden && e.target.closest('[data-bk-close]')) closeDel();
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && !delModal.hidden) closeDel();
+                });
+
+                closeDel();
+            }
         })();
     </script>
 }

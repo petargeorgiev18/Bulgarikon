@@ -2400,3 +2400,42 @@ body.bk-modal-open {
     max-width: 1100px;
     width: min(1100px, calc(100vw - 24px));
 }
+
+.event-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.event-gallery-img {
+    width: 320px;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+#bkEventGallery {
+    margin-top: 18px;
+}
+
+#bkEventGallery {
+    margin-bottom: 16px;
+}
+
+.bk-gallery--event {
+    margin-bottom: 18px; 
+    padding-bottom: 8px;
+}
+
+.bk-gallery--event {
+    margin-bottom: 18px;
+}
+
+.bk-gallery {
+    margin-bottom: 16px;
+}
+
+.bk-gallery-grid {
+    padding-bottom: 12px;
+}

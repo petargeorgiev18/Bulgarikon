@@ -31,7 +31,8 @@
 
                     <div class="col-lg-4">
                         <label class="form-label">Епоха</label>
-                        <select asp-for="EraId" class="form-select" asp-items="(IEnumerable<SelectListItem>)ViewBag.Eras"></select>
+                        <select asp-for="EraId" class="form-select"
+                                asp-items="(IEnumerable<SelectListItem>)ViewBag.Eras"></select>
                         <span asp-validation-for="EraId" class="text-danger"></span>
                     </div>
 
@@ -82,7 +83,7 @@
                 <div id="eventImagesWrap" class="mt-3" style="display:grid; gap:12px;"></div>
 
                 <div class="text-muted small mt-2">
-                    Маркирай "Премахни" за изтриване. Редактирай URL/надпис и запази.
+                    Натисни "Премахни" за изтриване. Редактирай URL/надпис и запази.
                 </div>
 
                 <div class="d-flex justify-content-end gap-2 mt-4">
@@ -103,65 +104,91 @@
             const btn = document.getElementById('addEventImgBtn');
             if (!wrap || !btn) return;
 
-            let idx = 0;
-
             function esc(s) {
-                return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+                return (s || '').toString().replace(/[&<>"']/g, c => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+                }[c]));
             }
 
-            function renderRow(i, idVal, urlVal, capVal, removeVal) {
+            function newKey() {
+                return 'k' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+            }
+
+            function renderRow(key, idVal, urlVal, capVal, removeVal) {
                 const row = document.createElement('div');
                 row.className = 'bk-imgrow';
+                row.dataset.key = key;
+
                 row.innerHTML = `
-                    <input type="hidden" name="Images[${i}].Id" value="${esc(idVal)}" />
+                    <!-- IMPORTANT: казваме на binder-а кои keys съществуват -->
+                    <input type="hidden" name="Images.Index" value="${esc(key)}" />
+
+                    <input type="hidden" name="Images[${esc(key)}].Id" value="${esc(idVal)}" />
+                    <input type="hidden" name="Images[${esc(key)}].Remove" value="${removeVal ? 'true' : 'false'}" />
+
                     <div class="bk-imgrow-grid">
                         <div>
                             <label class="form-label fw-semibold">URL</label>
-                            <input class="form-control" name="Images[${i}].Url" value="${esc(urlVal)}" placeholder="https://..." />
+                            <input class="form-control" name="Images[${esc(key)}].Url" value="${esc(urlVal)}" placeholder="https://..." />
                         </div>
+
                         <div>
                             <label class="form-label fw-semibold">Надпис (по желание)</label>
-                            <input class="form-control" name="Images[${i}].Caption" value="${esc(capVal)}" placeholder="Кратък надпис..." />
+                            <input class="form-control" name="Images[${esc(key)}].Caption" value="${esc(capVal)}" placeholder="Кратък надпис..." />
                         </div>
+
                         <div class="bk-imgrow-actions">
-                            <label class="form-label fw-semibold d-block">Премахни</label>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="Images[${i}].Remove" ${removeVal ? 'checked' : ''} />
-                                <label class="form-check-label">Изтрий</label>
+                            <label class="form-label fw-semibold d-block">Действия</label>
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-outline-danger" data-remove-btn>Премахни</button>
+                                <button type="button" class="btn btn-outline-secondary" data-undo-btn style="display:none;">Върни</button>
                             </div>
                         </div>
                     </div>
+
                     <div class="bk-imgrow-preview" hidden>
                         <img alt="preview" />
                         <div class="bk-imgrow-cap"></div>
                     </div>
                 `;
 
-                const urlInput = row.querySelector(`input[name="Images[${i}].Url"]`);
-                const capInput = row.querySelector(`input[name="Images[${i}].Caption"]`);
-                const removeInput = row.querySelector(`input[name="Images[${i}].Remove"]`);
+                const urlInput = row.querySelector(`input[name="Images[${key}].Url"]`);
+                const capInput = row.querySelector(`input[name="Images[${key}].Caption"]`);
+                const removeHidden = row.querySelector(`input[name="Images[${key}].Remove"]`);
+
                 const prev = row.querySelector('.bk-imgrow-preview');
                 const img = row.querySelector('img');
                 const cap = row.querySelector('.bk-imgrow-cap');
 
+                const removeBtn = row.querySelector('[data-remove-btn]');
+                const undoBtn = row.querySelector('[data-undo-btn]');
+
+                function setRemoved(isRemoved) {
+                    removeHidden.value = isRemoved ? 'true' : 'false';
+                    row.style.opacity = isRemoved ? '0.5' : '1';
+                    row.style.filter = isRemoved ? 'grayscale(0.35)' : '';
+                    removeBtn.style.display = isRemoved ? 'none' : '';
+                    undoBtn.style.display = isRemoved ? '' : 'none';
+                }
+
                 function refreshPreview() {
                     const u = (urlInput?.value || '').trim();
                     const c = (capInput?.value || '').trim();
-                    const rm = !!removeInput?.checked;
 
-                    if (!u) { prev.hidden = true; row.style.opacity = '1'; return; }
-
+                    if (!u) { prev.hidden = true; return; }
                     img.src = u;
                     cap.textContent = c;
                     prev.hidden = false;
-                    row.style.opacity = rm ? '0.5' : '1';
                 }
 
                 urlInput?.addEventListener('input', refreshPreview);
                 capInput?.addEventListener('input', refreshPreview);
-                removeInput?.addEventListener('change', refreshPreview);
+
+                removeBtn?.addEventListener('click', () => setRemoved(true));
+                undoBtn?.addEventListener('click', () => setRemoved(false));
 
                 wrap.appendChild(row);
+                setRemoved(!!removeVal);
                 refreshPreview();
             }
 
@@ -169,25 +196,25 @@
                             Model.Images ?? new List<Bulgarikon.Core.DTOs.ImageDTOs.ImageEditDto>()
                     ));
 
-        initial.forEach(x => {
-            renderRow(
-                idx,
-                x.id || x.Id || '',
-                x.url || x.Url || '',
-                x.caption || x.Caption || '',
-                x.remove || x.Remove || false
-            );
-            idx++;
-        });
-
-            if (!initial || initial.length === 0) {
-                renderRow(idx, '', '', '', false);
-                idx++;
-            }
+        if (initial && initial.length) {
+            initial.forEach(x => {
+                const key = newKey();
+                renderRow(
+                    key,
+                    x.id || x.Id || '',
+                    x.url || x.Url || '',
+                    x.caption || x.Caption || '',
+                    x.remove || x.Remove || false
+                );
+            });
+        } else {
+            const key = newKey();
+            renderRow(key, '', '', '', false);
+        }
 
             btn.addEventListener('click', () => {
-                renderRow(idx, '', '', '', false);
-                idx++;
+                const key = newKey();
+                renderRow(key, '', '', '', false);
             });
         })();
     </script>

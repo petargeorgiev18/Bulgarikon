@@ -39,14 +39,6 @@
                 </select>
             </div>
 
-            <div class="era-field era-field-inline">
-                <label class="era-label">Описания</label>
-                <div class="d-flex gap-2 flex-wrap">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="expandAll">Покажи всички</button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="collapseAll">Скрий всички</button>
-                </div>
-            </div>
-
             <div class="era-field era-count">
                 <div class="era-count-box">
                     <div class="era-count-num" id="eraCount">0</div>
@@ -151,8 +143,6 @@
             const sort = document.getElementById('eraSort');
             const timeline = document.getElementById('eraTimeline');
             const countEl = document.getElementById('eraCount');
-            const expandAll = document.getElementById('expandAll');
-            const collapseAll = document.getElementById('collapseAll');
 
             if (!timeline) return;
 
@@ -191,37 +181,24 @@
                 nodes.filter(n => !visible.includes(n)).forEach(n => frag.appendChild(n));
                 timeline.appendChild(frag);
 
-                countEl.textContent = String(visible.length);
+                if (countEl) countEl.textContent = String(visible.length);
             }
 
-            function setAllCollapses(open) {
-                nodes.forEach(n => {
-                    const full = n.querySelector('.era-desc-full');
-                    const btn = n.querySelector('.era-toggle');
-                    if (!full || !btn) return;
-
-                    const isShown = full.classList.contains('show');
-                    if (open && !isShown) btn.click();
-                    if (!open && isShown) btn.click();
-                });
-            }
-
+            // Само превключване на текста на бутона "Прочети още"
             timeline.addEventListener('click', (e) => {
                 const btn = e.target.closest('.era-toggle');
                 if (!btn) return;
 
                 setTimeout(() => {
-                    const target = document.querySelector(btn.getAttribute('data-bs-target'));
+                    const targetSel = btn.getAttribute('data-bs-target');
+                    const target = targetSel ? document.querySelector(targetSel) : null;
                     const expanded = target && target.classList.contains('show');
-                    btn.textContent = expanded ? 'Show less' : 'Read more';
+                    btn.textContent = expanded ? 'Скрий' : 'Прочети още';
                 }, 60);
             });
 
-            search.addEventListener('input', applyFilterAndSort);
-            sort.addEventListener('change', applyFilterAndSort);
-
-            expandAll.addEventListener('click', () => setAllCollapses(true));
-            collapseAll.addEventListener('click', () => setAllCollapses(false));
+            search?.addEventListener('input', applyFilterAndSort);
+            sort?.addEventListener('change', applyFilterAndSort);
 
             applyFilterAndSort();
         })();

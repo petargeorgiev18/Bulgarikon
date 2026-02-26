@@ -3,23 +3,31 @@
 
 @{
     ViewData["Title"] = "Добави артефакт";
+    var hasErrors = ViewData.ModelState.ErrorCount > 0;
 }
 
-<div class="container py-4">
-    <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+<div class="era-shell">
+    <div class="era-header">
         <div>
-            <div class="text-muted small">Артефакти</div>
-            <h1 class="mb-0">Добави артефакт</h1>
+            <div class="era-kicker">Bulgarikon • Артефакти</div>
+            <h1 class="era-h1">Добави артефакт</h1>
+            <div class="era-sub">Създай артефакт и добави снимка (URL).</div>
         </div>
 
-        <a asp-action="Index" class="btn btn-outline-secondary">← Назад</a>
+        <div class="era-actions">
+            <a asp-action="Index" class="btn btn-outline-secondary">← Назад</a>
+        </div>
     </div>
 
-    <div class="card shadow-sm era-paper">
+    <div class="card shadow-sm era-paper mt-3">
         <div class="card-body p-4">
             <form asp-action="Create" method="post" autocomplete="off">
                 @Html.AntiForgeryToken()
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3"></div>
+
+                @if (hasErrors)
+                {
+                    <div asp-validation-summary="All" class="alert alert-danger py-2 mb-3"></div>
+                }
 
                 <div class="row g-3">
                     <div class="col-lg-8">
@@ -45,6 +53,7 @@
                         <select asp-for="CivilizationId" class="form-select" asp-items="(IEnumerable<SelectListItem>)ViewBag.Civilizations">
                             <option value="">(няма)</option>
                         </select>
+                        <span asp-validation-for="CivilizationId" class="text-danger"></span>
                     </div>
 
                     <div class="col-lg-4">
@@ -66,15 +75,20 @@
                     </div>
 
                     <div class="col-12">
-                        <label asp-for="ImageUrl" class="form-label fw-semibold">Image URL (по избор)</label>
-                        <input asp-for="ImageUrl" class="form-control" />
-                        <span asp-validation-for="ImageUrl" class="text-danger"></span>
-                    </div>
-
-                    <div class="col-12">
                         <label asp-for="Description" class="form-label fw-semibold">Описание</label>
                         <textarea asp-for="Description" class="form-control" rows="7"></textarea>
                         <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="ImageUrl" class="form-label fw-semibold">Снимка URL (по избор)</label>
+                        <input asp-for="ImageUrl" class="form-control" placeholder="https://..." id="bkImgUrl" />
+                        <span asp-validation-for="ImageUrl" class="text-danger"></span>
+
+                        <div class="mt-3" id="bkImgPrevWrap" style="display:none;">
+                            <img id="bkImgPrev" alt="preview" style="width:100%; max-height:320px; object-fit:cover; border-radius:14px;" />
+                        </div>
+                        <div class="text-muted small mt-2">По избор. Ако е празно — артефактът ще се запази без снимка.</div>
                     </div>
                 </div>
 
@@ -88,5 +102,23 @@
 </div>
 
 @section Scripts {
-        <partial name="_ValidationScriptsPartial" />
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            const input = document.getElementById('bkImgUrl');
+            const wrap = document.getElementById('bkImgPrevWrap');
+            const img = document.getElementById('bkImgPrev');
+            if (!input || !wrap || !img) return;
+
+            function refresh() {
+                const u = (input.value || '').trim();
+                if (!u) { wrap.style.display = 'none'; img.removeAttribute('src'); return; }
+                img.src = u;
+                wrap.style.display = '';
+            }
+
+            input.addEventListener('input', refresh);
+            refresh();
+        })();
+    </script>
 }

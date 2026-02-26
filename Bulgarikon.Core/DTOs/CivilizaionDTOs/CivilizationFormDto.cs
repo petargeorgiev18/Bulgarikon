@@ -27,7 +27,6 @@ namespace Bulgarikon.Core.DTOs.CivilizaionDTOs
 
         [Required]
         public Guid EraId { get; set; }
-
         public string? ImageUrl { get; set; }
     }
 }

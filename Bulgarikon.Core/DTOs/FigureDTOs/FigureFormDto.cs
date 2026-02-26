@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Bulgarikon.Core.DTOs.ImageDTOs;
+using System.ComponentModel.DataAnnotations;
+using static Bulgarikon.Common.DataModelsValidation.EntityClassesValidations.Figure;
 
 namespace Bulgarikon.Core.DTOs.FigureDTOs
 {
@@ -16,16 +18,15 @@ namespace Bulgarikon.Core.DTOs.FigureDTOs
         [DataType(DataType.Date)]
         public DateTime? DeathDate { get; set; }
 
+        [Range(BirthYearMinValue, BirthYearMaxValue)]
         public int? BirthYear { get; set; }
+        [Range(DeathYearMinValue, DeathYearMaxValue)]
         public int? DeathYear { get; set; }
-
-        [Url]
-        public string? ImageUrl { get; set; }
 
         [Required]
         public Guid EraId { get; set; }
 
         public Guid? CivilizationId { get; set; }
+        public List<ImageEditDto> Images { get; set; } = new();
     }
-
 }

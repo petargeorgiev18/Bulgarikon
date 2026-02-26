@@ -68,9 +68,9 @@
             public const int NameFigureMinLength = 3;
             public const int DescriptionMaxLength = 2000;
             public const int DescriptionMinLength = 20;
-            public const int BirthYearMaxValue = 2025;
+            public const int BirthYearMaxValue = 2026;
             public const int BirthYearMinValue = -300000;
-            public const int DeathYearMaxValue = 2025;
+            public const int DeathYearMaxValue = 2026;
             public const int DeathYearMinValue = -300000;
         }
         public static class Image

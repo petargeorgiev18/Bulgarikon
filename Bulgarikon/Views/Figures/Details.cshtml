@@ -3,38 +3,66 @@
 @{
     ViewData["Title"] = "Детайли";
     bool isAdmin = User.IsInRole("Admin");
+
+    var hasImages = Model.Images != null && Model.Images.Any();
+    var galleryJson = System.Text.Json.JsonSerializer.Serialize(
+        (Model.Images ?? new List<Bulgarikon.Core.DTOs.ImageDTOs.ImageViewDto>())
+            .Select(x => new { url = x.Url, caption = x.Caption })
+            .ToList()
+    );
+
+    int? birthYear = Model.BirthDate?.Year ?? Model.BirthYear;
+    int? deathYear = Model.DeathDate?.Year ?? Model.DeathYear;
+    int? lifespan = (birthYear.HasValue && deathYear.HasValue) ? (deathYear - birthYear) : null;
+
+    string centuryText = "—";
+    if (birthYear.HasValue)
+    {
+        var c = (int)Math.Ceiling(birthYear.Value / 100.0);
+        centuryText = $"{c}. век";
+    }
+
+    string yearsText =
+        (birthYear.HasValue || deathYear.HasValue)
+            ? $"{(birthYear?.ToString() ?? "—")} – {(deathYear?.ToString() ?? "—")}"
+            : "—";
+
+    string birthDateBg = Model.BirthDate.HasValue ? Model.BirthDate.Value.ToString("dd.MM.yyyy") + " г." : "—";
+    string deathDateBg = Model.DeathDate.HasValue ? Model.DeathDate.Value.ToString("dd.MM.yyyy") + " г." : "—";
+    bool showDatesLine = Model.BirthDate.HasValue || Model.DeathDate.HasValue;
 }
 
-<div class="container py-3">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-2 mb-3">
+<div class="era-shell">
+    <div class="era-header">
         <div>
-            <div class="text-muted small">Личност</div>
-            <h1 class="mb-1">@Model.Name</h1>
-            <div class="text-muted">
-                @if (Model.BirthYear.HasValue || Model.DeathYear.HasValue)
-                {
-                    <span>@(Model.BirthYear?.ToString() ?? "—") – @(Model.DeathYear?.ToString() ?? "—")</span>
-                }
+            <div class="era-kicker">Bulgarikon • Личност</div>
+            <h1 class="era-h1">@Model.Name</h1>
+
+            <div class="era-sub">
+                <span class="era-chip">@yearsText</span>
+
                 @if (!string.IsNullOrWhiteSpace(Model.CivilizationName))
                 {
-                    <span> • @Model.CivilizationName</span>
+                    <span class="era-chip">@Model.CivilizationName</span>
                 }
                 @if (!string.IsNullOrWhiteSpace(Model.EraName))
                 {
-                    <span> • Епоха: @Model.EraName</span>
+                    <span class="era-chip">Епоха: @Model.EraName</span>
                 }
             </div>
 
-            @if (Model.BirthDate.HasValue || Model.DeathDate.HasValue)
+            @if (showDatesLine)
             {
-                <div class="text-muted small mt-1">
-                    Дати: @(Model.BirthDate?.ToString("yyyy-MM-dd") ?? "—") → @(Model.DeathDate?.ToString("yyyy-MM-dd") ?? "—")
+                <div class="text-muted small mt-2">
+                    Дати: @birthDateBg → @deathDateBg
                 </div>
             }
         </div>
 
-        <div class="d-flex gap-2 flex-wrap">
-            <a asp-action="Index" asp-route-eraId="@Model.EraId" asp-route-civilizationId="@Model.CivilizationId"
+        <div class="era-actions">
+            <a asp-action="Index"
+               asp-route-eraId="@Model.EraId"
+               asp-route-civilizationId="@Model.CivilizationId"
                class="btn btn-outline-secondary">← Назад</a>
 
             @if (isAdmin)
@@ -54,19 +82,200 @@
         </div>
     </div>
 
-    @if (!string.IsNullOrWhiteSpace(Model.ImageUrl))
-    {
-        <div class="card shadow-sm mb-3">
-            <img src="@Model.ImageUrl" class="img-fluid rounded" alt="@Model.Name" style="max-height:420px; object-fit:cover;" />
-        </div>
-    }
+    <!-- Quick facts -->
+    <div class="card shadow-sm era-toolbar mt-3">
+        <div class="card-body" style="display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:12px;">
+            <div class="era-count-box">
+                <div class="era-count-num">@yearsText</div>
+                <div class="era-count-label">Период</div>
+            </div>
 
-    <div class="card shadow-sm era-paper">
+            <div class="era-count-box">
+                <div class="era-count-num">@centuryText</div>
+                <div class="era-count-label">Век (по рожд.)</div>
+            </div>
+
+            <div class="era-count-box">
+                <div class="era-count-num">@((lifespan.HasValue && lifespan.Value >= 0) ? $"{lifespan} г." : "—")</div>
+                <div class="era-count-label">Продължителност</div>
+            </div>
+
+            <div class="era-count-box">
+                <div class="era-count-num">@((hasImages) ? Model.Images.Count.ToString() : "0")</div>
+                <div class="era-count-label">Снимки</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview only -->
+    <div class="card shadow-sm era-paper mt-3">
         <div class="card-body">
-            <h5 class="mb-3">Описание</h5>
-            <p class="mb-0 era-readable">@Model.Description</p>
+            @if (hasImages)
+            {
+                <div class="bk-gallery mt-2" id="bkFigGallery" data-images='@galleryJson'>
+                    <div class="bk-gallery-head">
+                        <div class="bk-gallery-title">Галерия</div>
+                        <div class="bk-gallery-sub text-muted small">Кликни на снимка за преглед.</div>
+                    </div>
+
+                    <div class="bk-gallery-grid">
+                        @for (int i = 0; i < Model.Images.Count; i++)
+                        {
+                            var img = Model.Images[i];
+                            <button type="button" class="bk-gallery-item" data-bk-open-img="@i">
+                                <img src="@img.Url"
+                                     alt="@(!string.IsNullOrWhiteSpace(img.Caption) ? img.Caption : Model.Name)"
+                                     loading="lazy" />
+                                @if (!string.IsNullOrWhiteSpace(img.Caption))
+                                {
+                                    <div class="bk-gallery-cap">@img.Caption</div>
+                                }
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <div class="bk-modal" id="bkFigImgModal" aria-hidden="true" hidden>
+                    <div class="bk-backdrop" data-bk-close></div>
+
+                    <div class="bk-dialog" role="dialog" aria-modal="true" aria-labelledby="bkFigImgTitle">
+                        <div class="bk-paper bk-imgpaper">
+                            <div class="bk-head">
+                                <div>
+                                    <div class="bk-kicker">Галерия</div>
+                                    <h3 class="bk-title" id="bkFigImgTitle">Снимка</h3>
+                                </div>
+
+                                <div class="bk-img-actions">
+                                    <button type="button" class="bk-navbtn" id="bkFigImgPrev" aria-label="Previous">←</button>
+                                    <button type="button" class="bk-navbtn" id="bkFigImgNext" aria-label="Next">→</button>
+                                    <button type="button" class="bk-x" aria-label="Close" data-bk-close>✕</button>
+                                </div>
+                            </div>
+
+                            <div class="bk-body">
+                                <img id="bkFigImgEl" class="bk-img" alt="image" />
+                                <div id="bkFigImgCap" class="bk-imgcap"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="card shadow-sm era-paper mt-3">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                        <h5 class="mb-0">Описание</h5>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="bkToggleHighlights">
+                            Подчертай години
+                        </button>
+                    </div>
+
+                    <div class="mt-3 era-readable" id="bkDesc">
+                        @Model.Description
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 @await Html.PartialAsync("Partials/_DeleteFigureModal")
+
+@section Scripts {
+    <script>
+        (function () {
+            const g = document.getElementById('bkFigGallery');
+            const modal = document.getElementById('bkFigImgModal');
+            if (g && modal) {
+                const imgEl = document.getElementById('bkFigImgEl');
+                const capEl = document.getElementById('bkFigImgCap');
+                const titleEl = document.getElementById('bkFigImgTitle');
+                const prevBtn = document.getElementById('bkFigImgPrev');
+                const nextBtn = document.getElementById('bkFigImgNext');
+
+                let items = [];
+                try { items = JSON.parse(g.getAttribute('data-images') || '[]') || []; } catch { items = []; }
+                let idx = 0;
+
+                function openAt(i) {
+                    if (!items.length) return;
+                    idx = Math.max(0, Math.min(items.length - 1, i));
+                    const it = items[idx];
+
+                    imgEl.src = it.url;
+                    capEl.textContent = it.caption || '';
+                    titleEl.textContent = it.caption || `Снимка ${idx + 1} / ${items.length}`;
+
+                    modal.hidden = false;
+                    modal.setAttribute('aria-hidden', 'false');
+                    modal.classList.add('is-open');
+                    document.body.classList.add('bk-modal-open');
+                    document.body.style.overflow = 'hidden';
+                }
+
+                function close() {
+                    modal.classList.remove('is-open');
+                    modal.setAttribute('aria-hidden', 'true');
+                    modal.hidden = true;
+                    document.body.classList.remove('bk-modal-open');
+                    document.body.style.overflow = '';
+                    imgEl.removeAttribute('src');
+                }
+
+                function prev() { openAt((idx - 1 + items.length) % items.length); }
+                function next() { openAt((idx + 1) % items.length); }
+
+                g.addEventListener('click', (e) => {
+                    const btn = e.target.closest('[data-bk-open-img]');
+                    if (!btn) return;
+                    const i = Number(btn.getAttribute('data-bk-open-img') || '0');
+                    openAt(isNaN(i) ? 0 : i);
+                });
+
+                prevBtn?.addEventListener('click', prev);
+                nextBtn?.addEventListener('click', next);
+
+                modal.addEventListener('click', (e) => {
+                    if (e.target.closest('[data-bk-close]')) close();
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (modal.hidden === false) {
+                        if (e.key === 'Escape') close();
+                        if (e.key === 'ArrowLeft') prev();
+                        if (e.key === 'ArrowRight') next();
+                    }
+                });
+
+                close();
+            }
+
+            const descEl = document.getElementById('bkDesc');
+            const toggleBtn = document.getElementById('bkToggleHighlights');
+
+            if (descEl && toggleBtn) {
+                let highlighted = false;
+                const originalHtml = descEl.innerHTML;
+
+                function highlightYears() {
+                    if (highlighted) {
+                        descEl.innerHTML = originalHtml;
+                        highlighted = false;
+                        toggleBtn.textContent = 'Подчертай години';
+                        return;
+                    }
+
+                    const safe = originalHtml
+                        .replace(/\b(1[0-9]{3}|20[0-9]{2})\b/g, `<mark style="padding:0 4px; border-radius:6px;">$1</mark>`);
+
+                    descEl.innerHTML = safe;
+                    highlighted = true;
+                    toggleBtn.textContent = 'Махни подчертаване';
+                }
+
+                toggleBtn.addEventListener('click', highlightYears);
+            }
+        })();
+    </script>
+}
