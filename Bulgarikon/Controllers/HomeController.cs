@@ -1,5 +1,8 @@
+using Bulgarikon.Data;
 using Bulgarikon.Models;
+using Bulgarikon.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 
 namespace Bulgarikon.Controllers
@@ -7,15 +10,25 @@ namespace Bulgarikon.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly BulgarikonDbContext context;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, BulgarikonDbContext context)
         {
             _logger = logger;
+            this.context = context;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var model = new HomeStatsViewModel
+            {
+                ErasCount = await context.Eras.CountAsync(),
+                EventsCount = await context.Events.CountAsync(),
+                FiguresCount = await context.Figures.CountAsync(),
+                ArtifactsCount = await context.Artifacts.CountAsync()
+            };
+
+            return View(model);
         }
 
         public IActionResult Privacy()

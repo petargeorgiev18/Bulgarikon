@@ -2439,3 +2439,24 @@ body.bk-modal-open {
 .bk-gallery-grid {
     padding-bottom: 12px;
 }
+
+.event-gallery-img {
+    width: 100%;
+    max-width: 320px;
+    height: auto;
+    aspect-ratio: 320 / 220;
+}
+
+@media (max-width: 576px) {
+    .bk-hero-img {
+        height: 45vh;
+    }
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.auth-card, .bk-dialog, .bk-imgpaper {
+    max-width: 100%;
+}

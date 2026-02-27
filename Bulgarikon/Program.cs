@@ -27,7 +27,8 @@ namespace Bulgarikon
             builder.Services.AddDefaultIdentity<BulgarikonUser>
                 (options => options.SignIn.RequireConfirmedAccount = false)
                 .AddRoles<IdentityRole<Guid>>()
-                .AddEntityFrameworkStores<BulgarikonDbContext>();
+                .AddEntityFrameworkStores<BulgarikonDbContext>()
+                .AddErrorDescriber<BulgarianIdentityErrorDescriber>();
 
             var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
             var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];

@@ -4,9 +4,12 @@
     ViewData["Title"] = "Епоха: " + Model.Name;
     bool isAdmin = User.IsInRole("Admin");
 
+    var startText = YearFormatter.Format(Model.StartYear);
+    var endText = YearFormatter.Format(Model.EndYear);
+
     var yearsText = (Model.StartYear == Model.EndYear)
-        ? $"{Model.StartYear}"
-        : $"{Model.StartYear} – {Model.EndYear}";
+        ? startText
+        : $"{startText} – {endText}";
 
     var hasImages = Model.Images != null && Model.Images.Any();
     var heroImg = hasImages ? Model.Images?.FirstOrDefault() : null;
@@ -207,7 +210,7 @@
                     <div class="bk-mini-dot"></div>
                     <div>
                         <div class="bk-mini-label">Начало</div>
-                        <div class="bk-mini-value">@Model.StartYear</div>
+                        <div class="bk-mini-value">@YearFormatter.Format(Model.StartYear)</div>
                     </div>
                 </div>
 
@@ -217,7 +220,7 @@
                     <div class="bk-mini-dot"></div>
                     <div>
                         <div class="bk-mini-label">Край</div>
-                        <div class="bk-mini-value">@Model.EndYear</div>
+                        <div class="bk-mini-value">@YearFormatter.Format(Model.EndYear)</div>
                     </div>
                 </div>
             </div>

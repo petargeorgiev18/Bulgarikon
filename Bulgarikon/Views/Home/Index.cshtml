@@ -1,4 +1,6 @@
-﻿@{
+﻿@model Bulgarikon.ViewModels.HomeStatsViewModel
+
+@{
     ViewData["Title"] = "Начало";
     bool isAdmin = User.IsInRole("Admin");
 }
@@ -26,19 +28,22 @@
 
         <div class="home-stats" id="homeStats">
             <div class="home-stat">
-                <div class="home-stat-num" data-target="7">0</div>
+                <div class="home-stat-num" data-target="@Model.ErasCount">0</div>
                 <div class="home-stat-label">Ключови периода</div>
             </div>
+
             <div class="home-stat">
-                <div class="home-stat-num" data-target="50">0</div>
+                <div class="home-stat-num" data-target="@Model.EventsCount">0</div>
                 <div class="home-stat-label">Събития</div>
             </div>
+
             <div class="home-stat">
-                <div class="home-stat-num" data-target="25">0</div>
+                <div class="home-stat-num" data-target="@Model.FiguresCount">0</div>
                 <div class="home-stat-label">Личности</div>
             </div>
+
             <div class="home-stat">
-                <div class="home-stat-num" data-target="120">0</div>
+                <div class="home-stat-num" data-target="@Model.ArtifactsCount">0</div>
                 <div class="home-stat-label">Артефакти</div>
             </div>
         </div>

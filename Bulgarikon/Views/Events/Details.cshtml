@@ -52,7 +52,9 @@
         <div class="home-hero-inner">
             <div class="home-badge">
                 <span>Събитие</span>
-                <span class="home-chip">@Model.StartYear – @Model.EndYear</span>
+                <span class="home-chip">
+                    @YearFormatter.Format(Model.StartYear ?? 0) – @YearFormatter.Format(Model.EndYear ?? 0)
+                </span>
                 @if (hasEra)
                 {
                     <span class="home-chip">Епоха: @Model.EraName</span>
@@ -67,7 +69,9 @@
 
             <p class="home-subtitle">
                 Продължителност: <b>@durationLabel</b>.
-                <span class="ms-1 text-muted">(@Model.StartYear → @Model.EndYear)</span>
+                <span class="ms-1 text-muted">
+                    (@YearFormatter.Format(Model.StartYear ?? 0) → @YearFormatter.Format(Model.EndYear ?? 0))
+                </span>ms-1 text-muted">(@Model.StartYear → @Model.EndYear)</span>
             </p>
 
             <div class="home-actions">
@@ -177,12 +181,12 @@
 
                     <div class="mt-2" style="display:grid; gap:10px;">
                         <div class="era-count-box" style="border-radius:16px;">
-                            <div class="era-count-num">@Model.StartYear</div>
+                            <div class="era-count-num">@YearFormatter.Format(Model.StartYear ?? 0)</div>
                             <div class="era-count-label">Начало</div>
                         </div>
 
                         <div class="era-count-box" style="border-radius:16px;">
-                            <div class="era-count-num">@Model.EndYear</div>
+                            <div class="era-count-num">@YearFormatter.Format(Model.EndYear ?? 0)</div>
                             <div class="era-count-label">Край</div>
                         </div>
 

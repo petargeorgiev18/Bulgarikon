@@ -2,6 +2,7 @@
 {
     public class QuizResultViewDto
     {
+        public Guid ResultId { get; set; }
         public Guid Id { get; set; }
         public Guid QuizId { get; set; }
         public string QuizTitle { get; set; } = "";

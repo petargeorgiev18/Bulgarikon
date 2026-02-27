@@ -29,19 +29,48 @@
                         <span asp-validation-for="Input.Email" class="text-danger"></span>
                     </div>
 
-                    <div class="form-floating mb-3">
+                    <!-- Password WITH eye toggle -->
+                    <div class="form-floating mb-3 position-relative">
                         <input asp-for="Input.Password"
-                               class="form-control auth-input"
+                               class="form-control auth-input pe-5"
+                               id="registerPassword"
+                               type="password"
                                autocomplete="new-password"
                                aria-required="true"
                                placeholder="password" />
                         <label asp-for="Input.Password">Парола</label>
+
+                        <button type="button"
+                                class="password-toggle"
+                                onclick="togglePassword('registerPassword', this)"
+                                aria-label="Покажи/скрий парола">
+                            <!-- Open Eye -->
+                            <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                 fill="none" stroke="currentColor" stroke-width="2"
+                                 viewBox="0 0 24 24">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+
+                            <!-- Closed Eye -->
+                            <svg class="eye-closed d-none" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                 fill="none" stroke="currentColor" stroke-width="2"
+                                 viewBox="0 0 24 24">
+                                <path d="M17.94 17.94A10.94 10.94 0 0 1 12 20C5 20 1 12 1 12a21.86 21.86 0 0 1 5.06-6.94" />
+                                <path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.86 21.86 0 0 1-2.16 3.19" />
+                                <line x1="1" y1="1" x2="23" y2="23" />
+                            </svg>
+                        </button>
+
                         <span asp-validation-for="Input.Password" class="text-danger"></span>
                     </div>
 
+                    <!-- ConfirmPassword WITHOUT eye toggle -->
                     <div class="form-floating mb-3">
                         <input asp-for="Input.ConfirmPassword"
                                class="form-control auth-input"
+                               id="confirmPassword"
+                               type="password"
                                autocomplete="new-password"
                                aria-required="true"
                                placeholder="password" />
@@ -130,4 +159,40 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            const openIcon = button.querySelector(".eye-open");
+            const closedIcon = button.querySelector(".eye-closed");
+
+            if (input.type === "password") {
+                input.type = "text";
+                openIcon.classList.add("d-none");
+                closedIcon.classList.remove("d-none");
+            } else {
+                input.type = "password";
+                openIcon.classList.remove("d-none");
+                closedIcon.classList.add("d-none");
+            }
+        }
+    </script>
+
+    <style>
+        .password-toggle {
+            position: absolute;
+            top: 50%;
+            right: 12px;
+            transform: translateY(-50%);
+            border: none;
+            background: none;
+            padding: 0;
+            cursor: pointer;
+            color: #6c757d;
+            line-height: 0;
+        }
+        .password-toggle:hover {
+            color: #000;
+        }
+    </style>
 }
