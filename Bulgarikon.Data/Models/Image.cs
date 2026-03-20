@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Bulgarikon.Data.Models.Enums;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Bulgarikon.Data.Models.Enums;
+using static Bulgarikon.Common.DataModelsValidation.EntityClassesValidations.Image;
 
 namespace Bulgarikon.Data.Models
 {
@@ -14,9 +10,12 @@ namespace Bulgarikon.Data.Models
         [Key]
         public Guid Id { get; set; }
         [Required]
-        [MaxLength(2048)]
+        [MaxLength(UrlMaxLength)]
         public string Url { get; set; } = null!;
         public string? Caption { get; set; }
+        [MaxLength(PublicIdMaxLength)]
+        public string? PublicId { get; set; }
+        public int SortOrder { get; set; }
         public ImageTargetType TargetType { get; set; }
         [ForeignKey(nameof(Figure))]
         public Guid? FigureId { get; set; }

@@ -4,10 +4,13 @@ using System.Threading.Tasks;
 using Bulgarikon.Core.DTOs.FigureDTOs;
 using Bulgarikon.Core.DTOs.ImageDTOs;
 using Bulgarikon.Core.Implementations;
+using Bulgarikon.Core.Interfaces;
 using Bulgarikon.Data;
 using Bulgarikon.Data.Models;
 using Bulgarikon.Data.Models.Enums;
+using Bulgarikon.Data.Repository.Interface;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using NUnit.Framework;
 
 namespace Bulgarikon.Tests.Services
@@ -16,6 +19,8 @@ namespace Bulgarikon.Tests.Services
     public class FigureServiceTests
     {
         private BulgarikonDbContext db = null!;
+        private Mock<IRepository<Figure, Guid>> figuresRepo = null!;
+        private Mock<ICloudinaryService> cloudinaryService = null!;
         private FigureService service = null!;
 
         [SetUp]
@@ -27,9 +32,13 @@ namespace Bulgarikon.Tests.Services
 
             db = new BulgarikonDbContext(options);
 
+            figuresRepo = new Mock<IRepository<Figure, Guid>>();
+            cloudinaryService = new Mock<ICloudinaryService>();
+
             service = new FigureService(
-                figures: null!,
-                context: db
+                figuresRepo.Object,
+                db,
+                cloudinaryService.Object
             );
         }
 
@@ -162,7 +171,8 @@ namespace Bulgarikon.Tests.Services
                 TargetType = ImageTargetType.Figure,
                 FigureId = fig.Id,
                 Url = "u2",
-                Caption = "c2"
+                Caption = "c2",
+                SortOrder = 1
             };
             var img1 = new Image
             {
@@ -170,7 +180,8 @@ namespace Bulgarikon.Tests.Services
                 TargetType = ImageTargetType.Figure,
                 FigureId = fig.Id,
                 Url = "u1",
-                Caption = "c1"
+                Caption = "c1",
+                SortOrder = 0
             };
 
             db.Images.AddRange(img2, img1);
@@ -186,10 +197,8 @@ namespace Bulgarikon.Tests.Services
 
             Assert.That(res.Images, Is.Not.Null);
             Assert.That(res.Images.Count, Is.EqualTo(2));
-
-            var ordered = res.Images.OrderBy(x => x.Id).ToList();
-            Assert.That(res.Images[0].Id, Is.EqualTo(ordered[0].Id));
-            Assert.That(res.Images[1].Id, Is.EqualTo(ordered[1].Id));
+            Assert.That(res.Images[0].Url, Is.EqualTo("u1"));
+            Assert.That(res.Images[1].Url, Is.EqualTo("u2"));
         }
 
         [Test]
@@ -302,11 +311,13 @@ namespace Bulgarikon.Tests.Services
 
             var imgs = await db.Images.AsNoTracking()
                 .Where(i => i.TargetType == ImageTargetType.Figure && i.FigureId == id)
+                .OrderBy(i => i.SortOrder)
                 .ToListAsync();
 
             Assert.That(imgs.Count, Is.EqualTo(1));
             Assert.That(imgs[0].Url, Is.EqualTo("https://img1"));
             Assert.That(imgs[0].Caption, Is.EqualTo("cap1"));
+            Assert.That(imgs[0].SortOrder, Is.EqualTo(0));
         }
 
         [Test]
@@ -333,8 +344,24 @@ namespace Bulgarikon.Tests.Services
             };
             db.Figures.Add(fig);
 
-            var img2 = new Image { Id = Guid.NewGuid(), TargetType = ImageTargetType.Figure, FigureId = fig.Id, Url = "u2", Caption = "c2" };
-            var img1 = new Image { Id = Guid.NewGuid(), TargetType = ImageTargetType.Figure, FigureId = fig.Id, Url = "u1", Caption = "c1" };
+            var img2 = new Image
+            {
+                Id = Guid.NewGuid(),
+                TargetType = ImageTargetType.Figure,
+                FigureId = fig.Id,
+                Url = "u2",
+                Caption = "c2",
+                SortOrder = 1
+            };
+            var img1 = new Image
+            {
+                Id = Guid.NewGuid(),
+                TargetType = ImageTargetType.Figure,
+                FigureId = fig.Id,
+                Url = "u1",
+                Caption = "c1",
+                SortOrder = 0
+            };
             db.Images.AddRange(img2, img1);
 
             await db.SaveChangesAsync();
@@ -344,10 +371,8 @@ namespace Bulgarikon.Tests.Services
             Assert.That(res, Is.Not.Null);
             Assert.That(res!.Name, Is.EqualTo("N"));
             Assert.That(res.Images.Count, Is.EqualTo(2));
-
-            var ordered = res.Images.OrderBy(x => x.Id).ToList();
-            Assert.That(res.Images[0].Id, Is.EqualTo(ordered[0].Id));
-            Assert.That(res.Images[1].Id, Is.EqualTo(ordered[1].Id));
+            Assert.That(res.Images[0].Url, Is.EqualTo("u1"));
+            Assert.That(res.Images[1].Url, Is.EqualTo("u2"));
             Assert.That(res.Images.All(x => x.Remove == false), Is.True);
         }
 
@@ -400,8 +425,24 @@ namespace Bulgarikon.Tests.Services
             };
             db.Figures.Add(fig);
 
-            var removeImg = new Image { Id = Guid.NewGuid(), TargetType = ImageTargetType.Figure, FigureId = fig.Id, Url = "remove", Caption = "r" };
-            var updateImg = new Image { Id = Guid.NewGuid(), TargetType = ImageTargetType.Figure, FigureId = fig.Id, Url = "old", Caption = "oldcap" };
+            var removeImg = new Image
+            {
+                Id = Guid.NewGuid(),
+                TargetType = ImageTargetType.Figure,
+                FigureId = fig.Id,
+                Url = "remove",
+                Caption = "r",
+                SortOrder = 0
+            };
+            var updateImg = new Image
+            {
+                Id = Guid.NewGuid(),
+                TargetType = ImageTargetType.Figure,
+                FigureId = fig.Id,
+                Url = "old",
+                Caption = "oldcap",
+                SortOrder = 1
+            };
             db.Images.AddRange(removeImg, updateImg);
 
             await db.SaveChangesAsync();
@@ -459,7 +500,15 @@ namespace Bulgarikon.Tests.Services
             };
             db.Figures.Add(fig);
 
-            var existing = new Image { Id = Guid.NewGuid(), TargetType = ImageTargetType.Figure, FigureId = fig.Id, Url = "u", Caption = "c" };
+            var existing = new Image
+            {
+                Id = Guid.NewGuid(),
+                TargetType = ImageTargetType.Figure,
+                FigureId = fig.Id,
+                Url = "u",
+                Caption = "c",
+                SortOrder = 0
+            };
             db.Images.Add(existing);
 
             await db.SaveChangesAsync();
@@ -511,8 +560,24 @@ namespace Bulgarikon.Tests.Services
             };
             db.Figures.Add(fig);
 
-            var figImg = new Image { Id = Guid.NewGuid(), TargetType = ImageTargetType.Figure, FigureId = fig.Id, Url = "u", Caption = "c" };
-            var otherTarget = new Image { Id = Guid.NewGuid(), TargetType = ImageTargetType.Era, EraId = era.Id, Url = "keep", Caption = "k" };
+            var figImg = new Image
+            {
+                Id = Guid.NewGuid(),
+                TargetType = ImageTargetType.Figure,
+                FigureId = fig.Id,
+                Url = "u",
+                Caption = "c",
+                SortOrder = 0,
+                PublicId = "figure-public-id"
+            };
+            var otherTarget = new Image
+            {
+                Id = Guid.NewGuid(),
+                TargetType = ImageTargetType.Era,
+                EraId = era.Id,
+                Url = "keep",
+                Caption = "k"
+            };
             db.Images.AddRange(figImg, otherTarget);
 
             await db.SaveChangesAsync();
@@ -524,6 +589,8 @@ namespace Bulgarikon.Tests.Services
             var imgs = await db.Images.AsNoTracking().ToListAsync();
             Assert.That(imgs.Count, Is.EqualTo(1));
             Assert.That(imgs[0].Url, Is.EqualTo("keep"));
+
+            cloudinaryService.Verify(x => x.DeleteImageAsync("figure-public-id"), Times.Once);
         }
     }
 }

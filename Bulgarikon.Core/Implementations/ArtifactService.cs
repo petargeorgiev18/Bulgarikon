@@ -1,6 +1,8 @@
 ﻿using Bulgarikon.Core.DTOs.ArtifactDTOs;
 using Bulgarikon.Core.Interfaces;
+using Bulgarikon.Data;
 using Bulgarikon.Data.Models;
+using Bulgarikon.Data.Models.Enums;
 using Bulgarikon.Data.Repository.Interface;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
@@ -10,17 +12,25 @@ namespace Bulgarikon.Core.Implementations
     public class ArtifactService : IArtifactService
     {
         private readonly IRepository<Artifact, Guid> artifacts;
+        private readonly BulgarikonDbContext context;
+        private readonly ICloudinaryService cloudinaryService;
 
-        public ArtifactService(IRepository<Artifact, Guid> artifacts)
+        public ArtifactService(
+            IRepository<Artifact, Guid> artifacts,
+            BulgarikonDbContext context,
+            ICloudinaryService cloudinaryService)
         {
             this.artifacts = artifacts;
+            this.context = context;
+            this.cloudinaryService = cloudinaryService;
         }
 
         public async Task<IEnumerable<ArtifactViewDto>> GetByEraAsync(Guid? eraId, Guid? civilizationId = null)
         {
             IQueryable<Artifact> q = artifacts.Query()
                 .Include(a => a.Era)
-                .Include(a => a.Civilization);
+                .Include(a => a.Civilization)
+                .Include(a => a.Images);
 
             if (eraId.HasValue)
                 q = q.Where(a => a.EraId == eraId.Value);
@@ -43,7 +53,11 @@ namespace Bulgarikon.Core.Implementations
                     EraName = a.Era.Name,
                     CivilizationId = a.CivilizationId,
                     CivilizationName = a.Civilization != null ? a.Civilization.Name : null,
-                    ImageUrl = a.ImageUrl
+                    ImageUrl = a.Images
+                        .Where(i => i.TargetType == ImageTargetType.Artifact && i.ArtifactId == a.Id)
+                        .OrderBy(i => i.SortOrder)
+                        .Select(i => i.Url)
+                        .FirstOrDefault() ?? a.ImageUrl
                 })
                 .ToListAsync();
         }
@@ -53,6 +67,7 @@ namespace Bulgarikon.Core.Implementations
             return await artifacts.Query()
                 .Include(a => a.Era)
                 .Include(a => a.Civilization)
+                .Include(a => a.Images)
                 .Where(a => a.Id == id)
                 .Select(a => new ArtifactDetailsDto
                 {
@@ -67,7 +82,11 @@ namespace Bulgarikon.Core.Implementations
                     EraName = a.Era.Name,
                     CivilizationId = a.CivilizationId,
                     CivilizationName = a.Civilization != null ? a.Civilization.Name : null,
-                    ImageUrl = a.ImageUrl
+                    ImageUrl = a.Images
+                        .Where(i => i.TargetType == ImageTargetType.Artifact && i.ArtifactId == a.Id)
+                        .OrderBy(i => i.SortOrder)
+                        .Select(i => i.Url)
+                        .FirstOrDefault() ?? a.ImageUrl
                 })
                 .FirstOrDefaultAsync();
         }
@@ -86,23 +105,69 @@ namespace Bulgarikon.Core.Implementations
                 Location = model.Location.Trim(),
                 DiscoveredAt = model.DiscoveredAt,
                 EraId = model.EraId,
-                CivilizationId = model.CivilizationId,
-                ImageUrl = string.IsNullOrWhiteSpace(model.ImageUrl)
-                    ? null
-                    : model.ImageUrl.Trim()
+                CivilizationId = model.CivilizationId
             };
 
             await artifacts.AddAsync(entity);
-            await artifacts.SaveChangesAsync();
+
+            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            {
+                var uploadResult = await cloudinaryService.UploadImageAsync(model.ImageFile);
+
+                var image = new Image
+                {
+                    Id = Guid.NewGuid(),
+                    Url = uploadResult.Url,
+                    PublicId = uploadResult.PublicId,
+                    Caption = entity.Name,
+                    SortOrder = 0,
+                    TargetType = ImageTargetType.Artifact,
+                    ArtifactId = entity.Id
+                };
+
+                await context.Images.AddAsync(image);
+                entity.ImageUrl = uploadResult.Url;
+            }
+            else if (!string.IsNullOrWhiteSpace(model.ImageUrl))
+            {
+                var cleanUrl = model.ImageUrl.Trim();
+
+                var image = new Image
+                {
+                    Id = Guid.NewGuid(),
+                    Url = cleanUrl,
+                    PublicId = null,
+                    Caption = entity.Name,
+                    SortOrder = 0,
+                    TargetType = ImageTargetType.Artifact,
+                    ArtifactId = entity.Id
+                };
+
+                await context.Images.AddAsync(image);
+                entity.ImageUrl = cleanUrl;
+            }
+            else
+            {
+                entity.ImageUrl = null;
+            }
+
+            await context.SaveChangesAsync();
             return entity.Id;
         }
 
         public async Task<ArtifactFormDto?> GetForEditAsync(Guid id)
         {
             var a = await artifacts.Query()
+                .Include(x => x.Images)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (a == null) return null;
+
+            var mainImageUrl = a.Images
+                .Where(i => i.TargetType == ImageTargetType.Artifact && i.ArtifactId == a.Id)
+                .OrderBy(i => i.SortOrder)
+                .Select(i => i.Url)
+                .FirstOrDefault() ?? a.ImageUrl;
 
             return new ArtifactFormDto
             {
@@ -114,7 +179,7 @@ namespace Bulgarikon.Core.Implementations
                 DiscoveredAt = a.DiscoveredAt,
                 EraId = a.EraId,
                 CivilizationId = a.CivilizationId,
-                ImageUrl = a.ImageUrl
+                ImageUrl = mainImageUrl
             };
         }
 
@@ -122,7 +187,10 @@ namespace Bulgarikon.Core.Implementations
         {
             Validate(model);
 
-            var a = await artifacts.GetByIdTrackedAsync(id);
+            var a = await context.Artifacts
+                .Include(x => x.Images)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
             if (a == null)
                 throw new InvalidOperationException("Artifact not found.");
 
@@ -134,22 +202,113 @@ namespace Bulgarikon.Core.Implementations
             a.DiscoveredAt = model.DiscoveredAt;
             a.EraId = model.EraId;
             a.CivilizationId = model.CivilizationId;
-            a.ImageUrl = string.IsNullOrWhiteSpace(model.ImageUrl)
-                ? null
-                : model.ImageUrl.Trim();
 
-            await artifacts.SaveChangesAsync();
+            var existingImages = a.Images
+                .Where(i => i.TargetType == ImageTargetType.Artifact && i.ArtifactId == a.Id)
+                .ToList();
+
+            if (model.ImageFile != null && model.ImageFile.Length > 0)
+            {
+                foreach (var img in existingImages)
+                {
+                    if (!string.IsNullOrWhiteSpace(img.PublicId))
+                    {
+                        await cloudinaryService.DeleteImageAsync(img.PublicId);
+                    }
+                }
+
+                if (existingImages.Any())
+                    context.Images.RemoveRange(existingImages);
+
+                var uploadResult = await cloudinaryService.UploadImageAsync(model.ImageFile);
+
+                var newImage = new Image
+                {
+                    Id = Guid.NewGuid(),
+                    Url = uploadResult.Url,
+                    PublicId = uploadResult.PublicId,
+                    Caption = a.Name,
+                    SortOrder = 0,
+                    TargetType = ImageTargetType.Artifact,
+                    ArtifactId = a.Id
+                };
+
+                await context.Images.AddAsync(newImage);
+                a.ImageUrl = uploadResult.Url;
+            }
+            else if (!string.IsNullOrWhiteSpace(model.ImageUrl))
+            {
+                var cleanUrl = model.ImageUrl.Trim();
+
+                foreach (var img in existingImages.Where(x => !string.IsNullOrWhiteSpace(x.PublicId)))
+                {
+                    await cloudinaryService.DeleteImageAsync(img.PublicId!);
+                }
+
+                if (existingImages.Any())
+                    context.Images.RemoveRange(existingImages);
+
+                var newImage = new Image
+                {
+                    Id = Guid.NewGuid(),
+                    Url = cleanUrl,
+                    PublicId = null,
+                    Caption = a.Name,
+                    SortOrder = 0,
+                    TargetType = ImageTargetType.Artifact,
+                    ArtifactId = a.Id
+                };
+
+                await context.Images.AddAsync(newImage);
+                a.ImageUrl = cleanUrl;
+            }
+            else
+            {
+                foreach (var img in existingImages)
+                {
+                    if (!string.IsNullOrWhiteSpace(img.PublicId))
+                    {
+                        await cloudinaryService.DeleteImageAsync(img.PublicId);
+                    }
+                }
+
+                if (existingImages.Any())
+                    context.Images.RemoveRange(existingImages);
+
+                a.ImageUrl = null;
+            }
+
+            await context.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(Guid id)
         {
-            var a = await artifacts.GetByIdTrackedAsync(id);
+            var a = await context.Artifacts
+                .Include(x => x.Images)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
             if (a == null) return;
 
+            var artifactImages = a.Images
+                .Where(i => i.TargetType == ImageTargetType.Artifact && i.ArtifactId == a.Id)
+                .ToList();
+
+            foreach (var img in artifactImages)
+            {
+                if (!string.IsNullOrWhiteSpace(img.PublicId))
+                {
+                    await cloudinaryService.DeleteImageAsync(img.PublicId);
+                }
+            }
+
+            if (artifactImages.Any())
+                context.Images.RemoveRange(artifactImages);
+
             artifacts.Delete(a);
-            await artifacts.SaveChangesAsync();
+            await context.SaveChangesAsync();
         }
 
+        // Validates the artifact form data before creation or update.
         private static void Validate(ArtifactFormDto m)
         {
             if (m.DiscoveredAt.Date > DateTime.Today)

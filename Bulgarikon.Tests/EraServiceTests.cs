@@ -1,6 +1,7 @@
 ﻿using Bulgarikon.Core.DTOs.EraDTOs;
 using Bulgarikon.Core.DTOs.ImageDTOs;
 using Bulgarikon.Core.Implementations;
+using Bulgarikon.Core.Interfaces;
 using Bulgarikon.Data;
 using Bulgarikon.Data.Models;
 using Bulgarikon.Data.Models.Enums;
@@ -14,6 +15,7 @@ namespace Bulgarikon.Tests.Services
     public class EraServiceTests
     {
         private Mock<IRepository<Era, Guid>> eraRepo = null!;
+        private Mock<ICloudinaryService> cloudinaryServiceMock = null!;
         private BulgarikonDbContext db = null!;
         private EraService service = null!;
 
@@ -27,6 +29,7 @@ namespace Bulgarikon.Tests.Services
             db = new BulgarikonDbContext(options);
 
             eraRepo = new Mock<IRepository<Era, Guid>>();
+            cloudinaryServiceMock = new Mock<ICloudinaryService>();
 
             eraRepo.Setup(r => r.Query()).Returns(db.Eras);
 
@@ -34,7 +37,7 @@ namespace Bulgarikon.Tests.Services
                 .Callback<Era>(e => db.Eras.Add(e))
                 .Returns(Task.CompletedTask);
 
-            service = new EraService(eraRepo.Object, db);
+            service = new EraService(eraRepo.Object, db, cloudinaryServiceMock.Object);
         }
 
         [TearDown]
@@ -44,7 +47,7 @@ namespace Bulgarikon.Tests.Services
         }
 
         [Test]
-        public async Task GetAllAsync_ReturnsEras_WithOnlyEraImages()
+        public async Task GetAllAsync_ReturnsOnlyNotDeletedEras_WithOnlyEraImages()
         {
             var era1 = new Era
             {
@@ -52,7 +55,8 @@ namespace Bulgarikon.Tests.Services
                 Name = "Era1",
                 Description = "D1",
                 StartYear = 1,
-                EndYear = 10
+                EndYear = 10,
+                IsDeleted = false
             };
 
             var era2 = new Era
@@ -61,10 +65,21 @@ namespace Bulgarikon.Tests.Services
                 Name = "Era2",
                 Description = "D2",
                 StartYear = 11,
-                EndYear = 20
+                EndYear = 20,
+                IsDeleted = false
             };
 
-            db.Eras.AddRange(era1, era2);
+            var deletedEra = new Era
+            {
+                Id = Guid.NewGuid(),
+                Name = "DeletedEra",
+                Description = "Hidden",
+                StartYear = 21,
+                EndYear = 30,
+                IsDeleted = true
+            };
+
+            db.Eras.AddRange(era1, era2, deletedEra);
 
             db.Images.AddRange(
                 new Image
@@ -73,14 +88,24 @@ namespace Bulgarikon.Tests.Services
                     TargetType = ImageTargetType.Era,
                     EraId = era1.Id,
                     Url = "https://era1/1",
-                    Caption = "c1"
+                    Caption = "c1",
+                    SortOrder = 0
                 },
                 new Image
                 {
                     Id = Guid.NewGuid(),
                     TargetType = ImageTargetType.Era,
                     EraId = era2.Id,
-                    Url = "https://era2/1"
+                    Url = "https://era2/1",
+                    SortOrder = 0
+                },
+                new Image
+                {
+                    Id = Guid.NewGuid(),
+                    TargetType = ImageTargetType.Era,
+                    EraId = deletedEra.Id,
+                    Url = "https://deleted/1",
+                    SortOrder = 0
                 });
 
             db.Images.Add(new Image
@@ -96,6 +121,7 @@ namespace Bulgarikon.Tests.Services
             var result = (await service.GetAllAsync()).ToList();
 
             Assert.That(result.Count, Is.EqualTo(2));
+            Assert.That(result.Any(x => x.Id == deletedEra.Id), Is.False);
 
             var r1 = result.First(x => x.Id == era1.Id);
             Assert.That(r1.Images.Count, Is.EqualTo(1));
@@ -107,11 +133,29 @@ namespace Bulgarikon.Tests.Services
             Assert.That(r2.Images[0].Url, Is.EqualTo("https://era2/1"));
         }
 
-
         [Test]
         public void GetByIdAsync_Throws_WhenNotFound()
         {
             Assert.ThrowsAsync<KeyNotFoundException>(() => service.GetByIdAsync(Guid.NewGuid()));
+        }
+
+        [Test]
+        public void GetByIdAsync_Throws_WhenEraIsSoftDeleted()
+        {
+            var era = new Era
+            {
+                Id = Guid.NewGuid(),
+                Name = "Deleted",
+                Description = "Desc",
+                StartYear = 1,
+                EndYear = 2,
+                IsDeleted = true
+            };
+
+            db.Eras.Add(era);
+            db.SaveChanges();
+
+            Assert.ThrowsAsync<KeyNotFoundException>(() => service.GetByIdAsync(era.Id));
         }
 
         [Test]
@@ -123,7 +167,8 @@ namespace Bulgarikon.Tests.Services
                 Name = "Era",
                 Description = "Desc",
                 StartYear = 1,
-                EndYear = 2
+                EndYear = 2,
+                IsDeleted = false
             };
 
             db.Eras.Add(era);
@@ -135,7 +180,8 @@ namespace Bulgarikon.Tests.Services
                     TargetType = ImageTargetType.Era,
                     EraId = era.Id,
                     Url = "https://era/1",
-                    Caption = "cap"
+                    Caption = "cap",
+                    SortOrder = 0
                 },
                 new Image
                 {
@@ -184,8 +230,9 @@ namespace Bulgarikon.Tests.Services
                 {
                     new ImageEditDto { Url = "  https://img/1  ", Caption = "  cap1  " },
                     new ImageEditDto { Url = "   ", Caption = "ignored" },
-                    new ImageEditDto { Url = null, Caption = "ignored" }  
-                }
+                    new ImageEditDto { Url = null, Caption = "ignored" }
+                },
+                ImageFiles = null
             };
 
             await service.CreateAsync(dto);
@@ -196,14 +243,17 @@ namespace Bulgarikon.Tests.Services
             Assert.That(createdEra.Description, Is.EqualTo("Desc"));
             Assert.That(createdEra.StartYear, Is.EqualTo(1));
             Assert.That(createdEra.EndYear, Is.EqualTo(2));
+            Assert.That(createdEra.IsDeleted, Is.False);
 
             var imgs = await db.Images.AsNoTracking()
                 .Where(i => i.TargetType == ImageTargetType.Era && i.EraId == createdEra.Id)
+                .OrderBy(i => i.SortOrder)
                 .ToListAsync();
 
             Assert.That(imgs.Count, Is.EqualTo(1));
             Assert.That(imgs[0].Url, Is.EqualTo("https://img/1"));
             Assert.That(imgs[0].Caption, Is.EqualTo("cap1"));
+            Assert.That(imgs[0].SortOrder, Is.EqualTo(0));
         }
 
         [Test]
@@ -215,7 +265,8 @@ namespace Bulgarikon.Tests.Services
                 Description = null,
                 StartYear = 1,
                 EndYear = 2,
-                Images = null
+                Images = new List<ImageEditDto>(),
+                ImageFiles = null
             };
 
             await service.CreateAsync(dto);
@@ -235,14 +286,15 @@ namespace Bulgarikon.Tests.Services
         }
 
         [Test]
-        public async Task Delete_RemovesEra_AndOnlyEraImages()
+        public async Task Delete_SoftDeletesEra_AndDoesNotRemoveImages()
         {
             var era = new Era
             {
                 Id = Guid.NewGuid(),
                 Name = "Era",
                 StartYear = 1,
-                EndYear = 2
+                EndYear = 2,
+                IsDeleted = false
             };
 
             db.Eras.Add(era);
@@ -252,7 +304,8 @@ namespace Bulgarikon.Tests.Services
                 Id = Guid.NewGuid(),
                 TargetType = ImageTargetType.Era,
                 EraId = era.Id,
-                Url = "https://era/1"
+                Url = "https://era/1",
+                SortOrder = 0
             };
 
             var eraImg2 = new Image
@@ -260,7 +313,8 @@ namespace Bulgarikon.Tests.Services
                 Id = Guid.NewGuid(),
                 TargetType = ImageTargetType.Era,
                 EraId = era.Id,
-                Url = "https://era/2"
+                Url = "https://era/2",
+                SortOrder = 1
             };
 
             var otherImg = new Image
@@ -276,16 +330,71 @@ namespace Bulgarikon.Tests.Services
 
             await service.Delete(era.Id);
 
-            var eraStillThere = await db.Eras.AsNoTracking().AnyAsync(e => e.Id == era.Id);
-            Assert.That(eraStillThere, Is.False);
+            var dbEra = await db.Eras.AsNoTracking().FirstAsync(e => e.Id == era.Id);
+            Assert.That(dbEra.IsDeleted, Is.True);
 
             var eraImgsStillThere = await db.Images.AsNoTracking()
-                .AnyAsync(i => i.TargetType == ImageTargetType.Era && i.EraId == era.Id);
-            Assert.That(eraImgsStillThere, Is.False);
+                .CountAsync(i => i.TargetType == ImageTargetType.Era && i.EraId == era.Id);
+            Assert.That(eraImgsStillThere, Is.EqualTo(2));
 
             var otherStillThere = await db.Images.AsNoTracking()
                 .AnyAsync(i => i.Id == otherImg.Id);
             Assert.That(otherStillThere, Is.True);
+        }
+
+        [Test]
+        public async Task Delete_DoesNotCallCloudinaryDelete_BecauseSoftDeleteDoesNotRemoveImages()
+        {
+            var era = new Era
+            {
+                Id = Guid.NewGuid(),
+                Name = "Era",
+                StartYear = 1,
+                EndYear = 2,
+                IsDeleted = false
+            };
+
+            db.Eras.Add(era);
+
+            var eraImg = new Image
+            {
+                Id = Guid.NewGuid(),
+                TargetType = ImageTargetType.Era,
+                EraId = era.Id,
+                Url = "https://era/1",
+                PublicId = "bulgarikon/test-image",
+                SortOrder = 0
+            };
+
+            db.Images.Add(eraImg);
+            await db.SaveChangesAsync();
+
+            await service.Delete(era.Id);
+
+            cloudinaryServiceMock.Verify(
+                x => x.DeleteImageAsync(It.IsAny<string>()),
+                Times.Never);
+        }
+
+        [Test]
+        public async Task Delete_WhenAlreadySoftDeleted_DoesNothing()
+        {
+            var era = new Era
+            {
+                Id = Guid.NewGuid(),
+                Name = "Era",
+                StartYear = 1,
+                EndYear = 2,
+                IsDeleted = true
+            };
+
+            db.Eras.Add(era);
+            await db.SaveChangesAsync();
+
+            await service.Delete(era.Id);
+
+            var dbEra = await db.Eras.AsNoTracking().FirstAsync(e => e.Id == era.Id);
+            Assert.That(dbEra.IsDeleted, Is.True);
         }
 
         [Test]
@@ -318,6 +427,34 @@ namespace Bulgarikon.Tests.Services
         }
 
         [Test]
+        public void EditAsync_Throws_WhenEraIsSoftDeleted()
+        {
+            var era = new Era
+            {
+                Id = Guid.NewGuid(),
+                Name = "DeletedEra",
+                Description = "D",
+                StartYear = 1,
+                EndYear = 2,
+                IsDeleted = true
+            };
+
+            db.Eras.Add(era);
+            db.SaveChanges();
+
+            var dto = new EraFormDto
+            {
+                Name = "Era",
+                Description = "D",
+                StartYear = 1,
+                EndYear = 2,
+                Images = new List<ImageEditDto>()
+            };
+
+            Assert.ThrowsAsync<KeyNotFoundException>(() => service.EditAsync(era.Id, dto));
+        }
+
+        [Test]
         public async Task EditAsync_UpdatesEraFields_AndRemovesMarkedImages()
         {
             var era = new Era
@@ -326,7 +463,8 @@ namespace Bulgarikon.Tests.Services
                 Name = "Old",
                 Description = "OldDesc",
                 StartYear = 1,
-                EndYear = 2
+                EndYear = 2,
+                IsDeleted = false
             };
 
             var img1 = new Image
@@ -335,7 +473,8 @@ namespace Bulgarikon.Tests.Services
                 TargetType = ImageTargetType.Era,
                 EraId = era.Id,
                 Url = "https://old/1",
-                Caption = "c1"
+                Caption = "c1",
+                SortOrder = 0
             };
 
             var img2 = new Image
@@ -344,7 +483,8 @@ namespace Bulgarikon.Tests.Services
                 TargetType = ImageTargetType.Era,
                 EraId = era.Id,
                 Url = "https://old/2",
-                Caption = "c2"
+                Caption = "c2",
+                SortOrder = 1
             };
 
             db.Eras.Add(era);
@@ -359,9 +499,10 @@ namespace Bulgarikon.Tests.Services
                 EndYear = 20,
                 Images = new List<ImageEditDto>
                 {
-                    new ImageEditDto { Id = img1.Id, Remove = true }, // remove img1
-                    new ImageEditDto { Id = img2.Id, Url = "https://old/2", Caption = "c2", Remove = false } // keep img2
-                }
+                    new ImageEditDto { Id = img1.Id, Remove = true },
+                    new ImageEditDto { Id = img2.Id, Url = "https://old/2", Caption = "c2", Remove = false }
+                },
+                ImageFiles = null
             };
 
             await service.EditAsync(era.Id, dto);
@@ -374,11 +515,61 @@ namespace Bulgarikon.Tests.Services
 
             var imgs = await db.Images.AsNoTracking()
                 .Where(i => i.TargetType == ImageTargetType.Era && i.EraId == era.Id)
-                .OrderBy(i => i.Id)
+                .OrderBy(i => i.SortOrder)
                 .ToListAsync();
 
             Assert.That(imgs.Count, Is.EqualTo(1));
             Assert.That(imgs[0].Id, Is.EqualTo(img2.Id));
+        }
+
+        [Test]
+        public async Task EditAsync_RemovingCloudinaryImage_CallsDeleteImageAsync()
+        {
+            var era = new Era
+            {
+                Id = Guid.NewGuid(),
+                Name = "Era",
+                StartYear = 1,
+                EndYear = 2,
+                IsDeleted = false
+            };
+
+            var img = new Image
+            {
+                Id = Guid.NewGuid(),
+                TargetType = ImageTargetType.Era,
+                EraId = era.Id,
+                Url = "https://old/1",
+                PublicId = "bulgarikon/old-public-id",
+                SortOrder = 0
+            };
+
+            db.Eras.Add(era);
+            db.Images.Add(img);
+            await db.SaveChangesAsync();
+
+            var dto = new EraFormDto
+            {
+                Name = "Era",
+                Description = "",
+                StartYear = 1,
+                EndYear = 2,
+                Images = new List<ImageEditDto>
+                {
+                    new ImageEditDto
+                    {
+                        Id = img.Id,
+                        Remove = true
+                    }
+                },
+                ImageFiles = null
+            };
+
+            await service.EditAsync(era.Id, dto);
+
+            cloudinaryServiceMock.Verify(
+                x => x.DeleteImageAsync("bulgarikon/old-public-id"),
+                Times.Once);
         }
 
         [Test]
@@ -389,7 +580,8 @@ namespace Bulgarikon.Tests.Services
                 Id = Guid.NewGuid(),
                 Name = "Era",
                 StartYear = 1,
-                EndYear = 2
+                EndYear = 2,
+                IsDeleted = false
             };
 
             var img = new Image
@@ -398,7 +590,8 @@ namespace Bulgarikon.Tests.Services
                 TargetType = ImageTargetType.Era,
                 EraId = era.Id,
                 Url = "https://old",
-                Caption = "oldcap"
+                Caption = "oldcap",
+                SortOrder = 0
             };
 
             db.Eras.Add(era);
@@ -420,7 +613,8 @@ namespace Bulgarikon.Tests.Services
                         Caption = "  newcap  ",
                         Remove = false
                     }
-                }
+                },
+                ImageFiles = null
             };
 
             await service.EditAsync(era.Id, dto);
@@ -440,7 +634,8 @@ namespace Bulgarikon.Tests.Services
                 Id = Guid.NewGuid(),
                 Name = "Era",
                 StartYear = 1,
-                EndYear = 2
+                EndYear = 2,
+                IsDeleted = false
             };
 
             var img = new Image
@@ -449,7 +644,8 @@ namespace Bulgarikon.Tests.Services
                 TargetType = ImageTargetType.Era,
                 EraId = era.Id,
                 Url = "https://old",
-                Caption = "oldcap"
+                Caption = "oldcap",
+                SortOrder = 0
             };
 
             db.Eras.Add(era);
@@ -471,7 +667,8 @@ namespace Bulgarikon.Tests.Services
                         Caption = "newcap",
                         Remove = false
                     }
-                }
+                },
+                ImageFiles = null
             };
 
             await service.EditAsync(era.Id, dto);
@@ -489,7 +686,8 @@ namespace Bulgarikon.Tests.Services
                 Id = Guid.NewGuid(),
                 Name = "Era",
                 StartYear = 1,
-                EndYear = 2
+                EndYear = 2,
+                IsDeleted = false
             };
 
             db.Eras.Add(era);
@@ -506,21 +704,25 @@ namespace Bulgarikon.Tests.Services
                     new ImageEditDto { Url = "  https://new/1  ", Caption = "  c1  " },
                     new ImageEditDto { Url = "   " },
                     new ImageEditDto { Url = "https://new/2", Caption = null }
-                }
+                },
+                ImageFiles = null
             };
 
             await service.EditAsync(era.Id, dto);
 
             var imgs = await db.Images.AsNoTracking()
                 .Where(i => i.TargetType == ImageTargetType.Era && i.EraId == era.Id)
-                .OrderBy(i => i.Url)
+                .OrderBy(i => i.SortOrder)
                 .ToListAsync();
 
             Assert.That(imgs.Count, Is.EqualTo(2));
             Assert.That(imgs[0].Url, Is.EqualTo("https://new/1"));
             Assert.That(imgs[0].Caption, Is.EqualTo("c1"));
+            Assert.That(imgs[0].SortOrder, Is.EqualTo(0));
+
             Assert.That(imgs[1].Url, Is.EqualTo("https://new/2"));
             Assert.That(imgs[1].Caption, Is.Null);
+            Assert.That(imgs[1].SortOrder, Is.EqualTo(1));
         }
 
         [Test]
@@ -531,7 +733,8 @@ namespace Bulgarikon.Tests.Services
                 Id = Guid.NewGuid(),
                 Name = "Era",
                 StartYear = 1,
-                EndYear = 2
+                EndYear = 2,
+                IsDeleted = false
             };
 
             var existingImg = new Image
@@ -540,7 +743,8 @@ namespace Bulgarikon.Tests.Services
                 TargetType = ImageTargetType.Era,
                 EraId = era.Id,
                 Url = "https://old",
-                Caption = "old"
+                Caption = "old",
+                SortOrder = 0
             };
 
             db.Eras.Add(era);
@@ -562,7 +766,8 @@ namespace Bulgarikon.Tests.Services
                         Caption = "x",
                         Remove = false
                     }
-                }
+                },
+                ImageFiles = null
             };
 
             await service.EditAsync(era.Id, dto);

@@ -1,4 +1,5 @@
 ﻿using Bulgarikon.Core.DTOs.ImageDTOs;
+using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 using static Bulgarikon.Common.DataModelsValidation.EntityClassesValidations.Era;
 
@@ -23,5 +24,7 @@ namespace Bulgarikon.Core.DTOs.EraDTOs
         public int EndYear { get; set; }
 
         public List<ImageEditDto> Images { get; set; } = new();
+
+        public List<IFormFile>? ImageFiles { get; set; }
     }
 }

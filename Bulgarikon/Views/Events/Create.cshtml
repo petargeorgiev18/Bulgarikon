@@ -16,7 +16,7 @@
 
     <div class="card shadow-sm">
         <div class="card-body">
-            <form asp-action="Create" method="post" autocomplete="off">
+            <form asp-action="Create" method="post" enctype="multipart/form-data" autocomplete="off">
                 @Html.AntiForgeryToken()
 
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3"></div>
@@ -44,7 +44,7 @@
                         <label class="form-label">Крайна година</label>
                         <input asp-for="EndYear" class="form-control" type="number" />
                         <span asp-validation-for="EndYear" class="text-danger"></span>
-                        <div class="form-text">Ако е едногодишно — остави EndYear празно (ще се нормализира).</div>
+                        <div class="form-text">Ако е едногодишно — остави EndYear празно.</div>
                     </div>
 
                     <div class="col-12">
@@ -70,18 +70,25 @@
                         <select asp-for="FigureIds" class="form-select" multiple
                                 asp-items="(IEnumerable<SelectListItem>)ViewBag.Figures"></select>
                     </div>
+
+                    <div class="col-12">
+                        <label asp-for="ImageFiles" class="form-label fw-semibold">Качи снимки (по избор)</label>
+                        <input asp-for="ImageFiles" type="file" multiple class="form-control" accept="image/*" />
+                        <span asp-validation-for="ImageFiles" class="text-danger"></span>
+                        <div class="text-muted small mt-2">Качените файлове ще се добавят в галерията.</div>
+                    </div>
                 </div>
 
                 <hr class="my-4" />
 
                 <div class="d-flex align-items-center justify-content-between">
-                    <h5 class="mb-0">Снимки</h5>
+                    <h5 class="mb-0">Снимки чрез URL</h5>
                     <button type="button" class="btn btn-sm btn-outline-dark" id="addEventImgBtn">+ Добави снимка</button>
                 </div>
 
                 <div id="eventImagesWrap" class="mt-3" style="display:grid; gap:12px;"></div>
                 <div class="text-muted small mt-2">
-                    Добави URL, надпис по желание. “Премахни” е полезно основно при Edit, но го оставяме и тук.
+                    Добави URL и надпис по желание.
                 </div>
 
                 <div class="d-flex justify-content-end gap-2 mt-4">
@@ -124,10 +131,7 @@
                         </div>
                         <div class="bk-imgrow-actions">
                             <label class="form-label fw-semibold d-block">Премахни</label>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="Images[${i}].Remove" ${removeVal ? 'checked' : ''} />
-                                <label class="form-check-label">Изтрий</label>
-                            </div>
+                            <button type="button" class="btn btn-outline-danger w-100" data-remove>Изтрий ред</button>
                         </div>
                     </div>
                     <div class="bk-imgrow-preview" hidden>
@@ -138,7 +142,6 @@
 
                 const urlInput = row.querySelector(`input[name="Images[${i}].Url"]`);
                 const capInput = row.querySelector(`input[name="Images[${i}].Caption"]`);
-                const removeInput = row.querySelector(`input[name="Images[${i}].Remove"]`);
                 const prev = row.querySelector('.bk-imgrow-preview');
                 const img = row.querySelector('img');
                 const cap = row.querySelector('.bk-imgrow-cap');
@@ -146,19 +149,17 @@
                 function refreshPreview() {
                     const u = (urlInput?.value || '').trim();
                     const c = (capInput?.value || '').trim();
-                    const rm = !!removeInput?.checked;
 
-                    if (!u) { prev.hidden = true; row.style.opacity = '1'; return; }
+                    if (!u) { prev.hidden = true; return; }
 
                     img.src = u;
                     cap.textContent = c;
                     prev.hidden = false;
-                    row.style.opacity = rm ? '0.5' : '1';
                 }
 
                 urlInput?.addEventListener('input', refreshPreview);
                 capInput?.addEventListener('input', refreshPreview);
-                removeInput?.addEventListener('change', refreshPreview);
+                row.querySelector('[data-remove]')?.addEventListener('click', () => row.remove());
 
                 wrap.appendChild(row);
                 refreshPreview();

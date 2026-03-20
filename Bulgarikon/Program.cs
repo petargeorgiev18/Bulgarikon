@@ -70,6 +70,7 @@ namespace Bulgarikon
             builder.Services.AddScoped<IQuizResultService, QuizResultService>();
             builder.Services.AddScoped<IFeedbackService, FeedbackService>();
             builder.Services.AddScoped<IFeedbackNotificationService, FeedbackNotificationService>();
+            builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
 
             var app = builder.Build();
 

@@ -20,7 +20,7 @@
 
     <div class="card shadow-sm era-paper">
         <div class="card-body p-4">
-            <form asp-action="Create" method="post" autocomplete="off">
+            <form asp-action="Create" method="post" enctype="multipart/form-data" autocomplete="off">
                 @Html.AntiForgeryToken()
 
                 @if (hasErrors)
@@ -84,8 +84,15 @@
 
                 <hr class="my-4" />
 
+                <div class="mb-3">
+                    <label asp-for="ImageFiles" class="form-label fw-semibold">Качи снимки (по избор)</label>
+                    <input asp-for="ImageFiles" type="file" multiple class="form-control" accept="image/*" />
+                    <span asp-validation-for="ImageFiles" class="text-danger"></span>
+                    <div class="text-muted small mt-2">Качените файлове ще се добавят в галерията.</div>
+                </div>
+
                 <div class="d-flex align-items-center justify-content-between">
-                    <h5 class="mb-0">Снимки</h5>
+                    <h5 class="mb-0">Снимки чрез URL</h5>
                     <button type="button" class="btn btn-sm btn-outline-dark" id="addFigImgBtn">+ Добави снимка</button>
                 </div>
 

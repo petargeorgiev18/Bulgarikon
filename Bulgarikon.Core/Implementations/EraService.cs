@@ -1,6 +1,7 @@
 ﻿using Bulgarikon.Core.DTOs;
 using Bulgarikon.Core.DTOs.EraDTOs;
 using Bulgarikon.Core.DTOs.ImageDTOs;
+using Bulgarikon.Core.Interfaces;
 using Bulgarikon.Data;
 using Bulgarikon.Data.Models;
 using Bulgarikon.Data.Models.Enums;
@@ -12,18 +13,24 @@ namespace Bulgarikon.Core.Implementations
     public class EraService : IEraService
     {
         private readonly IRepository<Era, Guid> eraRepository;
+        private readonly ICloudinaryService cloudinaryService;
         private readonly BulgarikonDbContext context;
 
-        public EraService(IRepository<Era, Guid> eraRepository, BulgarikonDbContext context)
+        public EraService(
+            IRepository<Era, Guid> eraRepository,
+            BulgarikonDbContext context,
+            ICloudinaryService cloudinaryService)
         {
             this.eraRepository = eraRepository;
             this.context = context;
+            this.cloudinaryService = cloudinaryService;
         }
 
         public async Task<IEnumerable<EraViewDto>> GetAllAsync()
         {
             var eras = await eraRepository.Query()
                 .AsNoTracking()
+                .Where(e => !e.IsDeleted)
                 .Include(e => e.Images)
                 .ToListAsync();
 
@@ -36,6 +43,7 @@ namespace Bulgarikon.Core.Implementations
                 EndYear = e.EndYear,
                 Images = e.Images
                     .Where(i => i.TargetType == ImageTargetType.Era && i.EraId == e.Id)
+                    .OrderBy(i => i.SortOrder)
                     .Select(i => new ImageViewDto
                     {
                         Id = i.Id,
@@ -50,8 +58,9 @@ namespace Bulgarikon.Core.Implementations
         {
             var era = await eraRepository.Query()
                 .AsNoTracking()
+                .Where(e => e.Id == id && !e.IsDeleted)
                 .Include(e => e.Images)
-                .FirstOrDefaultAsync(e => e.Id == id);
+                .FirstOrDefaultAsync();
 
             if (era == null)
                 throw new KeyNotFoundException("Era not found.");
@@ -65,6 +74,7 @@ namespace Bulgarikon.Core.Implementations
                 EndYear = era.EndYear,
                 Images = era.Images
                     .Where(i => i.TargetType == ImageTargetType.Era && i.EraId == era.Id)
+                    .OrderBy(i => i.SortOrder)
                     .Select(i => new ImageViewDto
                     {
                         Id = i.Id,
@@ -86,18 +96,42 @@ namespace Bulgarikon.Core.Implementations
                 Name = model.Name.Trim(),
                 Description = model.Description?.Trim(),
                 StartYear = model.StartYear,
-                EndYear = model.EndYear
+                EndYear = model.EndYear,
+                IsDeleted = false
             };
 
             await eraRepository.AddAsync(era);
 
-            var newImages = (model.Images ?? new List<ImageEditDto>())
-                .Where(x => !string.IsNullOrWhiteSpace(x.Url))
+            int sortOrder = 0;
+
+            if (model.ImageFiles != null && model.ImageFiles.Any())
+            {
+                foreach (var file in model.ImageFiles.Where(f => f.Length > 0))
+                {
+                    var uploadResult = await cloudinaryService.UploadImageAsync(file);
+
+                    await context.Images.AddAsync(new Image
+                    {
+                        Id = Guid.NewGuid(),
+                        Url = uploadResult.Url,
+                        PublicId = uploadResult.PublicId,
+                        Caption = null,
+                        SortOrder = sortOrder++,
+                        TargetType = ImageTargetType.Era,
+                        EraId = era.Id
+                    });
+                }
+            }
+
+            var newImages = model.Images
+                .Where(x => !x.Id.HasValue && !x.Remove && !string.IsNullOrWhiteSpace(x.Url))
                 .Select(x => new Image
                 {
                     Id = Guid.NewGuid(),
                     Url = x.Url.Trim(),
+                    PublicId = null,
                     Caption = string.IsNullOrWhiteSpace(x.Caption) ? null : x.Caption.Trim(),
+                    SortOrder = sortOrder++,
                     TargetType = ImageTargetType.Era,
                     EraId = era.Id
                 })
@@ -112,20 +146,15 @@ namespace Bulgarikon.Core.Implementations
         public async Task Delete(Guid id)
         {
             var era = await context.Eras
-                .Include(e => e.Images)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             if (era == null)
                 throw new KeyNotFoundException("Era not found.");
 
-            var eraImages = era.Images
-                .Where(i => i.TargetType == ImageTargetType.Era && i.EraId == era.Id)
-                .ToList();
+            if (era.IsDeleted)
+                return;
 
-            if (eraImages.Any())
-                context.Images.RemoveRange(eraImages);
-
-            context.Eras.Remove(era);
+            era.IsDeleted = true;
             await context.SaveChangesAsync();
         }
 
@@ -136,7 +165,7 @@ namespace Bulgarikon.Core.Implementations
 
             var era = await context.Eras
                 .Include(e => e.Images)
-                .FirstOrDefaultAsync(e => e.Id == id);
+                .FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
 
             if (era == null)
                 throw new KeyNotFoundException("Era not found.");
@@ -148,6 +177,7 @@ namespace Bulgarikon.Core.Implementations
 
             var existing = era.Images
                 .Where(i => i.TargetType == ImageTargetType.Era && i.EraId == era.Id)
+                .OrderBy(i => i.SortOrder)
                 .ToList();
 
             var incoming = model.Images ?? new List<ImageEditDto>();
@@ -160,37 +190,69 @@ namespace Bulgarikon.Core.Implementations
             if (removeIds.Any())
             {
                 var toRemove = existing.Where(i => removeIds.Contains(i.Id)).ToList();
+
+                foreach (var image in toRemove)
+                {
+                    if (!string.IsNullOrWhiteSpace(image.PublicId))
+                    {
+                        await cloudinaryService.DeleteImageAsync(image.PublicId);
+                    }
+                }
+
                 if (toRemove.Any())
                     context.Images.RemoveRange(toRemove);
             }
 
             foreach (var dto in incoming.Where(x => x.Id.HasValue && !x.Remove))
             {
-                if (string.IsNullOrWhiteSpace(dto.Url)) continue;
+                if (string.IsNullOrWhiteSpace(dto.Url))
+                    continue;
 
                 var img = existing.FirstOrDefault(i => i.Id == dto.Id!.Value);
-                if (img == null) continue;
+                if (img == null)
+                    continue;
 
                 img.Url = dto.Url.Trim();
                 img.Caption = string.IsNullOrWhiteSpace(dto.Caption) ? null : dto.Caption.Trim();
-                img.TargetType = ImageTargetType.Era;
-                img.EraId = era.Id;
             }
 
-            var toAdd = incoming
+            int nextSortOrder = existing.Any() ? existing.Max(i => i.SortOrder) + 1 : 0;
+
+            var toAddFromUrls = incoming
                 .Where(x => !x.Id.HasValue && !x.Remove && !string.IsNullOrWhiteSpace(x.Url))
                 .Select(x => new Image
                 {
                     Id = Guid.NewGuid(),
                     Url = x.Url.Trim(),
+                    PublicId = null,
                     Caption = string.IsNullOrWhiteSpace(x.Caption) ? null : x.Caption.Trim(),
+                    SortOrder = nextSortOrder++,
                     TargetType = ImageTargetType.Era,
                     EraId = era.Id
                 })
                 .ToList();
 
-            if (toAdd.Any())
-                await context.Images.AddRangeAsync(toAdd);
+            if (toAddFromUrls.Any())
+                await context.Images.AddRangeAsync(toAddFromUrls);
+
+            if (model.ImageFiles != null && model.ImageFiles.Any())
+            {
+                foreach (var file in model.ImageFiles.Where(f => f.Length > 0))
+                {
+                    var uploadResult = await cloudinaryService.UploadImageAsync(file);
+
+                    await context.Images.AddAsync(new Image
+                    {
+                        Id = Guid.NewGuid(),
+                        Url = uploadResult.Url,
+                        PublicId = uploadResult.PublicId,
+                        Caption = null,
+                        SortOrder = nextSortOrder++,
+                        TargetType = ImageTargetType.Era,
+                        EraId = era.Id
+                    });
+                }
+            }
 
             await context.SaveChangesAsync();
         }

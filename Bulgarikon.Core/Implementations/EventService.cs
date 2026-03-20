@@ -13,11 +13,16 @@ namespace Bulgarikon.Core.Implementations
     {
         private readonly IRepository<Event, Guid> eventsRepo;
         private readonly BulgarikonDbContext context;
+        private readonly ICloudinaryService cloudinaryService;
 
-        public EventService(IRepository<Event, Guid> eventsRepo, BulgarikonDbContext context)
+        public EventService(
+            IRepository<Event, Guid> eventsRepo,
+            BulgarikonDbContext context,
+            ICloudinaryService cloudinaryService)
         {
             this.eventsRepo = eventsRepo;
             this.context = context;
+            this.cloudinaryService = cloudinaryService;
         }
 
         public async Task<IEnumerable<EventViewDto>> GetByEraAsync(Guid eraId)
@@ -66,6 +71,7 @@ namespace Bulgarikon.Core.Implementations
                 EraName = e.Era.Name,
                 Images = e.Images
                     .Where(i => i.TargetType == ImageTargetType.Event && i.EventId == e.Id)
+                    .OrderBy(i => i.SortOrder)
                     .Select(i => new ImageViewDto
                     {
                         Id = i.Id,
@@ -113,6 +119,27 @@ namespace Bulgarikon.Core.Implementations
 
             await context.Events.AddAsync(entity);
 
+            int sortOrder = 0;
+
+            if (model.ImageFiles != null && model.ImageFiles.Any())
+            {
+                foreach (var file in model.ImageFiles.Where(f => f != null && f.Length > 0))
+                {
+                    var uploadResult = await cloudinaryService.UploadImageAsync(file);
+
+                    await context.Images.AddAsync(new Image
+                    {
+                        Id = Guid.NewGuid(),
+                        TargetType = ImageTargetType.Event,
+                        Url = uploadResult.Url,
+                        PublicId = uploadResult.PublicId,
+                        Caption = null,
+                        SortOrder = sortOrder++,
+                        EventId = entity.Id
+                    });
+                }
+            }
+
             var newImages = (model.Images ?? new List<ImageEditDto>())
                 .Where(x => !x.Remove)
                 .Select(x => new
@@ -130,7 +157,9 @@ namespace Bulgarikon.Core.Implementations
                     Id = Guid.NewGuid(),
                     TargetType = ImageTargetType.Event,
                     Url = x.Url,
+                    PublicId = null,
                     Caption = x.Caption,
+                    SortOrder = sortOrder++,
                     EventId = entity.Id
                 }));
             }
@@ -163,7 +192,7 @@ namespace Bulgarikon.Core.Implementations
                 FigureIds = e.EventFigures.Select(x => x.FigureId).ToList(),
                 Images = e.Images
                     .Where(i => i.TargetType == ImageTargetType.Event && i.EventId == e.Id)
-                    .OrderBy(i => i.Id)
+                    .OrderBy(i => i.SortOrder)
                     .Select(i => new ImageEditDto
                     {
                         Id = i.Id,
@@ -224,6 +253,7 @@ namespace Bulgarikon.Core.Implementations
 
             var existing = e.Images
                 .Where(i => i.TargetType == ImageTargetType.Event && i.EventId == e.Id)
+                .OrderBy(i => i.SortOrder)
                 .ToList();
 
             var removeIds = incoming
@@ -234,6 +264,15 @@ namespace Bulgarikon.Core.Implementations
             if (removeIds.Any())
             {
                 var toRemove = existing.Where(img => removeIds.Contains(img.Id)).ToList();
+
+                foreach (var img in toRemove)
+                {
+                    if (!string.IsNullOrWhiteSpace(img.PublicId))
+                    {
+                        await cloudinaryService.DeleteImageAsync(img.PublicId);
+                    }
+                }
+
                 if (toRemove.Any())
                     context.Images.RemoveRange(toRemove);
             }
@@ -253,6 +292,8 @@ namespace Bulgarikon.Core.Implementations
                 dbImg.EventId = e.Id;
             }
 
+            int nextSortOrder = existing.Any() ? existing.Max(i => i.SortOrder) + 1 : 0;
+
             var adds = incoming
                 .Where(x => !x.Remove && !x.Id.HasValue && !string.IsNullOrWhiteSpace(x.Url))
                 .ToList();
@@ -264,9 +305,30 @@ namespace Bulgarikon.Core.Implementations
                     Id = Guid.NewGuid(),
                     TargetType = ImageTargetType.Event,
                     Url = a.Url,
+                    PublicId = null,
                     Caption = a.Caption,
+                    SortOrder = nextSortOrder++,
                     EventId = e.Id
                 }));
+            }
+
+            if (model.ImageFiles != null && model.ImageFiles.Any())
+            {
+                foreach (var file in model.ImageFiles.Where(f => f != null && f.Length > 0))
+                {
+                    var uploadResult = await cloudinaryService.UploadImageAsync(file);
+
+                    await context.Images.AddAsync(new Image
+                    {
+                        Id = Guid.NewGuid(),
+                        TargetType = ImageTargetType.Event,
+                        Url = uploadResult.Url,
+                        PublicId = uploadResult.PublicId,
+                        Caption = null,
+                        SortOrder = nextSortOrder++,
+                        EventId = e.Id
+                    });
+                }
             }
 
             await context.SaveChangesAsync();
@@ -285,6 +347,14 @@ namespace Bulgarikon.Core.Implementations
             var eventImages = e.Images
                 .Where(i => i.TargetType == ImageTargetType.Event && i.EventId == e.Id)
                 .ToList();
+
+            foreach (var img in eventImages)
+            {
+                if (!string.IsNullOrWhiteSpace(img.PublicId))
+                {
+                    await cloudinaryService.DeleteImageAsync(img.PublicId);
+                }
+            }
 
             if (eventImages.Any())
                 context.Images.RemoveRange(eventImages);
@@ -337,7 +407,6 @@ namespace Bulgarikon.Core.Implementations
             }
         }
 
-        // Helper method to ensure years are valid and normalized
         private static void NormalizeAndValidateYears(EventFormDto m)
         {
             if (!m.StartYear.HasValue && !m.EndYear.HasValue)

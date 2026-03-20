@@ -20,7 +20,7 @@
         <div class="col-lg-8">
             <div class="card shadow-sm era-paper">
                 <div class="card-body p-4">
-                    <form asp-action="Create" method="post" autocomplete="off">
+                    <form asp-action="Create" method="post" enctype="multipart/form-data" autocomplete="off">
                         @Html.AntiForgeryToken()
 
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3"></div>
@@ -39,7 +39,7 @@
                             </label>
                             <textarea asp-for="Description" class="form-control" rows="7"
                                       placeholder="Опиши какво характеризира епохата (общество, култура, ключови събития)..."></textarea>
-                            <div class="form-text">Пиши ясно и информативно (описанието е задължително).</div>
+                            <div class="form-text">Пиши ясно и информативно.</div>
                             <span asp-validation-for="Description" class="text-danger"></span>
                         </div>
 
@@ -58,8 +58,16 @@
                         </div>
 
                         <div class="mt-4">
+                            <h5 class="mb-2">Качи снимки от устройство</h5>
+                            <div class="text-muted small mb-2">Тези снимки ще се качат в Cloudinary.</div>
+
+                            <input asp-for="ImageFiles" type="file" multiple class="form-control" />
+                            <span asp-validation-for="ImageFiles" class="text-danger"></span>
+                        </div>
+
+                        <div class="mt-4">
                             <div class="d-flex align-items-center justify-content-between">
-                                <h5 class="mb-0">Снимки (по желание)</h5>
+                                <h5 class="mb-0">Снимки чрез URL (по желание)</h5>
                                 <button type="button" class="btn btn-sm btn-outline-dark" id="addEraImgBtn">+ Добави снимка</button>
                             </div>
 
@@ -128,7 +136,6 @@
 
                 previewName.textContent = n || "Име на епохата…";
                 previewDesc.textContent = d || "Описанието ще се появи тук…";
-
                 previewPeriod.textContent = (s || e) ? `${s || "…"} – ${e || "…"}` : "Начало – Край";
                 descCount.textContent = String((descEl?.value || '').length);
 

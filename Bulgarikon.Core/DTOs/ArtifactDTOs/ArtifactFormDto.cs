@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations;
 using static Bulgarikon.Common.DataModelsValidation.EntityClassesValidations.Artifact;
 
 namespace Bulgarikon.Core.DTOs.ArtifactDTOs
@@ -16,6 +17,8 @@ namespace Bulgarikon.Core.DTOs.ArtifactDTOs
         [Url]
         [MaxLength(ImageUrlMaxLength)]
         public string? ImageUrl { get; set; }
+
+        public IFormFile? ImageFile { get; set; }
 
         [Range(YearMinValue, YearMaxValue)]
         public int? Year { get; set; }

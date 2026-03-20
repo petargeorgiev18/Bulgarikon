@@ -76,6 +76,7 @@
         public static class Image
         {
             public const int UrlMaxLength = 2083;
+            public const int PublicIdMaxLength = 255;
         }
         public static class Question
         {

@@ -14,11 +14,16 @@ namespace Bulgarikon.Core.Implementations
     {
         private readonly IRepository<Figure, Guid> figures;
         private readonly BulgarikonDbContext context;
+        private readonly ICloudinaryService cloudinaryService;
 
-        public FigureService(IRepository<Figure, Guid> figures, BulgarikonDbContext context)
+        public FigureService(
+            IRepository<Figure, Guid> figures,
+            BulgarikonDbContext context,
+            ICloudinaryService cloudinaryService)
         {
             this.figures = figures;
             this.context = context;
+            this.cloudinaryService = cloudinaryService;
         }
 
         public async Task<IEnumerable<FigureViewDto>> GetByEraAsync(Guid? eraId, Guid? civilizationId = null)
@@ -27,6 +32,7 @@ namespace Bulgarikon.Core.Implementations
                 .AsNoTracking()
                 .Include(f => f.Era)
                 .Include(f => f.Civilization)
+                .Include(f => f.Images)
                 .AsQueryable();
 
             if (eraId.HasValue)
@@ -49,7 +55,17 @@ namespace Bulgarikon.Core.Implementations
                     EraId = f.EraId,
                     EraName = f.Era.Name,
                     CivilizationId = f.CivilizationId,
-                    CivilizationName = f.Civilization != null ? f.Civilization.Name : null
+                    CivilizationName = f.Civilization != null ? f.Civilization.Name : null,
+                    Images = f.Images
+                        .Where(i => i.TargetType == ImageTargetType.Figure && i.FigureId == f.Id)
+                        .OrderBy(i => i.SortOrder)
+                        .Select(i => new ImageViewDto
+                        {
+                            Id = i.Id,
+                            Url = i.Url,
+                            Caption = i.Caption
+                        })
+                        .ToList()
                 })
                 .ToListAsync();
         }
@@ -80,7 +96,7 @@ namespace Bulgarikon.Core.Implementations
                 CivilizationName = f.Civilization != null ? f.Civilization.Name : null,
                 Images = f.Images
                     .Where(i => i.TargetType == ImageTargetType.Figure && i.FigureId == f.Id)
-                    .OrderBy(i => i.Id)
+                    .OrderBy(i => i.SortOrder)
                     .Select(i => new ImageViewDto
                     {
                         Id = i.Id,
@@ -110,9 +126,34 @@ namespace Bulgarikon.Core.Implementations
 
             await context.Figures.AddAsync(entity);
 
+            int sortOrder = 0;
+
+            if (model.ImageFiles != null && model.ImageFiles.Any())
+            {
+                foreach (var file in model.ImageFiles.Where(f => f != null && f.Length > 0))
+                {
+                    var uploadResult = await cloudinaryService.UploadImageAsync(file);
+
+                    await context.Images.AddAsync(new Image
+                    {
+                        Id = Guid.NewGuid(),
+                        TargetType = ImageTargetType.Figure,
+                        FigureId = entity.Id,
+                        Url = uploadResult.Url,
+                        PublicId = uploadResult.PublicId,
+                        Caption = null,
+                        SortOrder = sortOrder++
+                    });
+                }
+            }
+
             var toAdd = (model.Images ?? new List<ImageEditDto>())
                 .Where(x => !x.Remove)
-                .Select(x => new { Url = (x.Url ?? "").Trim(), Caption = x.Caption?.Trim() })
+                .Select(x => new
+                {
+                    Url = (x.Url ?? "").Trim(),
+                    Caption = x.Caption?.Trim()
+                })
                 .Where(x => !string.IsNullOrWhiteSpace(x.Url))
                 .Select(x => new Image
                 {
@@ -120,7 +161,9 @@ namespace Bulgarikon.Core.Implementations
                     TargetType = ImageTargetType.Figure,
                     FigureId = entity.Id,
                     Url = x.Url,
-                    Caption = string.IsNullOrWhiteSpace(x.Caption) ? null : x.Caption
+                    PublicId = null,
+                    Caption = string.IsNullOrWhiteSpace(x.Caption) ? null : x.Caption,
+                    SortOrder = sortOrder++
                 })
                 .ToList();
 
@@ -152,7 +195,7 @@ namespace Bulgarikon.Core.Implementations
                 CivilizationId = f.CivilizationId,
                 Images = f.Images
                     .Where(i => i.TargetType == ImageTargetType.Figure && i.FigureId == f.Id)
-                    .OrderBy(i => i.Id)
+                    .OrderBy(i => i.SortOrder)
                     .Select(i => new ImageEditDto
                     {
                         Id = i.Id,
@@ -195,9 +238,9 @@ namespace Bulgarikon.Core.Implementations
 
             var existing = f.Images
                 .Where(i => i.TargetType == ImageTargetType.Figure && i.FigureId == f.Id)
+                .OrderBy(i => i.SortOrder)
                 .ToList();
 
-            // remove
             var removeIds = incoming
                 .Where(x => x.Remove && x.Id.HasValue)
                 .Select(x => x.Id!.Value)
@@ -206,11 +249,19 @@ namespace Bulgarikon.Core.Implementations
             if (removeIds.Any())
             {
                 var toRemove = existing.Where(img => removeIds.Contains(img.Id)).ToList();
+
+                foreach (var img in toRemove)
+                {
+                    if (!string.IsNullOrWhiteSpace(img.PublicId))
+                    {
+                        await cloudinaryService.DeleteImageAsync(img.PublicId);
+                    }
+                }
+
                 if (toRemove.Any())
                     context.Images.RemoveRange(toRemove);
             }
 
-            // update
             foreach (var u in incoming.Where(x => !x.Remove && x.Id.HasValue && !string.IsNullOrWhiteSpace(x.Url)))
             {
                 var dbImg = existing.FirstOrDefault(img => img.Id == u.Id!.Value);
@@ -222,7 +273,8 @@ namespace Bulgarikon.Core.Implementations
                 dbImg.FigureId = f.Id;
             }
 
-            // add
+            int nextSortOrder = existing.Any() ? existing.Max(i => i.SortOrder) + 1 : 0;
+
             var adds = incoming
                 .Where(x => !x.Remove && !x.Id.HasValue && !string.IsNullOrWhiteSpace(x.Url))
                 .ToList();
@@ -235,8 +287,29 @@ namespace Bulgarikon.Core.Implementations
                     TargetType = ImageTargetType.Figure,
                     FigureId = f.Id,
                     Url = a.Url,
-                    Caption = string.IsNullOrWhiteSpace(a.Caption) ? null : a.Caption
+                    PublicId = null,
+                    Caption = string.IsNullOrWhiteSpace(a.Caption) ? null : a.Caption,
+                    SortOrder = nextSortOrder++
                 }));
+            }
+
+            if (model.ImageFiles != null && model.ImageFiles.Any())
+            {
+                foreach (var file in model.ImageFiles.Where(file => file != null && file.Length > 0))
+                {
+                    var uploadResult = await cloudinaryService.UploadImageAsync(file);
+
+                    await context.Images.AddAsync(new Image
+                    {
+                        Id = Guid.NewGuid(),
+                        TargetType = ImageTargetType.Figure,
+                        FigureId = f.Id,
+                        Url = uploadResult.Url,
+                        PublicId = uploadResult.PublicId,
+                        Caption = null,
+                        SortOrder = nextSortOrder++
+                    });
+                }
             }
 
             await context.SaveChangesAsync();
@@ -253,6 +326,14 @@ namespace Bulgarikon.Core.Implementations
             var figImages = f.Images
                 .Where(i => i.TargetType == ImageTargetType.Figure && i.FigureId == f.Id)
                 .ToList();
+
+            foreach (var img in figImages)
+            {
+                if (!string.IsNullOrWhiteSpace(img.PublicId))
+                {
+                    await cloudinaryService.DeleteImageAsync(img.PublicId);
+                }
+            }
 
             if (figImages.Any())
                 context.Images.RemoveRange(figImages);

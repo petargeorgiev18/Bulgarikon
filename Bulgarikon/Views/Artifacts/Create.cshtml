@@ -11,7 +11,7 @@
         <div>
             <div class="era-kicker">Bulgarikon • Артефакти</div>
             <h1 class="era-h1">Добави артефакт</h1>
-            <div class="era-sub">Създай артефакт и добави снимка (URL).</div>
+            <div class="era-sub">Създай артефакт и добави основна снимка.</div>
         </div>
 
         <div class="era-actions">
@@ -21,7 +21,7 @@
 
     <div class="card shadow-sm era-paper mt-3">
         <div class="card-body p-4">
-            <form asp-action="Create" method="post" autocomplete="off">
+            <form asp-action="Create" method="post" enctype="multipart/form-data" autocomplete="off">
                 @Html.AntiForgeryToken()
 
                 @if (hasErrors)
@@ -81,14 +81,28 @@
                     </div>
 
                     <div class="col-12">
-                        <label asp-for="ImageUrl" class="form-label fw-semibold">Снимка URL (по избор)</label>
+                        <label asp-for="ImageFile" class="form-label fw-semibold">Качи снимка (по избор)</label>
+                        <input asp-for="ImageFile" type="file" class="form-control" accept="image/*" />
+                        <span asp-validation-for="ImageFile" class="text-danger"></span>
+                        <div class="text-muted small mt-2">
+                            Ако качиш файл, той ще има приоритет пред URL-а.
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="ImageUrl" class="form-label fw-semibold">Или снимка URL (по избор)</label>
                         <input asp-for="ImageUrl" class="form-control" placeholder="https://..." id="bkImgUrl" />
                         <span asp-validation-for="ImageUrl" class="text-danger"></span>
 
                         <div class="mt-3" id="bkImgPrevWrap" style="display:none;">
-                            <img id="bkImgPrev" alt="preview" style="width:100%; max-height:320px; object-fit:cover; border-radius:14px;" />
+                            <img id="bkImgPrev"
+                                 alt="preview"
+                                 style="width:100%; max-height:320px; object-fit:cover; border-radius:14px;" />
                         </div>
-                        <div class="text-muted small mt-2">По избор. Ако е празно — артефактът ще се запази без снимка.</div>
+
+                        <div class="text-muted small mt-2">
+                            Ако и двете са празни — артефактът ще се запази без снимка.
+                        </div>
                     </div>
                 </div>
 
@@ -103,6 +117,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
     <script>
         (function () {
             const input = document.getElementById('bkImgUrl');
@@ -112,7 +127,12 @@
 
             function refresh() {
                 const u = (input.value || '').trim();
-                if (!u) { wrap.style.display = 'none'; img.removeAttribute('src'); return; }
+                if (!u) {
+                    wrap.style.display = 'none';
+                    img.removeAttribute('src');
+                    return;
+                }
+
                 img.src = u;
                 wrap.style.display = '';
             }

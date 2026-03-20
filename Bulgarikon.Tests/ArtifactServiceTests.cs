@@ -2,9 +2,12 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Bulgarikon.Core.DTOs.ArtifactDTOs;
+using Bulgarikon.Core.DTOs.ImageDTOs;
 using Bulgarikon.Core.Implementations;
+using Bulgarikon.Core.Interfaces;
 using Bulgarikon.Data;
 using Bulgarikon.Data.Models;
+using Bulgarikon.Data.Models.Enums;
 using Bulgarikon.Data.Repository.Interface;
 using Microsoft.EntityFrameworkCore;
 using Moq;
@@ -16,13 +19,28 @@ namespace Bulgarikon.Tests.Services
     public class ArtifactServiceTests
     {
         private Mock<IRepository<Artifact, Guid>> repo = null!;
+        private Mock<ICloudinaryService> cloudinaryService = null!;
+        private BulgarikonDbContext db = null!;
         private ArtifactService service = null!;
 
         [SetUp]
         public void SetUp()
         {
             repo = new Mock<IRepository<Artifact, Guid>>();
-            service = new ArtifactService(repo.Object);
+            cloudinaryService = new Mock<ICloudinaryService>();
+
+            db = CreateDb();
+
+            service = new ArtifactService(repo.Object, db, cloudinaryService.Object);
+
+            repo.Setup(r => r.Delete(It.IsAny<Artifact>()))
+                .Callback<Artifact>(a => db.Artifacts.Remove(a));
+        }
+
+        [TearDown]
+        public async Task TearDown()
+        {
+            await db.DisposeAsync();
         }
 
         private static BulgarikonDbContext CreateDb()
@@ -37,17 +55,48 @@ namespace Bulgarikon.Tests.Services
         [Test]
         public async Task GetByEraAsync_FiltersByEra_AndOrders()
         {
-            await using var db = CreateDb();
-
             var era1 = new Era { Id = Guid.NewGuid(), Name = "Era1", StartYear = 1, EndYear = 2 };
             var era2 = new Era { Id = Guid.NewGuid(), Name = "Era2", StartYear = 1, EndYear = 2 };
 
             db.Eras.AddRange(era1, era2);
 
             db.Artifacts.AddRange(
-                new Artifact { Id = Guid.NewGuid(), Name = "B", Year = 10, EraId = era1.Id, Era = era1, Material = "M", Location = "L", DiscoveredAt = DateTime.UtcNow, Description = "D" },
-                new Artifact { Id = Guid.NewGuid(), Name = "A", Year = 5, EraId = era1.Id, Era = era1, Material = "M", Location = "L", DiscoveredAt = DateTime.UtcNow, Description = "D" },
-                new Artifact { Id = Guid.NewGuid(), Name = "X", Year = 1, EraId = era2.Id, Era = era2, Material = "M", Location = "L", DiscoveredAt = DateTime.UtcNow, Description = "D" }
+                new Artifact
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "B",
+                    Year = 10,
+                    EraId = era1.Id,
+                    Era = era1,
+                    Material = "M",
+                    Location = "L",
+                    DiscoveredAt = DateTime.UtcNow,
+                    Description = "D"
+                },
+                new Artifact
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "A",
+                    Year = 5,
+                    EraId = era1.Id,
+                    Era = era1,
+                    Material = "M",
+                    Location = "L",
+                    DiscoveredAt = DateTime.UtcNow,
+                    Description = "D"
+                },
+                new Artifact
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "X",
+                    Year = 1,
+                    EraId = era2.Id,
+                    Era = era2,
+                    Material = "M",
+                    Location = "L",
+                    DiscoveredAt = DateTime.UtcNow,
+                    Description = "D"
+                }
             );
 
             await db.SaveChangesAsync();
@@ -64,8 +113,6 @@ namespace Bulgarikon.Tests.Services
         [Test]
         public async Task GetByEraAsync_FiltersByCivilization_WhenProvided()
         {
-            await using var db = CreateDb();
-
             var era = new Era { Id = Guid.NewGuid(), Name = "Era", StartYear = 1, EndYear = 2 };
             var civ1 = new Civilization { Id = Guid.NewGuid(), Name = "C1", Description = "D", Type = 0, StartYear = 1, EndYear = 2, EraId = era.Id, Era = era };
             var civ2 = new Civilization { Id = Guid.NewGuid(), Name = "C2", Description = "D", Type = 0, StartYear = 1, EndYear = 2, EraId = era.Id, Era = era };
@@ -73,8 +120,32 @@ namespace Bulgarikon.Tests.Services
             db.AddRange(era, civ1, civ2);
 
             db.Artifacts.AddRange(
-                new Artifact { Id = Guid.NewGuid(), Name = "A1", EraId = era.Id, Era = era, CivilizationId = civ1.Id, Civilization = civ1, Material = "M", Location = "L", DiscoveredAt = DateTime.UtcNow, Description = "D" },
-                new Artifact { Id = Guid.NewGuid(), Name = "A2", EraId = era.Id, Era = era, CivilizationId = civ2.Id, Civilization = civ2, Material = "M", Location = "L", DiscoveredAt = DateTime.UtcNow, Description = "D" }
+                new Artifact
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "A1",
+                    EraId = era.Id,
+                    Era = era,
+                    CivilizationId = civ1.Id,
+                    Civilization = civ1,
+                    Material = "M",
+                    Location = "L",
+                    DiscoveredAt = DateTime.UtcNow,
+                    Description = "D"
+                },
+                new Artifact
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "A2",
+                    EraId = era.Id,
+                    Era = era,
+                    CivilizationId = civ2.Id,
+                    Civilization = civ2,
+                    Material = "M",
+                    Location = "L",
+                    DiscoveredAt = DateTime.UtcNow,
+                    Description = "D"
+                }
             );
 
             await db.SaveChangesAsync();
@@ -88,11 +159,9 @@ namespace Bulgarikon.Tests.Services
             Assert.That(result[0].CivilizationName, Is.EqualTo("C1"));
         }
 
-
         [Test]
         public async Task GetDetailsAsync_ReturnsNull_WhenNotFound()
         {
-            await using var db = CreateDb();
             repo.Setup(r => r.Query()).Returns(db.Artifacts);
 
             var result = await service.GetDetailsAsync(Guid.NewGuid());
@@ -103,8 +172,6 @@ namespace Bulgarikon.Tests.Services
         [Test]
         public async Task GetDetailsAsync_ReturnsDto_WhenFound()
         {
-            await using var db = CreateDb();
-
             var era = new Era { Id = Guid.NewGuid(), Name = "Era", StartYear = 1, EndYear = 2 };
             var civ = new Civilization { Id = Guid.NewGuid(), Name = "Civ", Description = "D", Type = 0, StartYear = 1, EndYear = 2, EraId = era.Id, Era = era };
 
@@ -138,11 +205,9 @@ namespace Bulgarikon.Tests.Services
             Assert.That(result.ImageUrl, Is.EqualTo("https://img"));
         }
 
-
         [Test]
         public async Task GetForEditAsync_ReturnsNull_WhenNotFound()
         {
-            await using var db = CreateDb();
             repo.Setup(r => r.Query()).Returns(db.Artifacts);
 
             var result = await service.GetForEditAsync(Guid.NewGuid());
@@ -153,8 +218,6 @@ namespace Bulgarikon.Tests.Services
         [Test]
         public async Task GetForEditAsync_ReturnsFormDto_WhenFound()
         {
-            await using var db = CreateDb();
-
             var era = new Era { Id = Guid.NewGuid(), Name = "Era", StartYear = 1, EndYear = 2 };
 
             var artifact = new Artifact
@@ -183,9 +246,8 @@ namespace Bulgarikon.Tests.Services
             Assert.That(result.ImageUrl, Is.EqualTo("https://img"));
         }
 
-
         [Test]
-        public async Task CreateAsync_Trims_AndCallsAddAndSave()
+        public async Task CreateAsync_Trims_AndCallsAddAndSave_WhenUrlIsUsed()
         {
             var dto = new ArtifactFormDto
             {
@@ -201,15 +263,21 @@ namespace Bulgarikon.Tests.Services
             Artifact? captured = null;
 
             repo.Setup(r => r.AddAsync(It.IsAny<Artifact>()))
-                .Callback<Artifact>(a => captured = a)
+                .Callback<Artifact>(a =>
+                {
+                    captured = a;
+                    db.Artifacts.Add(a);
+                })
                 .Returns(Task.CompletedTask);
-
-            repo.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
 
             var id = await service.CreateAsync(dto);
 
             Assert.That(id, Is.Not.EqualTo(Guid.Empty));
+            Assert.That(captured, Is.Not.Null);
             Assert.That(captured!.Name, Is.EqualTo("N"));
+            Assert.That(captured.Description, Is.EqualTo("D"));
+            Assert.That(captured.Material, Is.EqualTo("Mat"));
+            Assert.That(captured.Location, Is.EqualTo("Loc"));
             Assert.That(captured.ImageUrl, Is.EqualTo("https://img"));
         }
 
@@ -231,12 +299,9 @@ namespace Bulgarikon.Tests.Services
         }
 
         [Test]
-        public void UpdateAsync_Throws_WhenNotFound()
+        public async Task UpdateAsync_Throws_WhenNotFound()
         {
             var id = Guid.NewGuid();
-
-            repo.Setup(r => r.GetByIdTrackedAsync(id))
-                .ReturnsAsync((Artifact?)null);
 
             var dto = new ArtifactFormDto
             {
@@ -249,11 +314,11 @@ namespace Bulgarikon.Tests.Services
             };
 
             Assert.ThrowsAsync<InvalidOperationException>(
-                () => service.UpdateAsync(id, dto));
+                async () => await service.UpdateAsync(id, dto));
         }
 
         [Test]
-        public async Task UpdateAsync_UpdatesFields_AndSaves()
+        public async Task UpdateAsync_UpdatesFields_AndClearsImage_WhenUrlEmptyAndNoFile()
         {
             var id = Guid.NewGuid();
 
@@ -269,8 +334,8 @@ namespace Bulgarikon.Tests.Services
                 ImageUrl = "https://old"
             };
 
-            repo.Setup(r => r.GetByIdTrackedAsync(id)).ReturnsAsync(existing);
-            repo.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+            db.Artifacts.Add(existing);
+            await db.SaveChangesAsync();
 
             var dto = new ArtifactFormDto
             {
@@ -285,8 +350,13 @@ namespace Bulgarikon.Tests.Services
 
             await service.UpdateAsync(id, dto);
 
-            Assert.That(existing.Name, Is.EqualTo("New"));
-            Assert.That(existing.ImageUrl, Is.Null);
+            var updated = await db.Artifacts.FirstAsync(x => x.Id == id);
+
+            Assert.That(updated.Name, Is.EqualTo("New"));
+            Assert.That(updated.Description, Is.EqualTo("ND"));
+            Assert.That(updated.Material, Is.EqualTo("NM"));
+            Assert.That(updated.Location, Is.EqualTo("NL"));
+            Assert.That(updated.ImageUrl, Is.Null);
         }
 
         [Test]
@@ -294,28 +364,33 @@ namespace Bulgarikon.Tests.Services
         {
             var id = Guid.NewGuid();
 
-            repo.Setup(r => r.GetByIdTrackedAsync(id))
-                .ReturnsAsync((Artifact?)null);
-
             await service.DeleteAsync(id);
 
-            repo.Verify(r => r.Delete(It.IsAny<Artifact>()), Times.Never);
-            repo.Verify(r => r.SaveChangesAsync(), Times.Never);
+            Assert.Pass();
         }
 
         [Test]
         public async Task DeleteAsync_WhenFound_DeletesAndSaves()
         {
             var id = Guid.NewGuid();
-            var entity = new Artifact { Id = id };
+            var entity = new Artifact
+            {
+                Id = id,
+                Name = "Art",
+                Description = "Desc",
+                Material = "Stone",
+                Location = "Loc",
+                DiscoveredAt = DateTime.Today,
+                EraId = Guid.NewGuid()
+            };
 
-            repo.Setup(r => r.GetByIdTrackedAsync(id)).ReturnsAsync(entity);
-            repo.Setup(r => r.SaveChangesAsync()).Returns(Task.CompletedTask);
+            db.Artifacts.Add(entity);
+            await db.SaveChangesAsync();
 
             await service.DeleteAsync(id);
 
-            repo.Verify(r => r.Delete(entity), Times.Once);
-            repo.Verify(r => r.SaveChangesAsync(), Times.Once);
+            var exists = await db.Artifacts.AnyAsync(x => x.Id == id);
+            Assert.That(exists, Is.False);
         }
     }
 }

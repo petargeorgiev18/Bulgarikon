@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Bulgarikon.Core.DTOs.EventDTOs;
 using Bulgarikon.Core.DTOs.ImageDTOs;
 using Bulgarikon.Core.Implementations;
+using Bulgarikon.Core.Interfaces;
 using Bulgarikon.Data;
 using Bulgarikon.Data.Models;
 using Bulgarikon.Data.Models.Enums;
@@ -19,6 +20,7 @@ namespace Bulgarikon.Tests.Services
     public class EventServiceTests
     {
         private Mock<IRepository<Event, Guid>> eventsRepo = null!;
+        private Mock<ICloudinaryService> cloudinaryService = null!;
         private BulgarikonDbContext db = null!;
         private EventService service = null!;
 
@@ -32,7 +34,9 @@ namespace Bulgarikon.Tests.Services
             db = new BulgarikonDbContext(options);
 
             eventsRepo = new Mock<IRepository<Event, Guid>>();
-            service = new EventService(eventsRepo.Object, db);
+            cloudinaryService = new Mock<ICloudinaryService>();
+
+            service = new EventService(eventsRepo.Object, db, cloudinaryService.Object);
         }
 
         [TearDown]
@@ -149,19 +153,21 @@ namespace Bulgarikon.Tests.Services
 
             var imgEvent1 = new Image
             {
-                Id = new Guid("00000000-0000-0000-0000-000000000001"),
+                Id = Guid.NewGuid(),
                 TargetType = ImageTargetType.Event,
                 EventId = ev.Id,
                 Url = "https://event/1",
-                Caption = "c1"
+                Caption = "c1",
+                SortOrder = 0
             };
             var imgEvent2 = new Image
             {
-                Id = new Guid("00000000-0000-0000-0000-000000000002"),
+                Id = Guid.NewGuid(),
                 TargetType = ImageTargetType.Event,
                 EventId = ev.Id,
                 Url = "https://event/2",
-                Caption = null
+                Caption = null,
+                SortOrder = 1
             };
             var imgOtherType = new Image
             {
@@ -189,8 +195,8 @@ namespace Bulgarikon.Tests.Services
             Assert.That(res.EraName, Is.EqualTo("Medieval"));
 
             Assert.That(res.Images.Count, Is.EqualTo(2));
-            Assert.That(res.Images.Any(i => i.Url == "https://event/1"), Is.True);
-            Assert.That(res.Images.Any(i => i.Url == "https://event/2"), Is.True);
+            Assert.That(res.Images[0].Url, Is.EqualTo("https://event/1"));
+            Assert.That(res.Images[1].Url, Is.EqualTo("https://event/2"));
 
             Assert.That(res.Civilizations.Select(x => x.Name).ToList(), Is.EqualTo(new[] { "Avar", "Bulgaria" }));
             Assert.That(res.Figures.Select(x => x.Name).ToList(), Is.EqualTo(new[] { "Asparuh", "Boris" }));
@@ -277,11 +283,13 @@ namespace Bulgarikon.Tests.Services
 
             var imgs = await db.Images.AsNoTracking()
                 .Where(i => i.TargetType == ImageTargetType.Event && i.EventId == id)
+                .OrderBy(i => i.SortOrder)
                 .ToListAsync();
 
             Assert.That(imgs.Count, Is.EqualTo(1));
             Assert.That(imgs[0].Url, Is.EqualTo("https://img/1"));
             Assert.That(imgs[0].Caption, Is.EqualTo("c1"));
+            Assert.That(imgs[0].SortOrder, Is.EqualTo(0));
         }
 
         [Test]
@@ -320,7 +328,7 @@ namespace Bulgarikon.Tests.Services
         }
 
         [Test]
-        public async Task GetForEditAsync_ReturnsDto_WithIdsAndImagesOrderedById()
+        public async Task GetForEditAsync_ReturnsDto_WithIdsAndImagesOrderedBySortOrder()
         {
             var era = new Era { Id = Guid.NewGuid(), Name = "Era", StartYear = 1, EndYear = 2 };
             var civ1 = new Civilization { Id = Guid.NewGuid(), Name = "C1", Description = "D", Type = CivilizationType.Kingdom, StartYear = 1, EndYear = 2, EraId = era.Id, Era = era };
@@ -345,19 +353,21 @@ namespace Bulgarikon.Tests.Services
 
             var img1 = new Image
             {
-                Id = new Guid("00000000-0000-0000-0000-000000000001"),
+                Id = Guid.NewGuid(),
                 TargetType = ImageTargetType.Event,
                 EventId = ev.Id,
                 Url = "https://img/1",
-                Caption = "c1"
+                Caption = "c1",
+                SortOrder = 0
             };
             var img2 = new Image
             {
-                Id = new Guid("00000000-0000-0000-0000-000000000002"),
+                Id = Guid.NewGuid(),
                 TargetType = ImageTargetType.Event,
                 EventId = ev.Id,
                 Url = "https://img/2",
-                Caption = null
+                Caption = null,
+                SortOrder = 1
             };
 
             db.Images.Add(new Image { Id = Guid.NewGuid(), TargetType = ImageTargetType.Era, EraId = era.Id, Url = "https://era/1" });
@@ -373,8 +383,8 @@ namespace Bulgarikon.Tests.Services
             Assert.That(res.FigureIds, Is.EquivalentTo(new[] { fig1.Id }));
 
             Assert.That(res.Images.Count, Is.EqualTo(2));
-            Assert.That(res.Images[0].Id, Is.EqualTo(img1.Id));
-            Assert.That(res.Images[1].Id, Is.EqualTo(img2.Id));
+            Assert.That(res.Images[0].Url, Is.EqualTo("https://img/1"));
+            Assert.That(res.Images[1].Url, Is.EqualTo("https://img/2"));
             Assert.That(res.Images.All(x => x.Remove == false), Is.True);
         }
 
@@ -437,19 +447,21 @@ namespace Bulgarikon.Tests.Services
 
             var imgToRemove = new Image
             {
-                Id = new Guid("00000000-0000-0000-0000-000000000010"),
+                Id = Guid.NewGuid(),
                 TargetType = ImageTargetType.Event,
                 EventId = ev.Id,
                 Url = "https://remove",
-                Caption = "r"
+                Caption = "r",
+                SortOrder = 0
             };
             var imgToUpdate = new Image
             {
-                Id = new Guid("00000000-0000-0000-0000-000000000011"),
+                Id = Guid.NewGuid(),
                 TargetType = ImageTargetType.Event,
                 EventId = ev.Id,
                 Url = "https://old",
-                Caption = "old"
+                Caption = "old",
+                SortOrder = 1
             };
             var otherType = new Image
             {
@@ -488,7 +500,6 @@ namespace Bulgarikon.Tests.Services
             var updated = await db.Events
                 .Include(x => x.EventCivilizations)
                 .Include(x => x.EventFigures)
-                .Include(x => x.Images)
                 .FirstAsync(x => x.Id == ev.Id);
 
             Assert.That(updated.Title, Is.EqualTo("NewT"));
@@ -553,7 +564,9 @@ namespace Bulgarikon.Tests.Services
                 Id = Guid.NewGuid(),
                 TargetType = ImageTargetType.Event,
                 EventId = ev.Id,
-                Url = "https://event/1"
+                Url = "https://event/1",
+                PublicId = "cloudinary-event-1",
+                SortOrder = 0
             };
             var imgOtherType = new Image
             {
@@ -574,6 +587,8 @@ namespace Bulgarikon.Tests.Services
 
             Assert.That(await db.Images.AsNoTracking().AnyAsync(i => i.TargetType == ImageTargetType.Event && i.EventId == ev.Id), Is.False);
             Assert.That(await db.Images.AsNoTracking().AnyAsync(i => i.Id == imgOtherType.Id), Is.True);
+
+            cloudinaryService.Verify(x => x.DeleteImageAsync("cloudinary-event-1"), Times.Once);
         }
 
         [Test]

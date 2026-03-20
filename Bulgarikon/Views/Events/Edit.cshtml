@@ -17,7 +17,7 @@
 
     <div class="card shadow-sm">
         <div class="card-body">
-            <form asp-action="Edit" asp-route-id="@id" method="post" autocomplete="off">
+            <form asp-action="Edit" asp-route-id="@id" method="post" enctype="multipart/form-data" autocomplete="off">
                 @Html.AntiForgeryToken()
 
                 <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3"></div>
@@ -71,6 +71,13 @@
                         <select asp-for="FigureIds" class="form-select" multiple
                                 asp-items="(IEnumerable<SelectListItem>)ViewBag.Figures"></select>
                     </div>
+
+                    <div class="col-12">
+                        <label asp-for="ImageFiles" class="form-label fw-semibold">Качи нови снимки (по избор)</label>
+                        <input asp-for="ImageFiles" type="file" multiple class="form-control" accept="image/*" />
+                        <span asp-validation-for="ImageFiles" class="text-danger"></span>
+                        <div class="text-muted small mt-2">Новите файлове ще се добавят към галерията.</div>
+                    </div>
                 </div>
 
                 <hr class="my-4" />
@@ -120,9 +127,7 @@
                 row.dataset.key = key;
 
                 row.innerHTML = `
-                    <!-- IMPORTANT: казваме на binder-а кои keys съществуват -->
                     <input type="hidden" name="Images.Index" value="${esc(key)}" />
-
                     <input type="hidden" name="Images[${esc(key)}].Id" value="${esc(idVal)}" />
                     <input type="hidden" name="Images[${esc(key)}].Remove" value="${removeVal ? 'true' : 'false'}" />
 

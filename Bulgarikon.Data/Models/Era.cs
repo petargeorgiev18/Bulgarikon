@@ -30,5 +30,6 @@ namespace Bulgarikon.Data.Models
             = new HashSet<Quiz>();
         public ICollection<Image> Images { get; set; }
             = new HashSet<Image>();
+        public bool IsDeleted { get; set; } = false;
     }
 }

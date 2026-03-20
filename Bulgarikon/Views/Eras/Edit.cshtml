@@ -27,7 +27,7 @@
         <div class="col-lg-8">
             <div class="card shadow-sm era-paper">
                 <div class="card-body p-4">
-                    <form asp-action="Edit" asp-route-id="@eraId" method="post" autocomplete="off">
+                    <form asp-action="Edit" asp-route-id="@eraId" method="post" enctype="multipart/form-data" autocomplete="off">
                         @Html.AntiForgeryToken()
 
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3"></div>
@@ -59,6 +59,14 @@
                                 <input asp-for="EndYear" class="form-control" id="endYear" />
                                 <span asp-validation-for="EndYear" class="text-danger"></span>
                             </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <h5 class="mb-2">Качи нови снимки от устройство</h5>
+                            <div class="text-muted small mb-2">Тези снимки ще се качат в Cloudinary и ще се добавят към епохата.</div>
+
+                            <input asp-for="ImageFiles" type="file" multiple class="form-control" />
+                            <span asp-validation-for="ImageFiles" class="text-danger"></span>
                         </div>
 
                         <div class="mt-4">
@@ -168,7 +176,6 @@
             }
 
             function newKey() {
-                // уникален ключ - вместо 0,1,2...
                 return 'k' + Math.random().toString(36).slice(2) + Date.now().toString(36);
             }
 
@@ -178,9 +185,7 @@
                 row.dataset.key = key;
 
                 row.innerHTML = `
-                    <!-- ТОВА е важното: Images.Index казва на binder-а кои елементи съществуват -->
                     <input type="hidden" name="Images.Index" value="${esc(key)}" />
-
                     <input type="hidden" name="Images[${esc(key)}].Id" value="${esc(idVal)}" />
                     <input type="hidden" name="Images[${esc(key)}].Remove" value="${removeVal ? 'true' : 'false'}" />
 
@@ -255,7 +260,6 @@
                 refreshPreview();
             }
 
-            // initial data
             const initial = @Html.Raw(
                             System.Text.Json.JsonSerializer.Serialize(
                                     Model.Images ?? new List<Bulgarikon.Core.DTOs.ImageDTOs.ImageEditDto>()
