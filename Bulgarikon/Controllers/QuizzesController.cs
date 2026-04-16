@@ -1,8 +1,7 @@
 ﻿using Bulgarikon.Core.DTOs;
-using Bulgarikon.Core.DTOs.QuizDTOs;
-using Bulgarikon.Core.Implementations;
 using Bulgarikon.Core.Interfaces;
 using Bulgarikon.Data.Models;
+using Bulgarikon.ViewModels.QuizViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -33,39 +32,77 @@ namespace Bulgarikon.Controllers
         public async Task<IActionResult> Index(Guid? eraId)
         {
             await LoadErasAsync(eraId);
+
             var model = await quizzes.GetByEraAsync(eraId);
+
+            var vm = model.Select(x => new QuizViewViewModel
+            {
+                Id = x.Id,
+                Title = x.Title,
+                EraId = x.EraId,
+                EraName = x.EraName,
+                QuestionsCount = x.QuestionsCount
+            }).ToList();
+
             ViewBag.EraId = eraId;
-            return View(model);
+            return View(vm);
         }
 
         [HttpGet]
         public async Task<IActionResult> Details(Guid id)
         {
-            var model = await quizzes.GetDetailsAsync(id);
-            if (model == null) return NotFound();
-            return View(model);
+            var dto = await quizzes.GetDetailsAsync(id);
+            if (dto == null) return NotFound();
+
+            var vm = new QuizDetailsViewModel
+            {
+                Id = dto.Id,
+                Title = dto.Title,
+                EraId = dto.EraId,
+                EraName = dto.EraName,
+                QuestionsCount = dto.QuestionsCount
+            };
+
+            return View(vm);
         }
 
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> Take(Guid id)
         {
-            var model = await quizzes.GetForTakeAsync(id);
-            if (model == null) return NotFound();
+            var dto = await quizzes.GetForTakeAsync(id);
+            if (dto == null) return NotFound();
 
-            if (model.Questions.Count == 0)
+            if (dto.Questions == null || dto.Questions.Count == 0)
             {
                 TempData["Error"] = "Този куиз още няма въпроси.";
                 return RedirectToAction(nameof(Details), new { id });
             }
 
-            return View(model);
+            var vm = new QuizTakeViewModel
+            {
+                QuizId = dto.QuizId,
+                Title = dto.Title,
+                EraName = dto.EraName,
+                Questions = dto.Questions.Select(q => new QuizTakeQuestionViewModel
+                {
+                    QuestionId = q.QuestionId,
+                    Text = q.Text,
+                    Answers = q.Answers.Select(a => new QuizTakeAnswerViewModel
+                    {
+                        AnswerId = a.AnswerId,
+                        Text = a.Text
+                    }).ToList()
+                }).ToList()
+            };
+
+            return View(vm);
         }
 
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Submit(QuizSubmitDto model)
+        public async Task<IActionResult> Submit(QuizSubmitViewModel model)
         {
             if (!ModelState.IsValid)
                 return BadRequest();
@@ -74,11 +111,6 @@ namespace Bulgarikon.Controllers
             if (take == null) return NotFound();
 
             var maxScore = take.Questions.Count;
-            if (maxScore == 0)
-            {
-                TempData["Error"] = "Този куиз още няма въпроси.";
-                return RedirectToAction(nameof(Details), new { id = model.QuizId });
-            }
 
             if (model.Answers == null || model.Answers.Count != maxScore)
             {
@@ -86,22 +118,22 @@ namespace Bulgarikon.Controllers
                 return RedirectToAction(nameof(Take), new { id = model.QuizId });
             }
 
-            var allowedAnswerIds = take.Questions
+            var allowed = take.Questions
                 .SelectMany(q => q.Answers)
                 .Select(a => a.AnswerId)
                 .ToHashSet();
 
-            var chosenAnswerIds = model.Answers.Values
-                .Where(id => allowedAnswerIds.Contains(id))
+            var chosen = model.Answers.Values
+                .Where(a => allowed.Contains(a))
                 .ToList();
 
-            if (chosenAnswerIds.Count != maxScore)
+            if (chosen.Count != maxScore)
             {
-                TempData["Error"] = "Невалидни отговори. Опитай отново.";
+                TempData["Error"] = "Невалидни отговори.";
                 return RedirectToAction(nameof(Take), new { id = model.QuizId });
             }
 
-            var score = await results.CountCorrectAsync(model.QuizId, chosenAnswerIds);
+            var score = await results.CountCorrectAsync(model.QuizId, chosen);
 
             var userId = Guid.Parse(userManager.GetUserId(User)!);
             var resultId = await results.SaveResultAsync(model.QuizId, userId, score);
@@ -116,10 +148,22 @@ namespace Bulgarikon.Controllers
             var userId = Guid.Parse(userManager.GetUserId(User)!);
             var isAdmin = User.IsInRole("Admin");
 
-            var model = await results.GetResultAsync(id, userId, isAdmin);
-            if (model == null) return NotFound();
+            var dto = await results.GetResultAsync(id, userId, isAdmin);
+            if (dto == null) return NotFound();
 
-            return View(model);
+            var vm = new QuizResultViewViewModel
+            {
+                ResultId = dto.ResultId,
+                Id = dto.Id,
+                QuizId = dto.QuizId,
+                QuizTitle = dto.QuizTitle,
+                EraName = dto.EraName,
+                Score = dto.Score,
+                MaxScore = dto.MaxScore,
+                DateTaken = dto.DateTaken
+            };
+
+            return View(vm);
         }
 
         [Authorize]
@@ -127,8 +171,19 @@ namespace Bulgarikon.Controllers
         public async Task<IActionResult> MyResults()
         {
             var userId = Guid.Parse(userManager.GetUserId(User)!);
-            var model = await results.MyResultsAsync(userId);
-            return View(model);
+
+            var dtos = await results.MyResultsAsync(userId);
+
+            var vm = dtos.Select(x => new QuizResultListItemViewModel
+            {
+                Id = x.Id,
+                QuizTitle = x.QuizTitle,
+                Score = x.Score,
+                MaxScore = x.MaxScore,
+                DateTaken = x.DateTaken
+            }).ToList();
+
+            return View(vm);
         }
 
         [Authorize(Roles = "Admin")]
@@ -136,13 +191,17 @@ namespace Bulgarikon.Controllers
         public async Task<IActionResult> Create(Guid? eraId)
         {
             await LoadErasAsync(eraId);
-            return View(new QuizFormDto { EraId = eraId ?? Guid.Empty });
+
+            return View(new QuizFormViewModel
+            {
+                EraId = eraId ?? Guid.Empty
+            });
         }
 
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(QuizFormDto model)
+        public async Task<IActionResult> Create(QuizFormViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -150,7 +209,12 @@ namespace Bulgarikon.Controllers
                 return View(model);
             }
 
-            var id = await quizzes.CreateAsync(model);
+            var id = await quizzes.CreateAsync(new Core.DTOs.QuizDTOs.QuizFormDto
+            {
+                Title = model.Title,
+                EraId = model.EraId
+            });
+
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -158,18 +222,24 @@ namespace Bulgarikon.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id)
         {
-            var model = await quizzes.GetForEditAsync(id);
-            if (model == null) return NotFound();
+            var dto = await quizzes.GetForEditAsync(id);
+            if (dto == null) return NotFound();
 
-            await LoadErasAsync(model.EraId);
+            await LoadErasAsync(dto.EraId);
+
             ViewBag.QuizId = id;
-            return View(model);
+
+            return View(new QuizFormViewModel
+            {
+                Title = dto.Title,
+                EraId = dto.EraId
+            });
         }
 
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, QuizFormDto model)
+        public async Task<IActionResult> Edit(Guid id, QuizFormViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -178,23 +248,27 @@ namespace Bulgarikon.Controllers
                 return View(model);
             }
 
-            await quizzes.UpdateAsync(id, model);
+            await quizzes.UpdateAsync(id, new Core.DTOs.QuizDTOs.QuizFormDto
+            {
+                Title = model.Title,
+                EraId = model.EraId
+            });
+
             return RedirectToAction(nameof(Details), new { id });
         }
 
         [Authorize(Roles = "Admin")]
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(Guid id, Guid? eraId)
         {
             await quizzes.DeleteAsync(id);
             return RedirectToAction(nameof(Index), new { eraId });
         }
 
-        // Helper method to load eras for dropdowns
         private async Task LoadErasAsync(Guid? selectedEraId)
         {
             var list = await eras.GetAllAsync();
+
             ViewBag.Eras = list.Select(e => new SelectListItem
             {
                 Text = e.Name,

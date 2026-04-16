@@ -1,4 +1,4 @@
-﻿@model Bulgarikon.Core.DTOs.EraDTOs.EraFormDto
+﻿@model Bulgarikon.ViewModels.EraViewModels.EraFormViewModel
 
 @{
     ViewData["Title"] = "Редакция на епоха";
@@ -262,7 +262,7 @@
 
             const initial = @Html.Raw(
                             System.Text.Json.JsonSerializer.Serialize(
-                                    Model.Images ?? new List<Bulgarikon.Core.DTOs.ImageDTOs.ImageEditDto>()
+                                    Model.Images ?? new List<Bulgarikon.ViewModels.ImageViewModels.ImageEditViewModel>()
                             )
                     );
 

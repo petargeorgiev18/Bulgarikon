@@ -1,5 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Mvc.Rendering
-@model Bulgarikon.Core.DTOs.FigureDTOs.FigureFormDto
+@model Bulgarikon.ViewModels.FigureViewModels.FigureFormViewModel
 
 @{
     ViewData["Title"] = "Добави личност";
@@ -210,7 +210,7 @@
                 refreshPreview();
             }
 
-            const initial = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Images ?? new List<Bulgarikon.Core.DTOs.ImageDTOs.ImageEditDto>()));
+            const initial = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Images ?? new List<Bulgarikon.ViewModels.ImageViewModels.ImageEditViewModel>()));
 
             if (initial && initial.length) {
                 initial.forEach(x => {

@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Bulgarikon.Common\Bulgarikon.Common.csproj" />
+    <ProjectReference Include="..\Bulgarikon.Data\Bulgarikon.Data.csproj" />
+  </ItemGroup>
+
+</Project>

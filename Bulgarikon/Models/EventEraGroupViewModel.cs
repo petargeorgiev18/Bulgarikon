@@ -1,4 +1,5 @@
 ﻿using Bulgarikon.Core.DTOs.EventDTOs;
+using Bulgarikon.ViewModels.EventViewModels;
 
 namespace Bulgarikon.Models
 {
@@ -8,6 +9,6 @@ namespace Bulgarikon.Models
         public string EraName { get; set; } = "";
         public int EraStartYear { get; set; }
         public int EraEndYear { get; set; }
-        public List<EventViewDto> Events { get; set; } = new();
+        public List<EventViewViewModel> Events { get; set; } = new();
     }
 }

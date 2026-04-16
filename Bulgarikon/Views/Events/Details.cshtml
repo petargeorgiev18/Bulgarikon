@@ -1,4 +1,4 @@
-﻿@model Bulgarikon.Core.DTOs.EventDTOs.EventDetailsDto
+﻿@model Bulgarikon.ViewModels.EventViewModels.EventDetailsViewModel
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
@@ -40,7 +40,7 @@
 
     var hasImages = Model.Images != null && Model.Images.Any();
     var galleryJson = System.Text.Json.JsonSerializer.Serialize(
-        (Model.Images ?? new List<Bulgarikon.Core.DTOs.ImageDTOs.ImageViewDto>())
+        (Model.Images ?? new List<Bulgarikon.ViewModels.ImageViewModels.ImageViewViewModel>())
             .Select(x => new { url = x.Url, caption = x.Caption })
             .ToList()
     );

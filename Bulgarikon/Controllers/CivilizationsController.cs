@@ -2,6 +2,7 @@
 using Bulgarikon.Core.DTOs.CivilizaionDTOs;
 using Bulgarikon.Core.Interfaces;
 using Bulgarikon.Data.Models.Enums;
+using Bulgarikon.ViewModels.CivilizaionViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -13,26 +14,50 @@ namespace Bulgarikon.Controllers
         private readonly ICivilizationService civilizationsService;
         private readonly IEraService erasService;
 
-        public CivilizationsController(ICivilizationService civilizationsservice, IEraService erasservice)
+        public CivilizationsController(
+            ICivilizationService civilizationsService,
+            IEraService erasService)
         {
-            this.civilizationsService = civilizationsservice;
-            this.erasService = erasservice;
+            this.civilizationsService = civilizationsService;
+            this.erasService = erasService;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(Guid eraId)
         {
-            var model = await civilizationsService.GetByEraAsync(eraId);
+            var dtos = await civilizationsService.GetByEraAsync(eraId);
+
+            var model = dtos.Select(c => new CivilizationViewViewModel
+            {
+                Id = c.Id,
+                Name = c.Name,
+                Type = c.Type,
+                EraId = c.EraId,
+                EraName = c.EraName
+            }).ToList();
+
             ViewBag.EraId = eraId;
-            await LoadDropdownsAsync(selectedEraId: eraId);
+            await LoadDropdownsAsync(eraId);
+
             return View(model);
         }
 
         [HttpGet]
         public async Task<IActionResult> Details(Guid id)
         {
-            var model = await civilizationsService.GetDetailsAsync(id);
-            if (model == null) return NotFound();
+            var dto = await civilizationsService.GetDetailsAsync(id);
+            if (dto == null) return NotFound();
+
+            var model = new CivilizationViewViewModel
+            {
+                Id = dto.Id,
+                Name = dto.Name,
+                Description = dto.Description,
+                Type = dto.Type,
+                EraId = dto.EraId,
+                EraName = dto.EraName
+            };
+
             return View(model);
         }
 
@@ -40,9 +65,9 @@ namespace Bulgarikon.Controllers
         [HttpGet]
         public async Task<IActionResult> Create(Guid eraId)
         {
-            await LoadDropdownsAsync(selectedEraId: eraId);
+            await LoadDropdownsAsync(eraId);
 
-            return View(new CivilizationFormDto
+            return View(new CivilizationFormViewModel
             {
                 EraId = eraId
             });
@@ -51,7 +76,7 @@ namespace Bulgarikon.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CivilizationFormDto model)
+        public async Task<IActionResult> Create(CivilizationFormViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -59,7 +84,16 @@ namespace Bulgarikon.Controllers
                 return View(model);
             }
 
-            var id = await civilizationsService.CreateAsync(model);
+            var dto = new CivilizationFormDto
+            {
+                Name = model.Name,
+                Description = model.Description,
+                Type = model.Type,
+                EraId = model.EraId
+            };
+
+            var id = await civilizationsService.CreateAsync(dto);
+
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -67,28 +101,41 @@ namespace Bulgarikon.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id)
         {
-            var model = await civilizationsService.GetForEditAsync(id);
-            if (model == null) return NotFound();
+            var dto = await civilizationsService.GetForEditAsync(id);
+            if (dto == null) return NotFound();
 
-            await LoadDropdownsAsync(model.EraId);
-            ViewBag.CivilizationId = id;
+            await LoadDropdownsAsync(dto.EraId);
 
-            return View(model);
+            return View(new CivilizationFormViewModel
+            {
+                Name = dto.Name,
+                Description = dto.Description,
+                Type = dto.Type,
+                EraId = dto.EraId
+            });
         }
 
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, CivilizationFormDto model)
+        public async Task<IActionResult> Edit(Guid id, CivilizationFormViewModel model)
         {
             if (!ModelState.IsValid)
             {
                 await LoadDropdownsAsync(model.EraId);
-                ViewBag.CivilizationId = id;
                 return View(model);
             }
 
-            await civilizationsService.UpdateAsync(id, model);
+            var dto = new CivilizationFormDto
+            {
+                Name = model.Name,
+                Description = model.Description,
+                Type = model.Type,
+                EraId = model.EraId
+            };
+
+            await civilizationsService.UpdateAsync(id, dto);
+
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -101,7 +148,6 @@ namespace Bulgarikon.Controllers
             return RedirectToAction(nameof(Index), new { eraId });
         }
 
-        //Helper method to load dropdown data
         private async Task LoadDropdownsAsync(Guid? selectedEraId = null)
         {
             ViewBag.CivilizationTypes = Enum
@@ -113,8 +159,9 @@ namespace Bulgarikon.Controllers
                 })
                 .ToList();
 
-            var eraList = await erasService.GetAllAsync();
-            ViewBag.Eras = eraList.Select(e => new SelectListItem
+            var eras = await erasService.GetAllAsync();
+
+            ViewBag.Eras = eras.Select(e => new SelectListItem
             {
                 Text = e.Name,
                 Value = e.Id.ToString(),

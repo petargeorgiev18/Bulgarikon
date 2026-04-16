@@ -1,6 +1,7 @@
 ﻿using Bulgarikon.Core.DTOs;
 using Bulgarikon.Core.DTOs.ArtifactDTOs;
 using Bulgarikon.Core.Interfaces;
+using Bulgarikon.ViewModels.ArtifactViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -15,10 +16,8 @@ namespace Bulgarikon.Controllers
 
         private static readonly string[] MaterialOptions =
         {
-            "Злато", "Сребро", "Бронз", "Желязо",
-            "Камък", "Керамика", "Дърво", "Кожа",
-            "Текстил", "Стъкло", "Кост", "Пергамент",
-            "Монета", "Друг"
+            "Злато","Сребро","Бронз","Желязо","Камък","Керамика",
+            "Дърво","Кожа","Текстил","Стъкло","Кост","Пергамент","Монета","Друг"
         };
 
         public ArtifactsController(
@@ -36,10 +35,22 @@ namespace Bulgarikon.Controllers
         {
             await LoadDropdownsAsync(eraId, civilizationId);
 
-            var model = await artifactsService.GetByEraAsync(eraId, civilizationId);
+            var dtos = await artifactsService.GetByEraAsync(eraId, civilizationId);
 
-            ViewBag.EraId = eraId;
-            ViewBag.CivilizationId = civilizationId;
+            var model = dtos.Select(a => new ArtifactViewViewModel
+            {
+                Id = a.Id,
+                Name = a.Name,
+                Description = a.Description,
+                Year = a.Year,
+                Material = a.Material,
+                Location = a.Location,
+                EraId = a.EraId,
+                EraName = a.EraName,
+                CivilizationId = a.CivilizationId,
+                CivilizationName = a.CivilizationName,
+                ImageUrl = a.ImageUrl
+            }).ToList();
 
             return View(model);
         }
@@ -47,8 +58,25 @@ namespace Bulgarikon.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(Guid id)
         {
-            var model = await artifactsService.GetDetailsAsync(id);
-            if (model == null) return NotFound();
+            var dto = await artifactsService.GetDetailsAsync(id);
+            if (dto == null) return NotFound();
+
+            var model = new ArtifactDetailsViewModel
+            {
+                Id = dto.Id,
+                Name = dto.Name,
+                Description = dto.Description,
+                Material = dto.Material,
+                Location = dto.Location,
+                Year = dto.Year,
+                DiscoveredAt = dto.DiscoveredAt,
+                EraId = dto.EraId,
+                EraName = dto.EraName,
+                CivilizationId = dto.CivilizationId,
+                CivilizationName = dto.CivilizationName,
+                ImageUrl = dto.ImageUrl
+            };
+
             return View(model);
         }
 
@@ -60,23 +88,22 @@ namespace Bulgarikon.Controllers
             var defaultEraId = eraId ?? eras.FirstOrDefault()?.Id;
 
             if (defaultEraId == null)
-                return BadRequest("Няма налични епохи. Добави епоха преди да създаваш артефакт.");
+                return BadRequest("No eras.");
 
             await LoadDropdownsAsync(defaultEraId, civilizationId);
 
-            return View(new ArtifactFormDto
+            return View(new ArtifactFormViewModel
             {
                 EraId = defaultEraId.Value,
                 CivilizationId = civilizationId,
-                DiscoveredAt = DateTime.Today,
-                ImageUrl = null // ✅ само една снимка
+                DiscoveredAt = DateTime.Today
             });
         }
 
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(ArtifactFormDto model)
+        public async Task<IActionResult> Create(ArtifactFormViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -84,7 +111,19 @@ namespace Bulgarikon.Controllers
                 return View(model);
             }
 
-            var id = await artifactsService.CreateAsync(model);
+            var id = await artifactsService.CreateAsync(new ArtifactFormDto
+            {
+                Name = model.Name,
+                Description = model.Description,
+                Year = model.Year,
+                Material = model.Material,
+                Location = model.Location,
+                DiscoveredAt = model.DiscoveredAt,
+                EraId = model.EraId,
+                CivilizationId = model.CivilizationId,
+                ImageUrl = model.ImageUrl
+            });
+
             return RedirectToAction(nameof(Details), new { id });
         }
 
@@ -92,10 +131,24 @@ namespace Bulgarikon.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id)
         {
-            var model = await artifactsService.GetForEditAsync(id);
-            if (model == null) return NotFound();
+            var dto = await artifactsService.GetDetailsAsync(id);
+            if (dto == null) return NotFound();
 
-            await LoadDropdownsAsync(model.EraId, model.CivilizationId);
+            await LoadDropdownsAsync(dto.EraId, dto.CivilizationId);
+
+            var model = new ArtifactFormViewModel
+            {
+                Name = dto.Name,
+                Description = dto.Description,
+                Material = dto.Material,
+                Location = dto.Location,
+                Year = dto.Year,
+                DiscoveredAt = dto.DiscoveredAt,
+                EraId = dto.EraId,
+                CivilizationId = dto.CivilizationId,
+                ImageUrl = dto.ImageUrl
+            };
+
             ViewBag.ArtifactId = id;
 
             return View(model);
@@ -104,7 +157,7 @@ namespace Bulgarikon.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, ArtifactFormDto model)
+        public async Task<IActionResult> Edit(Guid id, ArtifactFormViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -113,39 +166,49 @@ namespace Bulgarikon.Controllers
                 return View(model);
             }
 
-            await artifactsService.UpdateAsync(id, model);
+            await artifactsService.UpdateAsync(id, new ArtifactFormDto
+            {
+                Name = model.Name,
+                Description = model.Description,
+                Material = model.Material,
+                Location = model.Location,
+                Year = model.Year,
+                DiscoveredAt = model.DiscoveredAt,
+                EraId = model.EraId,
+                CivilizationId = model.CivilizationId,
+                ImageUrl = model.ImageUrl,
+                ImageFile = model.ImageFile
+            });
+
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        [Authorize]
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Delete(Guid id, Guid? eraId, Guid? civilizationId)
+        public async Task<IActionResult> Delete(Guid id)
         {
             await artifactsService.DeleteAsync(id);
-            return RedirectToAction(nameof(Index), new { eraId, civilizationId });
+            return RedirectToAction(nameof(Index));
         }
 
-        private async Task LoadDropdownsAsync(Guid? eraId, Guid? civilizationId)
+        private async Task LoadDropdownsAsync(Guid? eraId, Guid? civId)
         {
             var eras = await erasService.GetAllAsync();
             ViewBag.Eras = eras.Select(e => new SelectListItem
             {
                 Text = e.Name,
                 Value = e.Id.ToString(),
-                Selected = eraId.HasValue && e.Id == eraId.Value
+                Selected = eraId == e.Id
             }).ToList();
 
             var civs = await civilizationsService.GetByEraAsync(eraId);
-            var civItems = civs.Select(c => new SelectListItem
+            ViewBag.Civilizations = civs.Select(c => new SelectListItem
             {
                 Text = c.Name,
                 Value = c.Id.ToString(),
-                Selected = civilizationId.HasValue && c.Id == civilizationId.Value
+                Selected = civId == c.Id
             }).ToList();
-
-            civItems.Insert(0, new SelectListItem { Text = "(няма)", Value = "" });
-            ViewBag.Civilizations = civItems;
 
             ViewBag.Materials = MaterialOptions.Select(m => new SelectListItem
             {

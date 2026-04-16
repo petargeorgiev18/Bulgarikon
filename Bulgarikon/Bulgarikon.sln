@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bulgarikon.Common", "..\Bul
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bulgarikon.Tests", "..\Bulgarikon.Tests\Bulgarikon.Tests.csproj", "{D77271C3-1A1D-42B3-B129-1F61A4B8A780}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bulgarikon.ViewModels", "..\Bulgarikon.ViewModels\Bulgarikon.ViewModels.csproj", "{728DACA6-A247-4C9E-913C-9751855AB8DF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{D77271C3-1A1D-42B3-B129-1F61A4B8A780}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D77271C3-1A1D-42B3-B129-1F61A4B8A780}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D77271C3-1A1D-42B3-B129-1F61A4B8A780}.Release|Any CPU.Build.0 = Release|Any CPU
+		{728DACA6-A247-4C9E-913C-9751855AB8DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{728DACA6-A247-4C9E-913C-9751855AB8DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{728DACA6-A247-4C9E-913C-9751855AB8DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{728DACA6-A247-4C9E-913C-9751855AB8DF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

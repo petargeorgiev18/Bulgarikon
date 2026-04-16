@@ -28,6 +28,7 @@
     <ProjectReference Include="..\Bulgarikon.Common\Bulgarikon.Common.csproj" />
     <ProjectReference Include="..\Bulgarikon.Core\Bulgarikon.Core.csproj" />
     <ProjectReference Include="..\Bulgarikon.Data\Bulgarikon.Data.csproj" />
+    <ProjectReference Include="..\Bulgarikon.ViewModels\Bulgarikon.ViewModels.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,5 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Mvc.Rendering
-@model IEnumerable<Bulgarikon.Core.DTOs.ArtifactDTOs.ArtifactViewDto>
+@model IEnumerable<Bulgarikon.ViewModels.ArtifactViewModels.ArtifactViewViewModel>
 
 @{
     ViewData["Title"] = "Артефакти";
@@ -20,8 +20,12 @@
         <div class="era-actions">
             @if (isAdmin)
             {
-                <a asp-action="Create" asp-route-eraId="@eraId" asp-route-civilizationId="@civId"
-                   class="btn btn-primary era-btn-primary">+ Добави артефакт</a>
+                <a asp-action="Create"
+                   asp-route-eraId="@eraId"
+                   asp-route-civilizationId="@civId"
+                   class="btn btn-primary era-btn-primary">
+                    + Добави артефакт
+                </a>
             }
         </div>
     </div>
@@ -37,11 +41,13 @@
             <div class="era-field">
                 <label class="era-label">Епоха</label>
                 <select id="artEra" class="form-select era-input"
-                        onchange="location.href='@Url.Action("Index","Artifacts")' + buildQuery(this.value, document.getElementById('artCiv').value)">
+                        onchange="location.href='@Url.Action("Index", "Artifacts")' + buildQuery(this.value, document.getElementById('artCiv').value)">
                     <option value="">Всички</option>
                     @foreach (var e in (IEnumerable<SelectListItem>)ViewBag.Eras)
                     {
-                        <option value="@e.Value" selected="@(e.Selected ? "selected" : null)">@e.Text</option>
+                        <option value="@e.Value" selected="@(e.Selected ? "selected" : null)">
+                            @e.Text
+                        </option>
                     }
                 </select>
             </div>
@@ -49,11 +55,13 @@
             <div class="era-field">
                 <label class="era-label">Цивилизация</label>
                 <select id="artCiv" class="form-select era-input"
-                        onchange="location.href='@Url.Action("Index","Artifacts")' + buildQuery(document.getElementById('artEra').value, this.value)">
+                        onchange="location.href='@Url.Action("Index", "Artifacts")' + buildQuery(document.getElementById('artEra').value, this.value)">
                     <option value="">Всички</option>
                     @foreach (var c in (IEnumerable<SelectListItem>)ViewBag.Civilizations)
                     {
-                        <option value="@c.Value" selected="@(c.Selected ? "selected" : null)">@c.Text</option>
+                        <option value="@c.Value" selected="@(c.Selected ? "selected" : null)">
+                            @c.Text
+                        </option>
                     }
                 </select>
             </div>
@@ -79,7 +87,9 @@
 
     @if (!Model.Any())
     {
-        <div class="alert alert-info border-0 shadow-sm">Няма намерени артефакти.</div>
+        <div class="alert alert-info border-0 shadow-sm">
+            Няма намерени артефакти.
+        </div>
     }
     else
     {
@@ -88,7 +98,7 @@
             {
                 var shortDesc = string.IsNullOrWhiteSpace(a.Description)
                 ? ""
-                : (a.Description.Length > 180 ? a.Description.Substring(0, 180) + "…" : a.Description);
+                : (a.Description.Length > 180 ? a.Description[..180] + "…" : a.Description);
 
                 var yearLabel = a.Year.HasValue ? YearFormatter.Format(a.Year.Value) : "Неизвестна";
 
@@ -99,8 +109,7 @@
                          data-material="@a.Material"
                          data-location="@a.Location"
                          data-eraname="@a.EraName"
-                         data-civname="@(a.CivilizationName ?? "")"
-                         data-civid="@(a.CivilizationId?.ToString() ?? "")">
+                         data-civname="@(a.CivilizationName ?? "")">
 
                     <div class="era-rail">
                         <div class="era-dot"></div>
@@ -109,6 +118,7 @@
 
                     <div class="card era-card shadow-sm">
                         <div class="card-body">
+
                             <div class="era-top">
                                 <div class="era-years">
                                     <span class="era-year">@yearLabel</span>
@@ -116,13 +126,16 @@
 
                                 <div class="era-title-wrap">
                                     <div class="era-title">@a.Name</div>
+
                                     <div class="era-meta">
                                         <span class="era-chip">@a.Material</span>
                                         <span class="era-chip">@a.Location</span>
+
                                         @if (!string.IsNullOrWhiteSpace(a.EraName))
                                         {
                                             <span class="era-chip">@a.EraName</span>
                                         }
+
                                         @if (!string.IsNullOrWhiteSpace(a.CivilizationName))
                                         {
                                             <span class="era-chip">@a.CivilizationName</span>
@@ -136,21 +149,23 @@
 
                                 <div class="era-buttons">
                                     <a asp-action="Details" asp-route-id="@a.Id"
-                                       class="btn btn-sm btn-outline-secondary">Детайли</a>
+                                       class="btn btn-sm btn-outline-secondary">
+                                        Детайли
+                                    </a>
 
                                     @if (isAdmin)
                                     {
                                         <a asp-action="Edit" asp-route-id="@a.Id"
-                                           class="btn btn-sm btn-outline-primary">Редакция</a>
+                                           class="btn btn-sm btn-outline-primary">
+                                            Редакция
+                                        </a>
 
                                         <button type="button"
-                                                class="btn btn-sm btn-outline-danger"
+                                                class="btn btn-sm btn-outline-secondary"
                                                 data-bk-delete-artifact
                                                 data-id="@a.Id"
                                                 data-name="@a.Name"
-                                                data-yearlabel="@(a.Year.HasValue ? YearFormatter.Format(a.Year.Value) : "Неизвестна")"
-                                                data-eraid="@a.EraId"
-                                                data-civid="@a.CivilizationId">
+                                                data-year="@(a.Year.HasValue? a.Year.ToString() : "—")">
                                             Изтриване
                                         </button>
                                     }
@@ -161,16 +176,19 @@
                             {
                                 <div class="era-desc">@shortDesc</div>
                             }
+
                         </div>
                     </div>
                 </article>
             }
         </div>
     }
+
     @await Html.PartialAsync("Partials/_DeleteArtifactModal")
 </div>
 
 @section Scripts {
+
     <script>
         function buildQuery(eraId, civId) {
             const qs = new URLSearchParams();
@@ -180,6 +198,7 @@
             return s ? ('?' + s) : '';
         }
     </script>
+
     <script>
         (function () {
             const modal = document.getElementById('bkDeleteArtifactModal');
@@ -191,44 +210,45 @@
             const nameEl = document.getElementById('bkDeleteArtifactName');
             const yearEl = document.getElementById('bkDeleteArtifactYear');
 
-            function openModal({ id, name, eraId, civId }) {
+            function openModal({ id, name, eraId, civId, year }) {
                 if (idInput) idInput.value = id || '';
                 if (eraIdInput) eraIdInput.value = eraId || '';
                 if (civIdInput) civIdInput.value = civId || '';
                 if (nameEl) nameEl.textContent = name || '—';
                 if (yearEl) yearEl.textContent = year || '—';
+
                 modal.hidden = false;
-                modal.setAttribute('aria-hidden', 'false');
                 modal.classList.add('is-open');
+                modal.setAttribute('aria-hidden', 'false');
                 document.body.style.overflow = 'hidden';
             }
 
             function closeModal() {
+                modal.hidden = true;
                 modal.classList.remove('is-open');
                 modal.setAttribute('aria-hidden', 'true');
-                modal.hidden = true;
                 document.body.style.overflow = '';
             }
 
-            document.addEventListener('click', (e) => {
+            document.addEventListener('click', function (e) {
                 const btn = e.target.closest('[data-bk-delete-artifact]');
                 if (!btn) return;
 
                 openModal({
-                    id: btn.getAttribute('data-id'),
-                    name: btn.getAttribute('data-name'),
-                    year: btn.getAttribute('data-yearlabel'),
-                    eraId: btn.getAttribute('data-eraid'),
-                    civId: btn.getAttribute('data-civid')
+                    id: btn.dataset.id,
+                    name: btn.dataset.name,
+                    year: btn.dataset.yearlabel,
+                    eraId: btn.dataset.erAid,
+                    civId: btn.dataset.civid
                 });
             });
 
-            modal.addEventListener('click', (e) => {
+            modal?.addEventListener('click', function (e) {
                 if (e.target.closest('[data-bk-close]')) closeModal();
             });
 
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && modal.hidden === false) closeModal();
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && !modal.hidden) closeModal();
             });
 
             closeModal();
@@ -246,45 +266,45 @@
 
             const nodes = Array.from(timeline.querySelectorAll('.era-node'));
 
-            function normalize(s) { return (s || '').toString().toLowerCase().trim(); }
+            const normalize = s => (s || '').toLowerCase().trim();
 
             function apply() {
                 const q = normalize(search?.value);
 
                 let visible = nodes.filter(n => {
-                    const name = normalize(n.dataset.name);
-                    const desc = normalize(n.dataset.desc);
-                    const year = normalize(n.dataset.year);
-                    const material = normalize(n.dataset.material);
-                    const location = normalize(n.dataset.location);
-                    const eraName = normalize(n.dataset.eraname);
-                    const civName = normalize(n.dataset.civname);
+                    const hay = `
+                        ${n.dataset.name}
+                        ${n.dataset.desc}
+                        ${n.dataset.year}
+                        ${n.dataset.material}
+                        ${n.dataset.location}
+                        ${n.dataset.eraname}
+                        ${n.dataset.civname}
+                    `.toLowerCase();
 
-                    const hay = `${name} ${desc} ${year} ${material} ${location} ${eraName} ${civName}`;
-                    const okQ = !q || hay.includes(q);
-
-                    n.style.display = okQ ? '' : 'none';
-                    return okQ;
+                    const ok = !q || hay.includes(q);
+                    n.style.display = ok ? '' : 'none';
+                    return ok;
                 });
 
-                const mode = sort?.value || "yearAsc";
+                const mode = sort?.value || 'yearAsc';
 
                 const sorter = {
-                    yearAsc: (a, b) => Number(a.dataset.year) - Number(b.dataset.year),
-                    yearDesc: (a, b) => Number(b.dataset.year) - Number(a.dataset.year),
-                    nameAsc: (a, b) => a.dataset.name.localeCompare(b.dataset.name),
-                    nameDesc: (a, b) => b.dataset.name.localeCompare(a.dataset.name),
+                    yearAsc: (a,b) => a.dataset.year - b.dataset.year,
+                    yearDesc: (a,b) => b.dataset.year - a.dataset.year,
+                    nameAsc: (a,b) => a.dataset.name.localeCompare(b.dataset.name),
+                    nameDesc: (a,b) => b.dataset.name.localeCompare(a.dataset.name)
                 }[mode];
 
                 visible.sort(sorter);
 
                 const frag = document.createDocumentFragment();
                 visible.forEach(n => frag.appendChild(n));
-
                 nodes.filter(n => !visible.includes(n)).forEach(n => frag.appendChild(n));
+
                 timeline.appendChild(frag);
 
-                if (countEl) countEl.textContent = String(visible.length);
+                if (countEl) countEl.textContent = visible.length;
             }
 
             search?.addEventListener('input', apply);
@@ -293,4 +313,5 @@
             apply();
         })();
     </script>
+
 }

@@ -1,6 +1,9 @@
 ﻿using Bulgarikon.Core.DTOs;
 using Bulgarikon.Core.DTOs.FigureDTOs;
+using Bulgarikon.Core.DTOs.ImageDTOs;
 using Bulgarikon.Core.Interfaces;
+using Bulgarikon.ViewModels.FigureViewModels;
+using Bulgarikon.ViewModels.ImageViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -29,7 +32,29 @@ namespace Bulgarikon.Controllers
         {
             await LoadDropdownsAsync(eraId, civilizationId);
 
-            var model = await figuresService.GetByEraAsync(eraId, civilizationId);
+            var dtos = await figuresService.GetByEraAsync(eraId, civilizationId);
+
+            var model = dtos.Select(x => new FigureViewViewModel
+            {
+                Id = x.Id,
+                Name = x.Name,
+                Description = x.Description,
+                BirthDate = x.BirthDate,
+                DeathDate = x.DeathDate,
+                BirthYear = x.BirthYear,
+                DeathYear = x.DeathYear,
+                EraId = x.EraId,
+                EraName = x.EraName,
+                CivilizationId = x.CivilizationId,
+                CivilizationName = x.CivilizationName,
+                Images = x.Images.Select(i => new ImageViewViewModel
+                {
+                    Id = i.Id,
+                    Url = i.Url,
+                    Caption = i.Caption
+                }).ToList()
+            }).ToList();
+
             ViewBag.EraId = eraId;
             ViewBag.CivilizationId = civilizationId;
 
@@ -39,8 +64,30 @@ namespace Bulgarikon.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(Guid id)
         {
-            var model = await figuresService.GetDetailsAsync(id);
-            if (model == null) return NotFound();
+            var dto = await figuresService.GetDetailsAsync(id);
+            if (dto == null) return NotFound();
+
+            var model = new FigureViewViewModel
+            {
+                Id = dto.Id,
+                Name = dto.Name,
+                Description = dto.Description,
+                BirthDate = dto.BirthDate,
+                DeathDate = dto.DeathDate,
+                BirthYear = dto.BirthYear,
+                DeathYear = dto.DeathYear,
+                EraId = dto.EraId,
+                EraName = dto.EraName,
+                CivilizationId = dto.CivilizationId,
+                CivilizationName = dto.CivilizationName,
+                Images = dto.Images.Select(i => new ImageViewViewModel
+                {
+                    Id = i.Id,
+                    Url = i.Url,
+                    Caption = i.Caption
+                }).ToList()
+            };
+
             return View(model);
         }
 
@@ -50,7 +97,7 @@ namespace Bulgarikon.Controllers
         {
             await LoadDropdownsAsync(eraId, civilizationId);
 
-            return View(new FigureFormDto
+            return View(new FigureFormViewModel
             {
                 EraId = eraId,
                 CivilizationId = civilizationId
@@ -60,7 +107,7 @@ namespace Bulgarikon.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(FigureFormDto model)
+        public async Task<IActionResult> Create(FigureFormViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -70,19 +117,32 @@ namespace Bulgarikon.Controllers
 
             try
             {
-                Guid id = await figuresService.CreateAsync(model);
+                var dto = new FigureFormDto
+                {
+                    Name = model.Name,
+                    Description = model.Description,
+                    BirthDate = model.BirthDate,
+                    DeathDate = model.DeathDate,
+                    BirthYear = model.BirthYear,
+                    DeathYear = model.DeathYear,
+                    EraId = model.EraId,
+                    CivilizationId = model.CivilizationId,
+                    Images = model.Images.Select(i => new ImageEditDto
+                    {
+                        Id = i.Id,
+                        Url = i.Url,
+                        Caption = i.Caption,
+                        Remove = i.Remove
+                    }).ToList(),
+                    ImageFiles = model.ImageFiles
+                };
+
+                var id = await figuresService.CreateAsync(dto);
                 return RedirectToAction(nameof(Details), new { id });
             }
             catch (ValidationException ex)
             {
-                // ✅ UX: показваме грешката във формата, без да крашва
-                ModelState.AddModelError(string.Empty, ex.Message);
-                await LoadDropdownsAsync(model.EraId, model.CivilizationId);
-                return View(model);
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                ModelState.AddModelError("", ex.Message);
                 await LoadDropdownsAsync(model.EraId, model.CivilizationId);
                 return View(model);
             }
@@ -92,11 +152,30 @@ namespace Bulgarikon.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id)
         {
-            var model = await figuresService.GetForEditAsync(id);
-            if (model == null) return NotFound();
+            var dto = await figuresService.GetForEditAsync(id);
+            if (dto == null) return NotFound();
 
-            await LoadDropdownsAsync(model.EraId, model.CivilizationId);
+            await LoadDropdownsAsync(dto.EraId, dto.CivilizationId);
             ViewBag.FigureId = id;
+
+            var model = new FigureFormViewModel
+            {
+                Name = dto.Name,
+                Description = dto.Description,
+                BirthDate = dto.BirthDate,
+                DeathDate = dto.DeathDate,
+                BirthYear = dto.BirthYear,
+                DeathYear = dto.DeathYear,
+                EraId = dto.EraId,
+                CivilizationId = dto.CivilizationId,
+                Images = dto.Images.Select(i => new ImageEditViewModel
+                {
+                    Id = i.Id,
+                    Url = i.Url,
+                    Caption = i.Caption,
+                    Remove = i.Remove
+                }).ToList()
+            };
 
             return View(model);
         }
@@ -104,7 +183,7 @@ namespace Bulgarikon.Controllers
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, FigureFormDto model)
+        public async Task<IActionResult> Edit(Guid id, FigureFormViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -115,19 +194,32 @@ namespace Bulgarikon.Controllers
 
             try
             {
-                await figuresService.UpdateAsync(id, model);
+                var dto = new FigureFormDto
+                {
+                    Name = model.Name,
+                    Description = model.Description,
+                    BirthDate = model.BirthDate,
+                    DeathDate = model.DeathDate,
+                    BirthYear = model.BirthYear,
+                    DeathYear = model.DeathYear,
+                    EraId = model.EraId,
+                    CivilizationId = model.CivilizationId,
+                    Images = model.Images.Select(i => new ImageEditDto
+                    {
+                        Id = i.Id,
+                        Url = i.Url,
+                        Caption = i.Caption,
+                        Remove = i.Remove
+                    }).ToList(),
+                    ImageFiles = model.ImageFiles
+                };
+
+                await figuresService.UpdateAsync(id, dto);
                 return RedirectToAction(nameof(Details), new { id });
             }
             catch (ValidationException ex)
             {
-                ModelState.AddModelError(string.Empty, ex.Message);
-                await LoadDropdownsAsync(model.EraId, model.CivilizationId);
-                ViewBag.FigureId = id;
-                return View(model);
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
+                ModelState.AddModelError("", ex.Message);
                 await LoadDropdownsAsync(model.EraId, model.CivilizationId);
                 ViewBag.FigureId = id;
                 return View(model);
@@ -136,7 +228,6 @@ namespace Bulgarikon.Controllers
 
         [Authorize]
         [HttpPost]
-        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(Guid id, Guid eraId, Guid? civilizationId)
         {
             await figuresService.DeleteAsync(id);

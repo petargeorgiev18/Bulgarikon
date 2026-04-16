@@ -1,6 +1,8 @@
 ﻿using Bulgarikon.Core.DTOs.QuestionDTOs;
-using Bulgarikon.Core.DTOs.QuizDTOs;
 using Bulgarikon.Core.Interfaces;
+using Bulgarikon.ViewModels.QuestionViewModels;
+using Bulgarikon.ViewModels.AnswerViewModels;
+using Bulgarikon.Core.DTOs.AnswerDTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,25 +29,49 @@ namespace Bulgarikon.Controllers
             ViewBag.QuizId = quizId;
             ViewBag.QuizTitle = quiz.Title;
 
-            var model = await questions.GetByQuizAsync(quizId);
+            var dtos = await questions.GetByQuizAsync(quizId);
+
+            var model = dtos.Select(x => new QuestionListItemViewModel
+            {
+                Id = x.Id,
+                Text = x.Text,
+                AnswersCount = x.AnswersCount
+            }).ToList();
+
             return View(model);
         }
 
         [HttpGet]
         public IActionResult Create(Guid quizId)
         {
-            return View(new QuestionFormDto { QuizId = quizId });
+            return View(new QuestionFormViewModel
+            {
+                QuizId = quizId
+            });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(QuestionFormDto model)
+        public async Task<IActionResult> Create(QuestionFormViewModel model)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+                return View(model);
 
             try
             {
-                await questions.CreateAsync(model);
+                var dto = new QuestionFormDto
+                {
+                    QuizId = model.QuizId,
+                    Text = model.Text,
+                    Answers = model.Answers.Select((a, index) => new AnswerFormDto
+                    {
+                        Text = a.Text,
+                        IsCorrect = index == model.CorrectAnswerIndex
+                    }).ToList()
+                };
+
+                await questions.CreateAsync(dto);
+
                 return RedirectToAction(nameof(Index), new { quizId = model.QuizId });
             }
             catch (Exception ex)
@@ -58,8 +84,19 @@ namespace Bulgarikon.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id)
         {
-            var model = await questions.GetForEditAsync(id);
-            if (model == null) return NotFound();
+            var dto = await questions.GetForEditAsync(id);
+            if (dto == null) return NotFound();
+
+            var model = new QuestionFormViewModel
+            {
+                QuizId = dto.QuizId,
+                Text = dto.Text,
+                Answers = dto.Answers.Select(a => new AnswerFormViewModel
+                {
+                    Text = a.Text
+                }).ToList(),
+                CorrectAnswerIndex = dto.Answers.ToList().FindIndex(a => a.IsCorrect)
+            };
 
             ViewBag.QuestionId = id;
             return View(model);
@@ -67,7 +104,7 @@ namespace Bulgarikon.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, QuestionFormDto model)
+        public async Task<IActionResult> Edit(Guid id, QuestionFormViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -77,7 +114,19 @@ namespace Bulgarikon.Controllers
 
             try
             {
-                await questions.UpdateAsync(id, model);
+                var dto = new QuestionFormDto
+                {
+                    QuizId = model.QuizId,
+                    Text = model.Text,
+                    Answers = model.Answers.Select((a, index) => new AnswerFormDto
+                    {
+                        Text = a.Text,
+                        IsCorrect = index == model.CorrectAnswerIndex
+                    }).ToList()
+                };
+
+                await questions.UpdateAsync(id, dto);
+
                 return RedirectToAction(nameof(Index), new { quizId = model.QuizId });
             }
             catch (Exception ex)

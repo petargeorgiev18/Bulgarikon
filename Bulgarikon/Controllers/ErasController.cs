@@ -1,6 +1,9 @@
 ﻿using Bulgarikon.Core.DTOs;
 using Bulgarikon.Core.DTOs.EraDTOs;
 using Bulgarikon.Core.DTOs.ImageDTOs;
+using Bulgarikon.Core.Interfaces;
+using Bulgarikon.ViewModels.EraViewModels;
+using Bulgarikon.ViewModels.ImageViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,6 +12,7 @@ namespace Bulgarikon.Controllers
     public class ErasController : Controller
     {
         private readonly IEraService eraService;
+
         public ErasController(IEraService eraService)
         {
             this.eraService = eraService;
@@ -18,8 +22,24 @@ namespace Bulgarikon.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> Index()
         {
-            IEnumerable<EraViewDto> eras = await eraService.GetAllAsync();
-            return View(eras);
+            var dtos = await eraService.GetAllAsync();
+
+            var model = dtos.Select(e => new EraViewViewModel
+            {
+                Id = e.Id,
+                Name = e.Name,
+                Description = e.Description,
+                StartYear = e.StartYear,
+                EndYear = e.EndYear,
+                Images = e.Images?.Select(i => new ImageViewViewModel
+                {
+                    Id = i.Id,
+                    Url = i.Url,
+                    Caption = i.Caption
+                }).ToList()
+            });
+
+            return View(model);
         }
 
         [HttpGet]
@@ -28,8 +48,24 @@ namespace Bulgarikon.Controllers
         {
             try
             {
-                var era = await eraService.GetByIdAsync(id);
-                return View(era);
+                var dto = await eraService.GetByIdAsync(id);
+
+                var model = new EraViewViewModel
+                {
+                    Id = dto.Id,
+                    Name = dto.Name,
+                    Description = dto.Description,
+                    StartYear = dto.StartYear,
+                    EndYear = dto.EndYear,
+                    Images = dto.Images?.Select(i => new ImageViewViewModel
+                    {
+                        Id = i.Id,
+                        Url = i.Url,
+                        Caption = i.Caption
+                    }).ToList()
+                };
+
+                return View(model);
             }
             catch (KeyNotFoundException)
             {
@@ -41,27 +77,35 @@ namespace Bulgarikon.Controllers
         [Authorize]
         public IActionResult Create()
         {
-            return View();
+            return View(new EraFormViewModel());
         }
 
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(EraFormDto model)
+        public async Task<IActionResult> Create(EraFormViewModel model)
         {
             if (!ModelState.IsValid)
                 return View(model);
 
-            try
+            var dto = new EraFormDto
             {
-                await eraService.CreateAsync(model);
-                return RedirectToAction(nameof(Index));
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-                return View(model);
-            }
+                Name = model.Name,
+                Description = model.Description,
+                StartYear = model.StartYear,
+                EndYear = model.EndYear,
+                Images = model.Images?.Select(i => new ImageEditDto
+                {
+                    Id = i.Id,
+                    Url = i.Url,
+                    Caption = i.Caption,
+                    Remove = i.Remove
+                }).ToList()
+            };
+
+            await eraService.CreateAsync(dto);
+
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]
@@ -70,26 +114,24 @@ namespace Bulgarikon.Controllers
         {
             try
             {
-                var era = await eraService.GetByIdAsync(id);
+                var dto = await eraService.GetByIdAsync(id);
+
+                var model = new EraFormViewModel
+                {
+                    Name = dto.Name,
+                    Description = dto.Description,
+                    StartYear = dto.StartYear,
+                    EndYear = dto.EndYear,
+                    Images = dto.Images?.Select(i => new ImageEditViewModel
+                    {
+                        Id = i.Id,
+                        Url = i.Url,
+                        Caption = i.Caption,
+                        Remove = false
+                    }).ToList()
+                };
 
                 ViewBag.EraId = id;
-
-                var model = new EraFormDto
-                {
-                    Name = era.Name,
-                    Description = era.Description ?? string.Empty,
-                    StartYear = era.StartYear,
-                    EndYear = era.EndYear,
-                    Images = (era.Images ?? new List<Bulgarikon.Core.DTOs.ImageDTOs.ImageViewDto>())
-                        .Select(i => new ImageEditDto
-                        {
-                            Id = i.Id,
-                            Url = i.Url,
-                            Caption = i.Caption,
-                            Remove = false
-                        })
-                        .ToList()
-                };
 
                 return View(model);
             }
@@ -102,25 +144,29 @@ namespace Bulgarikon.Controllers
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, EraFormDto model)
+        public async Task<IActionResult> Edit(Guid id, EraFormViewModel model)
         {
             if (!ModelState.IsValid)
                 return View(model);
 
-            try
+            var dto = new EraFormDto
             {
-                await eraService.EditAsync(id, model);
-                return RedirectToAction(nameof(Details), new { id });
-            }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
-            catch (InvalidOperationException ex)
-            {
-                ModelState.AddModelError(string.Empty, ex.Message);
-                return View(model);
-            }
+                Name = model.Name,
+                Description = model.Description,
+                StartYear = model.StartYear,
+                EndYear = model.EndYear,
+                Images = model.Images?.Select(i => new ImageEditDto
+                {
+                    Id = i.Id,
+                    Url = i.Url,
+                    Caption = i.Caption,
+                    Remove = i.Remove
+                }).ToList()
+            };
+
+            await eraService.EditAsync(id, dto);
+
+            return RedirectToAction(nameof(Details), new { id });
         }
 
         [HttpPost]
@@ -141,8 +187,18 @@ namespace Bulgarikon.Controllers
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
 
-                var era = await eraService.GetByIdAsync(id);
-                return View("Delete", era);
+                var dto = await eraService.GetByIdAsync(id);
+
+                var model = new EraViewViewModel
+                {
+                    Id = dto.Id,
+                    Name = dto.Name,
+                    Description = dto.Description,
+                    StartYear = dto.StartYear,
+                    EndYear = dto.EndYear
+                };
+
+                return View("Delete", model);
             }
         }
     }

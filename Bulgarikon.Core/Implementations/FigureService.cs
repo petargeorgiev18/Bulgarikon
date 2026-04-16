@@ -26,7 +26,7 @@ namespace Bulgarikon.Core.Implementations
             this.cloudinaryService = cloudinaryService;
         }
 
-        public async Task<IEnumerable<FigureViewDto>> GetByEraAsync(Guid? eraId, Guid? civilizationId = null)
+        public async Task<List<FigureViewDto>> GetByEraAsync(Guid? eraId, Guid? civilizationId = null)
         {
             var q = context.Figures
                 .AsNoTracking()

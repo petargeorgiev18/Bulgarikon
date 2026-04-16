@@ -1,4 +1,4 @@
-﻿@model Bulgarikon.Core.DTOs.EventDTOs.EventFormDto
+﻿@model Bulgarikon.ViewModels.EventViewModels.EventFormViewModel
 @using Microsoft.AspNetCore.Mvc.Rendering
 
 @{
@@ -198,7 +198,7 @@
             }
 
             const initial = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-                            Model.Images ?? new List<Bulgarikon.Core.DTOs.ImageDTOs.ImageEditDto>()
+                            Model.Images ?? new List<Bulgarikon.ViewModels.ImageViewModels.ImageEditViewModel>()
                     ));
 
         if (initial && initial.length) {

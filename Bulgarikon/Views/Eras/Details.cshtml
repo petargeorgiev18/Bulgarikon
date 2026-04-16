@@ -1,4 +1,4 @@
-﻿@model Bulgarikon.Core.DTOs.EraDTOs.EraViewDto
+﻿@model Bulgarikon.ViewModels.EraViewModels.EraViewViewModel
 
 @{
     ViewData["Title"] = "Епоха: " + Model.Name;
@@ -15,7 +15,7 @@
     var heroImg = hasImages ? Model.Images?.FirstOrDefault() : null;
 
     var galleryJson = System.Text.Json.JsonSerializer.Serialize(
-        (Model.Images ?? new List<Bulgarikon.Core.DTOs.ImageDTOs.ImageViewDto>())
+        (Model.Images ?? new List<Bulgarikon.ViewModels.ImageViewModels.ImageViewViewModel>())
             .Select(x => new { url = x.Url, caption = x.Caption })
             .ToList()
     );

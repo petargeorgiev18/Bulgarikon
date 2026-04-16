@@ -1,5 +1,5 @@
 ﻿@using Bulgarikon.Common.Helpers
-@model Bulgarikon.Core.DTOs.FigureDTOs.FigureViewDto
+@model Bulgarikon.ViewModels.FigureViewModels.FigureViewViewModel
 
 @{
     ViewData["Title"] = "Детайли";
@@ -7,7 +7,7 @@
 
     var hasImages = Model.Images != null && Model.Images.Any();
     var galleryJson = System.Text.Json.JsonSerializer.Serialize(
-        (Model.Images ?? new List<Bulgarikon.Core.DTOs.ImageDTOs.ImageViewDto>())
+        (Model.Images ?? new List<Bulgarikon.ViewModels.ImageViewModels.ImageViewViewModel>())
             .Select(x => new { url = x.Url, caption = x.Caption })
             .ToList()
     );

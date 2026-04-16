@@ -1,12 +1,16 @@
-﻿using System.ComponentModel.DataAnnotations;
-using Bulgarikon.Core.DTOs;
+﻿using Bulgarikon.Core.DTOs;
 using Bulgarikon.Core.DTOs.CivilizaionDTOs;
 using Bulgarikon.Core.DTOs.EventDTOs;
+using Bulgarikon.Core.DTOs.FigureDTOs;
+using Bulgarikon.Core.DTOs.ImageDTOs;
 using Bulgarikon.Core.Interfaces;
 using Bulgarikon.Models;
+using Bulgarikon.ViewModels.EventViewModels;
+using Bulgarikon.ViewModels.ImageViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.ComponentModel.DataAnnotations;
 
 namespace Bulgarikon.Controllers
 {
@@ -45,19 +49,29 @@ namespace Bulgarikon.Controllers
 
             foreach (var era in eras)
             {
-                var events = (await eventsService.GetByEraAsync(era.Id)).ToList();
+                var dtos = await eventsService.GetByEraAsync(era.Id);
+
+                var events = dtos.Select(e => new EventViewViewModel
+                {
+                    Id = e.Id,
+                    Title = e.Title,
+                    StartYear = e.StartYear,
+                    EndYear = e.EndYear,
+                    Location = e.Location,
+                    EraId = e.EraId,
+                    EraName = e.EraName
+                }).ToList();
 
                 if (!string.IsNullOrWhiteSpace(search))
                 {
                     var s = search.ToLowerInvariant();
 
-                    events = events
-                        .Where(ev =>
-                            (!string.IsNullOrWhiteSpace(ev.Title) && ev.Title.ToLowerInvariant().Contains(s)) ||
-                            (!string.IsNullOrWhiteSpace(ev.Location) && ev.Location.ToLowerInvariant().Contains(s)) ||
-                            ev.StartYear.ToString().Contains(s) ||
-                            ev.EndYear.ToString().Contains(s))
-                        .ToList();
+                    events = events.Where(ev =>
+                        ev.Title.ToLowerInvariant().Contains(s) ||
+                        (ev.Location ?? "").ToLowerInvariant().Contains(s) ||
+                        ev.StartYear.ToString().Contains(s) ||
+                        ev.EndYear.ToString().Contains(s)
+                    ).ToList();
                 }
 
                 groups.Add(new EventEraGroupViewModel
@@ -73,18 +87,18 @@ namespace Bulgarikon.Controllers
             if (!string.IsNullOrWhiteSpace(search))
                 groups = groups.Where(g => g.Events.Any()).ToList();
 
-            ViewBag.EraId = eraId;
-            ViewBag.Search = search;
-
             ViewBag.Eras = (await erasService.GetAllAsync())
                 .OrderBy(e => e.StartYear)
                 .Select(e => new SelectListItem
                 {
                     Text = $"{e.Name} ({e.StartYear}–{e.EndYear})",
                     Value = e.Id.ToString(),
-                    Selected = eraId.HasValue && eraId.Value != Guid.Empty && e.Id == eraId.Value
+                    Selected = eraId.HasValue && e.Id == eraId.Value
                 })
                 .ToList();
+
+            ViewBag.EraId = eraId;
+            ViewBag.Search = search;
 
             return View(groups);
         }
@@ -92,19 +106,41 @@ namespace Bulgarikon.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(Guid id)
         {
-            var model = await eventsService.GetDetailsAsync(id);
-            if (model == null) return NotFound();
+            var dto = await eventsService.GetDetailsAsync(id);
+            if (dto == null) return NotFound();
 
-            await LoadDropdownsAsync(model.EraId);
+            await LoadDropdownsAsync(dto.EraId);
 
-            var civItems = (List<SelectListItem>)ViewBag.Civilizations;
-            var figItems = (List<SelectListItem>)ViewBag.Figures;
+            var model = new EventDetailsViewModel
+            {
+                Id = dto.Id,
+                Title = dto.Title,
+                Description = dto.Description,
+                Location = dto.Location,
+                StartYear = dto.StartYear,
+                EndYear = dto.EndYear,
+                EraId = dto.EraId,
+                EraName = dto.EraName,
 
-            var selectedCivIds = model.Civilizations.Select(c => c.Id.ToString()).ToHashSet();
-            var selectedFigIds = model.Figures.Select(f => f.Id.ToString()).ToHashSet();
+                Images = dto.Images.Select(i => new ImageViewViewModel
+                {
+                    Id = i.Id,
+                    Url = i.Url,
+                    Caption = i.Caption
+                }).ToList(),
 
-            ViewBag.Civilizations = civItems.Where(x => !selectedCivIds.Contains(x.Value!)).ToList();
-            ViewBag.Figures = figItems.Where(x => !selectedFigIds.Contains(x.Value!)).ToList();
+                Civilizations = dto.Civilizations.Select(c => new CivilizationChipViewModel
+                {
+                    Id = c.Id,
+                    Name = c.Name
+                }).ToList(),
+
+                Figures = dto.Figures.Select(f => new FigureChipViewModel
+                {
+                    Id = f.Id,
+                    Name = f.Name
+                }).ToList()
+            };
 
             return View(model);
         }
@@ -113,22 +149,20 @@ namespace Bulgarikon.Controllers
         [HttpGet]
         public async Task<IActionResult> Create(Guid? eraId = null)
         {
-            await LoadDropdownsAsync(selectedEraId: eraId);
+            await LoadDropdownsAsync(eraId);
 
-            var model = new EventFormDto
+            return View(new EventFormViewModel
             {
                 EraId = eraId ?? Guid.Empty,
                 CivilizationIds = new List<Guid>(),
                 FigureIds = new List<Guid>()
-            };
-
-            return View(model);
+            });
         }
 
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(EventFormDto model)
+        public async Task<IActionResult> Create(EventFormViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -138,7 +172,20 @@ namespace Bulgarikon.Controllers
 
             try
             {
-                var id = await eventsService.CreateAsync(model);
+                var dto = new EventFormDto
+                {
+                    Title = model.Title,
+                    Description = model.Description,
+                    Location = model.Location,
+                    StartYear = model.StartYear,
+                    EndYear = model.EndYear,
+                    EraId = model.EraId,
+                    CivilizationIds = model.CivilizationIds,
+                    FigureIds = model.FigureIds
+                };
+
+                var id = await eventsService.CreateAsync(dto);
+
                 return RedirectToAction(nameof(Details), new { id });
             }
             catch (ValidationException ex)
@@ -159,10 +206,31 @@ namespace Bulgarikon.Controllers
         [HttpGet]
         public async Task<IActionResult> Edit(Guid id)
         {
-            var model = await eventsService.GetForEditAsync(id);
-            if (model == null) return NotFound();
+            var dto = await eventsService.GetForEditAsync(id);
+            if (dto == null) return NotFound();
 
-            await LoadDropdownsAsync(model.EraId);
+            await LoadDropdownsAsync(dto.EraId);
+
+            var model = new EventFormViewModel
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                Location = dto.Location,
+                StartYear = dto.StartYear,
+                EndYear = dto.EndYear,
+                EraId = dto.EraId,
+                CivilizationIds = dto.CivilizationIds,
+                FigureIds = dto.FigureIds,
+                ImageFiles = dto.ImageFiles,
+                Images = dto.Images?.Select(x => new ImageEditViewModel
+                {
+                    Id = x.Id,
+                    Url = x.Url,
+                    Caption = x.Caption,
+                    Remove = x.Remove
+                }).ToList()
+            };
+
             ViewBag.EventId = id;
 
             return View(model);
@@ -171,7 +239,7 @@ namespace Bulgarikon.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(Guid id, EventFormDto model)
+        public async Task<IActionResult> Edit(Guid id, EventFormViewModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -182,7 +250,28 @@ namespace Bulgarikon.Controllers
 
             try
             {
-                await eventsService.UpdateAsync(id, model);
+                var dto = new EventFormDto
+                {
+                    Title = model.Title,
+                    Description = model.Description,
+                    Location = model.Location,
+                    StartYear = model.StartYear,
+                    EndYear = model.EndYear,
+                    EraId = model.EraId,
+                    CivilizationIds = model.CivilizationIds,
+                    FigureIds = model.FigureIds,
+                    ImageFiles = model.ImageFiles,
+                    Images = model.Images?.Select(x => new ImageEditDto
+                    {
+                        Id = x.Id,
+                        Url = x.Url,
+                        Caption = x.Caption,
+                        Remove = x.Remove
+                    }).ToList()
+                };
+
+                await eventsService.UpdateAsync(id, dto);
+
                 return RedirectToAction(nameof(Details), new { id });
             }
             catch (ValidationException ex)
@@ -210,57 +299,39 @@ namespace Bulgarikon.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        [Authorize(Roles = "Admin")]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddCivilization(Guid eventId, Guid civilizationId)
-        {
-            await eventsService.AddCivilizationAsync(eventId, civilizationId);
-            return RedirectToAction(nameof(Details), new { id = eventId });
-        }
-
-        [Authorize(Roles = "Admin")]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddFigure(Guid eventId, Guid figureId)
-        {
-            await eventsService.AddFigureAsync(eventId, figureId);
-            return RedirectToAction(nameof(Details), new { id = eventId });
-        }
-
         private async Task LoadDropdownsAsync(Guid? selectedEraId = null)
         {
             var eras = await erasService.GetAllAsync();
-            ViewBag.Eras = eras
-                .OrderBy(e => e.StartYear)
-                .Select(e => new SelectListItem
-                {
-                    Text = $"{e.Name} ({e.StartYear}–{e.EndYear})",
-                    Value = e.Id.ToString(),
-                    Selected = selectedEraId.HasValue && e.Id == selectedEraId.Value
-                })
-                .ToList();
 
-            var civs = selectedEraId.HasValue && selectedEraId.Value != Guid.Empty
+            ViewBag.Eras = eras.Select(e => new SelectListItem
+            {
+                Text = $"{e.Name} ({e.StartYear}–{e.EndYear})",
+                Value = e.Id.ToString(),
+                Selected = selectedEraId == e.Id
+            }).ToList();
+
+            var civs = selectedEraId.HasValue
                 ? await civilizationsService.GetByEraAsync(selectedEraId.Value)
                 : Enumerable.Empty<CivilizationViewDto>();
 
-            ViewBag.Civilizations = civs
-                .OrderBy(c => c.Name)
-                .Select(c => new SelectListItem { Text = c.Name, Value = c.Id.ToString() })
-                .ToList();
+            ViewBag.Civilizations = civs.Select(c => new SelectListItem
+            {
+                Text = c.Name,
+                Value = c.Id.ToString()
+            }).ToList();
 
-            var figs = selectedEraId.HasValue && selectedEraId.Value != Guid.Empty
-                ? await figuresService.GetByEraAsync(selectedEraId.Value)
-                : Enumerable.Empty<Bulgarikon.Core.DTOs.FigureDTOs.FigureViewDto>();
+            var figs = selectedEraId.HasValue
+                ? await figuresService.GetByEraAsync(selectedEraId.Value, null)
+                : Enumerable.Empty<FigureViewDto>();
 
-            ViewBag.Figures = figs
-                .OrderBy(f => f.Name)
-                .Select(f => new SelectListItem { Text = f.Name, Value = f.Id.ToString() })
-                .ToList();
+            ViewBag.Figures = figs.Select(f => new SelectListItem
+            {
+                Text = f.Name,
+                Value = f.Id.ToString()
+            }).ToList();
         }
 
-        private void AddYearErrorsToModelState(EventFormDto model, string message)
+        private void AddYearErrorsToModelState(EventFormViewModel model, string message)
         {
             ModelState.AddModelError(string.Empty, message);
             ModelState.AddModelError(nameof(model.StartYear), message);
