@@ -4,12 +4,16 @@
 @inject SignInManager<BulgarikonUser> SignInManager
 @inject UserManager<BulgarikonUser> UserManager
 
+@{
+	var username = User.Identity?.Name!.Split('@')[0];
+}
+
 <ul class="navbar-nav">
 	@if (SignInManager.IsSignedIn(User))
 	{
 		<li class="nav-item">
 			<span class="nav-link btn btn-link text-dark">
-				Здравей, @User.Identity?.Name!
+				Здравей, @username
 			</span>
 		</li>
 		<li class="nav-item">
