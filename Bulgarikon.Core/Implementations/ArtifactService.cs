@@ -112,39 +112,37 @@ namespace Bulgarikon.Core.Implementations
 
             if (model.ImageFile != null && model.ImageFile.Length > 0)
             {
-                var uploadResult = await cloudinaryService.UploadImageAsync(model.ImageFile);
+                var upload = await cloudinaryService.UploadImageAsync(model.ImageFile);
 
-                var image = new Image
+                await context.Images.AddAsync(new Image
                 {
                     Id = Guid.NewGuid(),
-                    Url = uploadResult.Url,
-                    PublicId = uploadResult.PublicId,
+                    Url = upload.Url,
+                    PublicId = upload.PublicId,
                     Caption = entity.Name,
                     SortOrder = 0,
                     TargetType = ImageTargetType.Artifact,
                     ArtifactId = entity.Id
-                };
+                });
 
-                await context.Images.AddAsync(image);
-                entity.ImageUrl = uploadResult.Url;
+                entity.ImageUrl = upload.Url;
             }
             else if (!string.IsNullOrWhiteSpace(model.ImageUrl))
             {
-                var cleanUrl = model.ImageUrl.Trim();
+                var upload = await cloudinaryService.UploadImageFromUrlAsync(model.ImageUrl.Trim());
 
-                var image = new Image
+                await context.Images.AddAsync(new Image
                 {
                     Id = Guid.NewGuid(),
-                    Url = cleanUrl,
-                    PublicId = null,
+                    Url = upload.Url,
+                    PublicId = upload.PublicId,
                     Caption = entity.Name,
                     SortOrder = 0,
                     TargetType = ImageTargetType.Artifact,
                     ArtifactId = entity.Id
-                };
+                });
 
-                await context.Images.AddAsync(image);
-                entity.ImageUrl = cleanUrl;
+                entity.ImageUrl = upload.Url;
             }
             else
             {
@@ -207,74 +205,51 @@ namespace Bulgarikon.Core.Implementations
                 .Where(i => i.TargetType == ImageTargetType.Artifact && i.ArtifactId == a.Id)
                 .ToList();
 
+            foreach (var img in existingImages)
+            {
+                if (!string.IsNullOrWhiteSpace(img.PublicId))
+                    await cloudinaryService.DeleteImageAsync(img.PublicId);
+            }
+
+            if (existingImages.Any())
+                context.Images.RemoveRange(existingImages);
+
             if (model.ImageFile != null && model.ImageFile.Length > 0)
             {
-                foreach (var img in existingImages)
-                {
-                    if (!string.IsNullOrWhiteSpace(img.PublicId))
-                    {
-                        await cloudinaryService.DeleteImageAsync(img.PublicId);
-                    }
-                }
+                var upload = await cloudinaryService.UploadImageAsync(model.ImageFile);
 
-                if (existingImages.Any())
-                    context.Images.RemoveRange(existingImages);
-
-                var uploadResult = await cloudinaryService.UploadImageAsync(model.ImageFile);
-
-                var newImage = new Image
+                await context.Images.AddAsync(new Image
                 {
                     Id = Guid.NewGuid(),
-                    Url = uploadResult.Url,
-                    PublicId = uploadResult.PublicId,
+                    Url = upload.Url,
+                    PublicId = upload.PublicId,
                     Caption = a.Name,
                     SortOrder = 0,
                     TargetType = ImageTargetType.Artifact,
                     ArtifactId = a.Id
-                };
+                });
 
-                await context.Images.AddAsync(newImage);
-                a.ImageUrl = uploadResult.Url;
+                a.ImageUrl = upload.Url;
             }
             else if (!string.IsNullOrWhiteSpace(model.ImageUrl))
             {
-                var cleanUrl = model.ImageUrl.Trim();
+                var upload = await cloudinaryService.UploadImageFromUrlAsync(model.ImageUrl.Trim());
 
-                foreach (var img in existingImages.Where(x => !string.IsNullOrWhiteSpace(x.PublicId)))
-                {
-                    await cloudinaryService.DeleteImageAsync(img.PublicId!);
-                }
-
-                if (existingImages.Any())
-                    context.Images.RemoveRange(existingImages);
-
-                var newImage = new Image
+                await context.Images.AddAsync(new Image
                 {
                     Id = Guid.NewGuid(),
-                    Url = cleanUrl,
-                    PublicId = null,
+                    Url = upload.Url,
+                    PublicId = upload.PublicId,
                     Caption = a.Name,
                     SortOrder = 0,
                     TargetType = ImageTargetType.Artifact,
                     ArtifactId = a.Id
-                };
+                });
 
-                await context.Images.AddAsync(newImage);
-                a.ImageUrl = cleanUrl;
+                a.ImageUrl = upload.Url;
             }
             else
             {
-                foreach (var img in existingImages)
-                {
-                    if (!string.IsNullOrWhiteSpace(img.PublicId))
-                    {
-                        await cloudinaryService.DeleteImageAsync(img.PublicId);
-                    }
-                }
-
-                if (existingImages.Any())
-                    context.Images.RemoveRange(existingImages);
-
                 a.ImageUrl = null;
             }
 
@@ -296,9 +271,7 @@ namespace Bulgarikon.Core.Implementations
             foreach (var img in artifactImages)
             {
                 if (!string.IsNullOrWhiteSpace(img.PublicId))
-                {
                     await cloudinaryService.DeleteImageAsync(img.PublicId);
-                }
             }
 
             if (artifactImages.Any())
@@ -308,7 +281,6 @@ namespace Bulgarikon.Core.Implementations
             await context.SaveChangesAsync();
         }
 
-        // Validates the artifact form data before creation or update.
         private static void Validate(ArtifactFormDto m)
         {
             if (m.DiscoveredAt.Date > DateTime.Today)

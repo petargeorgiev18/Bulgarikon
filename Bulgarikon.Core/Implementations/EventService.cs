@@ -121,7 +121,7 @@ namespace Bulgarikon.Core.Implementations
 
             int sortOrder = 0;
 
-            if (model.ImageFiles != null && model.ImageFiles.Any())
+            if (model.ImageFiles != null)
             {
                 foreach (var file in model.ImageFiles.Where(f => f != null && f.Length > 0))
                 {
@@ -140,28 +140,23 @@ namespace Bulgarikon.Core.Implementations
                 }
             }
 
-            var newImages = (model.Images ?? new List<ImageEditDto>())
-                .Where(x => !x.Remove)
-                .Select(x => new
-                {
-                    Url = (x.Url ?? string.Empty).Trim(),
-                    Caption = x.Caption?.Trim()
-                })
-                .Where(x => !string.IsNullOrWhiteSpace(x.Url))
-                .ToList();
-
-            if (newImages.Any())
+            if (model.Images != null)
             {
-                await context.Images.AddRangeAsync(newImages.Select(x => new Image
+                foreach (var img in model.Images.Where(x => !x.Remove && !string.IsNullOrWhiteSpace(x.Url)))
                 {
-                    Id = Guid.NewGuid(),
-                    TargetType = ImageTargetType.Event,
-                    Url = x.Url,
-                    PublicId = null,
-                    Caption = x.Caption,
-                    SortOrder = sortOrder++,
-                    EventId = entity.Id
-                }));
+                    var upload = await cloudinaryService.UploadImageFromUrlAsync(img.Url!);
+
+                    await context.Images.AddAsync(new Image
+                    {
+                        Id = Guid.NewGuid(),
+                        TargetType = ImageTargetType.Event,
+                        Url = upload.Url,
+                        PublicId = upload.PublicId,
+                        Caption = img.Caption?.Trim(),
+                        SortOrder = sortOrder++,
+                        EventId = entity.Id
+                    });
+                }
             }
 
             await context.SaveChangesAsync();
@@ -214,7 +209,7 @@ namespace Bulgarikon.Core.Implementations
                 .Include(x => x.Images)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
-            if (e == null) throw new InvalidOperationException("Event not found.");
+            if (e == null) throw new InvalidOperationException();
 
             e.Title = model.Title.Trim();
             e.Description = model.Description.Trim();
@@ -223,11 +218,8 @@ namespace Bulgarikon.Core.Implementations
             e.EndYear = model.EndYear;
             e.EraId = model.EraId;
 
-            if (e.EventCivilizations.Any())
-                context.RemoveRange(e.EventCivilizations);
-
-            if (e.EventFigures.Any())
-                context.RemoveRange(e.EventFigures);
+            context.RemoveRange(e.EventCivilizations);
+            context.RemoveRange(e.EventFigures);
 
             e.EventCivilizations = (model.CivilizationIds ?? new List<Guid>())
                 .Where(x => x != Guid.Empty)
@@ -241,78 +233,58 @@ namespace Bulgarikon.Core.Implementations
                 .Select(fid => new EventFigure { EventId = e.Id, FigureId = fid })
                 .ToHashSet();
 
-            var incoming = (model.Images ?? new List<ImageEditDto>())
-                .Select(x => new ImageEditDto
-                {
-                    Id = x.Id,
-                    Url = (x.Url ?? string.Empty).Trim(),
-                    Caption = x.Caption?.Trim(),
-                    Remove = x.Remove
-                })
-                .ToList();
+            var existing = e.Images.ToList();
 
-            var existing = e.Images
-                .Where(i => i.TargetType == ImageTargetType.Event && i.EventId == e.Id)
-                .OrderBy(i => i.SortOrder)
-                .ToList();
-
-            var removeIds = incoming
+            var removeIds = (model.Images ?? new List<ImageEditDto>())
                 .Where(x => x.Remove && x.Id.HasValue)
                 .Select(x => x.Id!.Value)
                 .ToHashSet();
 
-            if (removeIds.Any())
+            var toRemove = existing.Where(x => removeIds.Contains(x.Id)).ToList();
+
+            foreach (var img in toRemove)
             {
-                var toRemove = existing.Where(img => removeIds.Contains(img.Id)).ToList();
-
-                foreach (var img in toRemove)
-                {
-                    if (!string.IsNullOrWhiteSpace(img.PublicId))
-                    {
-                        await cloudinaryService.DeleteImageAsync(img.PublicId);
-                    }
-                }
-
-                if (toRemove.Any())
-                    context.Images.RemoveRange(toRemove);
+                if (!string.IsNullOrWhiteSpace(img.PublicId))
+                    await cloudinaryService.DeleteImageAsync(img.PublicId);
             }
 
-            var updates = incoming
-                .Where(x => !x.Remove && x.Id.HasValue && !string.IsNullOrWhiteSpace(x.Url))
-                .ToList();
+            if (toRemove.Any())
+                context.Images.RemoveRange(toRemove);
+
+            var updates = (model.Images ?? new List<ImageEditDto>())
+                .Where(x => !x.Remove && x.Id.HasValue && !string.IsNullOrWhiteSpace(x.Url));
 
             foreach (var u in updates)
             {
-                var dbImg = existing.FirstOrDefault(img => img.Id == u.Id!.Value);
+                var dbImg = existing.FirstOrDefault(x => x.Id == u.Id);
                 if (dbImg == null) continue;
 
-                dbImg.Url = u.Url;
+                dbImg.Url = u.Url!;
                 dbImg.Caption = u.Caption;
-                dbImg.TargetType = ImageTargetType.Event;
-                dbImg.EventId = e.Id;
             }
 
-            int nextSortOrder = existing.Any() ? existing.Max(i => i.SortOrder) + 1 : 0;
+            int sortOrder = existing.Any() ? existing.Max(x => x.SortOrder) + 1 : 0;
 
-            var adds = incoming
-                .Where(x => !x.Remove && !x.Id.HasValue && !string.IsNullOrWhiteSpace(x.Url))
-                .ToList();
+            var adds = (model.Images ?? new List<ImageEditDto>())
+                .Where(x => !x.Remove && !x.Id.HasValue && !string.IsNullOrWhiteSpace(x.Url));
 
-            if (adds.Any())
+            foreach (var a in adds)
             {
-                await context.Images.AddRangeAsync(adds.Select(a => new Image
+                var upload = await cloudinaryService.UploadImageFromUrlAsync(a.Url!);
+
+                await context.Images.AddAsync(new Image
                 {
                     Id = Guid.NewGuid(),
                     TargetType = ImageTargetType.Event,
-                    Url = a.Url,
-                    PublicId = null,
+                    Url = upload.Url,
+                    PublicId = upload.PublicId,
                     Caption = a.Caption,
-                    SortOrder = nextSortOrder++,
+                    SortOrder = sortOrder++,
                     EventId = e.Id
-                }));
+                });
             }
 
-            if (model.ImageFiles != null && model.ImageFiles.Any())
+            if (model.ImageFiles != null)
             {
                 foreach (var file in model.ImageFiles.Where(f => f != null && f.Length > 0))
                 {
@@ -325,7 +297,7 @@ namespace Bulgarikon.Core.Implementations
                         Url = uploadResult.Url,
                         PublicId = uploadResult.PublicId,
                         Caption = null,
-                        SortOrder = nextSortOrder++,
+                        SortOrder = sortOrder++,
                         EventId = e.Id
                     });
                 }
@@ -344,28 +316,17 @@ namespace Bulgarikon.Core.Implementations
 
             if (e == null) return;
 
-            var eventImages = e.Images
-                .Where(i => i.TargetType == ImageTargetType.Event && i.EventId == e.Id)
-                .ToList();
-
-            foreach (var img in eventImages)
+            foreach (var img in e.Images)
             {
                 if (!string.IsNullOrWhiteSpace(img.PublicId))
-                {
                     await cloudinaryService.DeleteImageAsync(img.PublicId);
-                }
             }
 
-            if (eventImages.Any())
-                context.Images.RemoveRange(eventImages);
-
-            if (e.EventCivilizations.Any())
-                context.RemoveRange(e.EventCivilizations);
-
-            if (e.EventFigures.Any())
-                context.RemoveRange(e.EventFigures);
-
+            context.Images.RemoveRange(e.Images);
+            context.RemoveRange(e.EventCivilizations);
+            context.RemoveRange(e.EventFigures);
             context.Events.Remove(e);
+
             await context.SaveChangesAsync();
         }
 
@@ -373,7 +334,7 @@ namespace Bulgarikon.Core.Implementations
         {
             if (eventId == Guid.Empty || civilizationId == Guid.Empty) return;
 
-            bool exists = await context.EventCivilizations
+            var exists = await context.EventCivilizations
                 .AnyAsync(x => x.EventId == eventId && x.CivilizationId == civilizationId);
 
             if (!exists)
@@ -392,7 +353,7 @@ namespace Bulgarikon.Core.Implementations
         {
             if (eventId == Guid.Empty || figureId == Guid.Empty) return;
 
-            bool exists = await context.EventFigures
+            var exists = await context.EventFigures
                 .AnyAsync(x => x.EventId == eventId && x.FigureId == figureId);
 
             if (!exists)
@@ -410,7 +371,7 @@ namespace Bulgarikon.Core.Implementations
         private static void NormalizeAndValidateYears(EventFormDto m)
         {
             if (!m.StartYear.HasValue && !m.EndYear.HasValue)
-                throw new InvalidOperationException("Трябва да има поне една година.");
+                throw new InvalidOperationException();
 
             if (m.StartYear.HasValue && !m.EndYear.HasValue)
                 m.EndYear = m.StartYear;
@@ -419,7 +380,7 @@ namespace Bulgarikon.Core.Implementations
                 m.StartYear = m.EndYear;
 
             if (m.StartYear > m.EndYear)
-                throw new InvalidOperationException("Началната година не може да е след крайната.");
+                throw new InvalidOperationException();
         }
     }
 }

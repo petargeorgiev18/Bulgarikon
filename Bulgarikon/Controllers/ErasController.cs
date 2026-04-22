@@ -100,7 +100,8 @@ namespace Bulgarikon.Controllers
                     Url = i.Url,
                     Caption = i.Caption,
                     Remove = i.Remove
-                }).ToList()
+                }).ToList(),
+                ImageFiles = model.ImageFiles
             };
 
             await eraService.CreateAsync(dto);
@@ -161,7 +162,8 @@ namespace Bulgarikon.Controllers
                     Url = i.Url,
                     Caption = i.Caption,
                     Remove = i.Remove
-                }).ToList()
+                }).ToList(),
+                ImageFiles = model.ImageFiles
             };
 
             await eraService.EditAsync(id, dto);

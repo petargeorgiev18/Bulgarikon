@@ -5,7 +5,7 @@
 @inject UserManager<BulgarikonUser> UserManager
 
 @{
-	var username = User.Identity?.Name!.Split('@')[0];
+	var username = User.Identity?.Name?.Split('@')[0];
 }
 
 <ul class="navbar-nav">

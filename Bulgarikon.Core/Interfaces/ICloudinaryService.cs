@@ -7,5 +7,6 @@ namespace Bulgarikon.Core.Interfaces
     {
         Task<CloudinaryUploadResultDto> UploadImageAsync(IFormFile file);
         Task DeleteImageAsync(string publicId);
+        Task<CloudinaryUploadResultDto> UploadImageFromUrlAsync(string imageUrl);
     }
 }

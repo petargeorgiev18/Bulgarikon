@@ -59,5 +59,25 @@ namespace Bulgarikon.Core.Implementations
                 PublicId = result.PublicId
             };
         }
+
+        public async Task<CloudinaryUploadResultDto> UploadImageFromUrlAsync(string imageUrl)
+        {
+            if (string.IsNullOrWhiteSpace(imageUrl))
+                throw new ArgumentException("Invalid image URL");
+
+            var uploadParams = new ImageUploadParams
+            {
+                File = new FileDescription(imageUrl),
+                Folder = "bulgarikon"
+            };
+
+            var result = await cloudinary.UploadAsync(uploadParams);
+
+            return new CloudinaryUploadResultDto
+            {
+                Url = result.SecureUrl.ToString(),
+                PublicId = result.PublicId
+            };
+        }
     }
 }

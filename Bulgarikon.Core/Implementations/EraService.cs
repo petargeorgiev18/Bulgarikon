@@ -104,18 +104,17 @@ namespace Bulgarikon.Core.Implementations
 
             int sortOrder = 0;
 
-            if (model.ImageFiles != null && model.ImageFiles.Any())
+            if (model.ImageFiles != null)
             {
                 foreach (var file in model.ImageFiles.Where(f => f.Length > 0))
                 {
-                    var uploadResult = await cloudinaryService.UploadImageAsync(file);
+                    var upload = await cloudinaryService.UploadImageAsync(file);
 
                     await context.Images.AddAsync(new Image
                     {
                         Id = Guid.NewGuid(),
-                        Url = uploadResult.Url,
-                        PublicId = uploadResult.PublicId,
-                        Caption = null,
+                        Url = upload.Url,
+                        PublicId = upload.PublicId,
                         SortOrder = sortOrder++,
                         TargetType = ImageTargetType.Era,
                         EraId = era.Id
@@ -123,22 +122,25 @@ namespace Bulgarikon.Core.Implementations
                 }
             }
 
-            var newImages = model.Images
-                .Where(x => !x.Id.HasValue && !x.Remove && !string.IsNullOrWhiteSpace(x.Url))
-                .Select(x => new Image
+            if (model.Images != null)
+            {
+                foreach (var img in model.Images
+                    .Where(x => !x.Id.HasValue && !x.Remove && !string.IsNullOrWhiteSpace(x.Url)))
                 {
-                    Id = Guid.NewGuid(),
-                    Url = x.Url.Trim(),
-                    PublicId = null,
-                    Caption = string.IsNullOrWhiteSpace(x.Caption) ? null : x.Caption.Trim(),
-                    SortOrder = sortOrder++,
-                    TargetType = ImageTargetType.Era,
-                    EraId = era.Id
-                })
-                .ToList();
+                    var upload = await cloudinaryService.UploadImageFromUrlAsync(img.Url.Trim());
 
-            if (newImages.Any())
-                await context.Images.AddRangeAsync(newImages);
+                    await context.Images.AddAsync(new Image
+                    {
+                        Id = Guid.NewGuid(),
+                        Url = upload.Url,
+                        PublicId = upload.PublicId,
+                        Caption = string.IsNullOrWhiteSpace(img.Caption) ? null : img.Caption.Trim(),
+                        SortOrder = sortOrder++,
+                        TargetType = ImageTargetType.Era,
+                        EraId = era.Id
+                    });
+                }
+            }
 
             await context.SaveChangesAsync();
         }
@@ -146,6 +148,7 @@ namespace Bulgarikon.Core.Implementations
         public async Task Delete(Guid id)
         {
             var era = await context.Eras
+                .Include(e => e.Images)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             if (era == null)
@@ -154,7 +157,20 @@ namespace Bulgarikon.Core.Implementations
             if (era.IsDeleted)
                 return;
 
+            var images = era.Images
+                .Where(i => i.TargetType == ImageTargetType.Era && i.EraId == era.Id)
+                .ToList();
+
+            foreach (var img in images)
+            {
+                if (!string.IsNullOrWhiteSpace(img.PublicId))
+                    await cloudinaryService.DeleteImageAsync(img.PublicId);
+            }
+
+            context.Images.RemoveRange(images);
+
             era.IsDeleted = true;
+
             await context.SaveChangesAsync();
         }
 
@@ -177,7 +193,6 @@ namespace Bulgarikon.Core.Implementations
 
             var existing = era.Images
                 .Where(i => i.TargetType == ImageTargetType.Era && i.EraId == era.Id)
-                .OrderBy(i => i.SortOrder)
                 .ToList();
 
             var incoming = model.Images ?? new List<ImageEditDto>();
@@ -187,67 +202,63 @@ namespace Bulgarikon.Core.Implementations
                 .Select(x => x.Id!.Value)
                 .ToHashSet();
 
-            if (removeIds.Any())
+            var toRemove = existing.Where(i => removeIds.Contains(i.Id)).ToList();
+
+            foreach (var img in toRemove)
             {
-                var toRemove = existing.Where(i => removeIds.Contains(i.Id)).ToList();
-
-                foreach (var image in toRemove)
-                {
-                    if (!string.IsNullOrWhiteSpace(image.PublicId))
-                    {
-                        await cloudinaryService.DeleteImageAsync(image.PublicId);
-                    }
-                }
-
-                if (toRemove.Any())
-                    context.Images.RemoveRange(toRemove);
+                if (!string.IsNullOrWhiteSpace(img.PublicId))
+                    await cloudinaryService.DeleteImageAsync(img.PublicId);
             }
+
+            context.Images.RemoveRange(toRemove);
 
             foreach (var dto in incoming.Where(x => x.Id.HasValue && !x.Remove))
             {
-                if (string.IsNullOrWhiteSpace(dto.Url))
+                var img = existing.FirstOrDefault(i => i.Id == dto.Id);
+                if (img == null || string.IsNullOrWhiteSpace(dto.Url))
                     continue;
 
-                var img = existing.FirstOrDefault(i => i.Id == dto.Id!.Value);
-                if (img == null)
-                    continue;
+                var upload = await cloudinaryService.UploadImageFromUrlAsync(dto.Url.Trim());
 
-                img.Url = dto.Url.Trim();
+                if (!string.IsNullOrWhiteSpace(img.PublicId))
+                    await cloudinaryService.DeleteImageAsync(img.PublicId);
+
+                img.Url = upload.Url;
+                img.PublicId = upload.PublicId;
                 img.Caption = string.IsNullOrWhiteSpace(dto.Caption) ? null : dto.Caption.Trim();
             }
 
-            int nextSortOrder = existing.Any() ? existing.Max(i => i.SortOrder) + 1 : 0;
+            int sortOrder = existing.Any() ? existing.Max(i => i.SortOrder) + 1 : 0;
 
-            var toAddFromUrls = incoming
-                .Where(x => !x.Id.HasValue && !x.Remove && !string.IsNullOrWhiteSpace(x.Url))
-                .Select(x => new Image
+            foreach (var dto in incoming
+                .Where(x => !x.Id.HasValue && !x.Remove && !string.IsNullOrWhiteSpace(x.Url)))
+            {
+                var upload = await cloudinaryService.UploadImageFromUrlAsync(dto.Url.Trim());
+
+                await context.Images.AddAsync(new Image
                 {
                     Id = Guid.NewGuid(),
-                    Url = x.Url.Trim(),
-                    PublicId = null,
-                    Caption = string.IsNullOrWhiteSpace(x.Caption) ? null : x.Caption.Trim(),
-                    SortOrder = nextSortOrder++,
+                    Url = upload.Url,
+                    PublicId = upload.PublicId,
+                    Caption = string.IsNullOrWhiteSpace(dto.Caption) ? null : dto.Caption.Trim(),
+                    SortOrder = sortOrder++,
                     TargetType = ImageTargetType.Era,
                     EraId = era.Id
-                })
-                .ToList();
+                });
+            }
 
-            if (toAddFromUrls.Any())
-                await context.Images.AddRangeAsync(toAddFromUrls);
-
-            if (model.ImageFiles != null && model.ImageFiles.Any())
+            if (model.ImageFiles != null)
             {
                 foreach (var file in model.ImageFiles.Where(f => f.Length > 0))
                 {
-                    var uploadResult = await cloudinaryService.UploadImageAsync(file);
+                    var upload = await cloudinaryService.UploadImageAsync(file);
 
                     await context.Images.AddAsync(new Image
                     {
                         Id = Guid.NewGuid(),
-                        Url = uploadResult.Url,
-                        PublicId = uploadResult.PublicId,
-                        Caption = null,
-                        SortOrder = nextSortOrder++,
+                        Url = upload.Url,
+                        PublicId = upload.PublicId,
+                        SortOrder = sortOrder++,
                         TargetType = ImageTargetType.Era,
                         EraId = era.Id
                     });

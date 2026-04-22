@@ -128,7 +128,7 @@ namespace Bulgarikon.Core.Implementations
 
             int sortOrder = 0;
 
-            if (model.ImageFiles != null && model.ImageFiles.Any())
+            if (model.ImageFiles != null)
             {
                 foreach (var file in model.ImageFiles.Where(f => f != null && f.Length > 0))
                 {
@@ -147,28 +147,24 @@ namespace Bulgarikon.Core.Implementations
                 }
             }
 
-            var toAdd = (model.Images ?? new List<ImageEditDto>())
-                .Where(x => !x.Remove)
-                .Select(x => new
+            if (model.Images != null)
+            {
+                foreach (var img in model.Images.Where(x => !x.Remove && !string.IsNullOrWhiteSpace(x.Url)))
                 {
-                    Url = (x.Url ?? "").Trim(),
-                    Caption = x.Caption?.Trim()
-                })
-                .Where(x => !string.IsNullOrWhiteSpace(x.Url))
-                .Select(x => new Image
-                {
-                    Id = Guid.NewGuid(),
-                    TargetType = ImageTargetType.Figure,
-                    FigureId = entity.Id,
-                    Url = x.Url,
-                    PublicId = null,
-                    Caption = string.IsNullOrWhiteSpace(x.Caption) ? null : x.Caption,
-                    SortOrder = sortOrder++
-                })
-                .ToList();
+                    var upload = await cloudinaryService.UploadImageFromUrlAsync(img.Url!);
 
-            if (toAdd.Any())
-                await context.Images.AddRangeAsync(toAdd);
+                    await context.Images.AddAsync(new Image
+                    {
+                        Id = Guid.NewGuid(),
+                        TargetType = ImageTargetType.Figure,
+                        FigureId = entity.Id,
+                        Url = upload.Url,
+                        PublicId = upload.PublicId,
+                        Caption = string.IsNullOrWhiteSpace(img.Caption) ? null : img.Caption.Trim(),
+                        SortOrder = sortOrder++
+                    });
+                }
+            }
 
             await context.SaveChangesAsync();
             return entity.Id;
@@ -253,9 +249,7 @@ namespace Bulgarikon.Core.Implementations
                 foreach (var img in toRemove)
                 {
                     if (!string.IsNullOrWhiteSpace(img.PublicId))
-                    {
                         await cloudinaryService.DeleteImageAsync(img.PublicId);
-                    }
                 }
 
                 if (toRemove.Any())
@@ -268,7 +262,7 @@ namespace Bulgarikon.Core.Implementations
                 if (dbImg == null) continue;
 
                 dbImg.Url = u.Url;
-                dbImg.Caption = string.IsNullOrWhiteSpace(u.Caption) ? null : u.Caption;
+                dbImg.Caption = string.IsNullOrWhiteSpace(u.Caption) ? null : u.Caption.Trim();
                 dbImg.TargetType = ImageTargetType.Figure;
                 dbImg.FigureId = f.Id;
             }
@@ -276,24 +270,25 @@ namespace Bulgarikon.Core.Implementations
             int nextSortOrder = existing.Any() ? existing.Max(i => i.SortOrder) + 1 : 0;
 
             var adds = incoming
-                .Where(x => !x.Remove && !x.Id.HasValue && !string.IsNullOrWhiteSpace(x.Url))
-                .ToList();
+                .Where(x => !x.Remove && !x.Id.HasValue && !string.IsNullOrWhiteSpace(x.Url));
 
-            if (adds.Any())
+            foreach (var a in adds)
             {
-                await context.Images.AddRangeAsync(adds.Select(a => new Image
+                var upload = await cloudinaryService.UploadImageFromUrlAsync(a.Url!);
+
+                await context.Images.AddAsync(new Image
                 {
                     Id = Guid.NewGuid(),
                     TargetType = ImageTargetType.Figure,
                     FigureId = f.Id,
-                    Url = a.Url,
-                    PublicId = null,
-                    Caption = string.IsNullOrWhiteSpace(a.Caption) ? null : a.Caption,
+                    Url = upload.Url,
+                    PublicId = upload.PublicId,
+                    Caption = string.IsNullOrWhiteSpace(a.Caption) ? null : a.Caption.Trim(),
                     SortOrder = nextSortOrder++
-                }));
+                });
             }
 
-            if (model.ImageFiles != null && model.ImageFiles.Any())
+            if (model.ImageFiles != null)
             {
                 foreach (var file in model.ImageFiles.Where(file => file != null && file.Length > 0))
                 {
@@ -330,9 +325,7 @@ namespace Bulgarikon.Core.Implementations
             foreach (var img in figImages)
             {
                 if (!string.IsNullOrWhiteSpace(img.PublicId))
-                {
                     await cloudinaryService.DeleteImageAsync(img.PublicId);
-                }
             }
 
             if (figImages.Any())

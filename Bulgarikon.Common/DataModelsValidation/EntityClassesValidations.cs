@@ -18,7 +18,7 @@
             public const int DescriptionMaxLength = 2000;
             public const int DescriptionMinLength = 20;
             public const int ImageUrlMaxLength = 2083;
-            public const int YearMaxValue = 1899;
+            public const int YearMaxValue = 2026;
             public const int YearMinValue = -300000;
         }
         public static class Civilization
