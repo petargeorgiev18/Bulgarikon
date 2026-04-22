@@ -148,7 +148,6 @@ namespace Bulgarikon.Core.Implementations
         public async Task Delete(Guid id)
         {
             var era = await context.Eras
-                .Include(e => e.Images)
                 .FirstOrDefaultAsync(e => e.Id == id);
 
             if (era == null)
@@ -157,20 +156,7 @@ namespace Bulgarikon.Core.Implementations
             if (era.IsDeleted)
                 return;
 
-            var images = era.Images
-                .Where(i => i.TargetType == ImageTargetType.Era && i.EraId == era.Id)
-                .ToList();
-
-            foreach (var img in images)
-            {
-                if (!string.IsNullOrWhiteSpace(img.PublicId))
-                    await cloudinaryService.DeleteImageAsync(img.PublicId);
-            }
-
-            context.Images.RemoveRange(images);
-
             era.IsDeleted = true;
-
             await context.SaveChangesAsync();
         }
 

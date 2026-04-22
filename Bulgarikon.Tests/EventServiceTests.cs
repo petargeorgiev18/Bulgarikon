@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Bulgarikon.Core.DTOs.Common;
 using Bulgarikon.Core.DTOs.EventDTOs;
 using Bulgarikon.Core.DTOs.ImageDTOs;
 using Bulgarikon.Core.Implementations;
@@ -262,6 +263,10 @@ namespace Bulgarikon.Tests.Services
                 }
             };
 
+            cloudinaryService
+                .Setup(c => c.UploadImageFromUrlAsync("  https://img/1  "))
+                .ReturnsAsync(new CloudinaryUploadResultDto { Url = "https://img/1", PublicId = "id1" });
+
             var id = await service.CreateAsync(dto);
 
             var created = await db.Events
@@ -494,6 +499,10 @@ namespace Bulgarikon.Tests.Services
                     new ImageEditDto { Id = Guid.NewGuid(), Url = "https://id-not-found", Caption = "x", Remove = false }
                 }
             };
+
+            cloudinaryService
+                .Setup(c => c.UploadImageFromUrlAsync("  https://added  "))
+                .ReturnsAsync(new CloudinaryUploadResultDto { Url = "https://added", PublicId = "id-added" });
 
             await service.UpdateAsync(ev.Id, dto);
 

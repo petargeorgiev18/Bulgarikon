@@ -1,4 +1,5 @@
-﻿using Bulgarikon.Core.DTOs.EraDTOs;
+﻿using Bulgarikon.Core.DTOs.Common;
+using Bulgarikon.Core.DTOs.EraDTOs;
 using Bulgarikon.Core.DTOs.ImageDTOs;
 using Bulgarikon.Core.Implementations;
 using Bulgarikon.Core.Interfaces;
@@ -220,6 +221,11 @@ namespace Bulgarikon.Tests.Services
         [Test]
         public async Task CreateAsync_CreatesEra_TrimsFields_AddsOnlyValidImages()
         {
+            // ✅ Mock-ваме само валидния URL (trimнат)
+            cloudinaryServiceMock
+                .Setup(c => c.UploadImageFromUrlAsync("https://img/1"))
+                .ReturnsAsync(new CloudinaryUploadResultDto { Url = "https://img/1", PublicId = "id1" });
+
             var dto = new EraFormDto
             {
                 Name = "  Era  ",
@@ -288,6 +294,8 @@ namespace Bulgarikon.Tests.Services
         [Test]
         public async Task Delete_SoftDeletesEra_AndDoesNotRemoveImages()
         {
+            // ⚠️ Изисква EraService.Delete да прави САМО soft delete (era.IsDeleted = true)
+            // без context.Images.RemoveRange и без Cloudinary викове
             var era = new Era
             {
                 Id = Guid.NewGuid(),
@@ -345,6 +353,7 @@ namespace Bulgarikon.Tests.Services
         [Test]
         public async Task Delete_DoesNotCallCloudinaryDelete_BecauseSoftDeleteDoesNotRemoveImages()
         {
+            // ⚠️ Изисква EraService.Delete да прави САМО soft delete — без Cloudinary
             var era = new Era
             {
                 Id = Guid.NewGuid(),
@@ -457,6 +466,11 @@ namespace Bulgarikon.Tests.Services
         [Test]
         public async Task EditAsync_UpdatesEraFields_AndRemovesMarkedImages()
         {
+            // ✅ img2 има Remove=false и Url → сервисът вика UploadImageFromUrlAsync
+            cloudinaryServiceMock
+                .Setup(c => c.UploadImageFromUrlAsync("https://old/2"))
+                .ReturnsAsync(new CloudinaryUploadResultDto { Url = "https://old/2", PublicId = "id2" });
+
             var era = new Era
             {
                 Id = Guid.NewGuid(),
@@ -575,6 +589,11 @@ namespace Bulgarikon.Tests.Services
         [Test]
         public async Task EditAsync_UpdatesExistingImage_WhenProvidedIdAndNotRemoved()
         {
+            // ✅ Сервисът вика UploadImageFromUrlAsync с trimнатия URL
+            cloudinaryServiceMock
+                .Setup(c => c.UploadImageFromUrlAsync("https://new"))
+                .ReturnsAsync(new CloudinaryUploadResultDto { Url = "https://new", PublicId = "id-new" });
+
             var era = new Era
             {
                 Id = Guid.NewGuid(),
@@ -681,6 +700,15 @@ namespace Bulgarikon.Tests.Services
         [Test]
         public async Task EditAsync_AddsNewImages_WhenNoIdAndUrlProvided()
         {
+            // ✅ Mock-ваме двата валидни URL-а (trimнати)
+            cloudinaryServiceMock
+                .Setup(c => c.UploadImageFromUrlAsync("https://new/1"))
+                .ReturnsAsync(new CloudinaryUploadResultDto { Url = "https://new/1", PublicId = "id1" });
+
+            cloudinaryServiceMock
+                .Setup(c => c.UploadImageFromUrlAsync("https://new/2"))
+                .ReturnsAsync(new CloudinaryUploadResultDto { Url = "https://new/2", PublicId = "id2" });
+
             var era = new Era
             {
                 Id = Guid.NewGuid(),

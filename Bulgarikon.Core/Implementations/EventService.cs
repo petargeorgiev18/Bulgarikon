@@ -259,8 +259,8 @@ namespace Bulgarikon.Core.Implementations
                 var dbImg = existing.FirstOrDefault(x => x.Id == u.Id);
                 if (dbImg == null) continue;
 
-                dbImg.Url = u.Url!;
-                dbImg.Caption = u.Caption;
+                dbImg.Url = u.Url!.Trim();
+                dbImg.Caption = string.IsNullOrWhiteSpace(u.Caption) ? null : u.Caption!.Trim();
             }
 
             int sortOrder = existing.Any() ? existing.Max(x => x.SortOrder) + 1 : 0;

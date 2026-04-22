@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Bulgarikon.Core.DTOs.ArtifactDTOs;
+using Bulgarikon.Core.DTOs.Common;
 using Bulgarikon.Core.DTOs.ImageDTOs;
 using Bulgarikon.Core.Implementations;
 using Bulgarikon.Core.Interfaces;
@@ -259,6 +260,10 @@ namespace Bulgarikon.Tests.Services
                 EraId = Guid.NewGuid(),
                 ImageUrl = "  https://img  "
             };
+
+            cloudinaryService
+                .Setup(c => c.UploadImageFromUrlAsync("https://img"))
+                .ReturnsAsync(new CloudinaryUploadResultDto { Url = "https://img", PublicId = "test-id" });
 
             Artifact? captured = null;
 
