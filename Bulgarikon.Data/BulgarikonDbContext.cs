@@ -122,6 +122,7 @@ namespace Bulgarikon.Data
             builder.ApplyConfiguration(new QuizConfiguration());
             builder.ApplyConfiguration(new QuestionConfiguration());
             builder.ApplyConfiguration(new AnswerConfiguration());
+            builder.ApplyConfiguration(new ImageConfiguration());
         }
     }
 }
