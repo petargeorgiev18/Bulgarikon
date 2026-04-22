@@ -43,7 +43,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.ToTable("Answers");
+                    b.ToTable("Answers", (string)null);
 
                     b.HasData(
                         new
@@ -1972,7 +1972,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("EraId");
 
-                    b.ToTable("Artifacts");
+                    b.ToTable("Artifacts", (string)null);
 
                     b.HasData(
                         new
@@ -2546,7 +2546,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("EraId");
 
-                    b.ToTable("Civilizations");
+                    b.ToTable("Civilizations", (string)null);
 
                     b.HasData(
                         new
@@ -2637,7 +2637,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Eras");
+                    b.ToTable("Eras", (string)null);
 
                     b.HasData(
                         new
@@ -2738,7 +2738,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("EraId");
 
-                    b.ToTable("Events");
+                    b.ToTable("Events", (string)null);
 
                     b.HasData(
                         new
@@ -3211,7 +3211,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("EventId");
 
-                    b.ToTable("EventCivilizations");
+                    b.ToTable("EventCivilizations", (string)null);
                 });
 
             modelBuilder.Entity("Bulgarikon.Data.Models.EventFigure", b =>
@@ -3232,7 +3232,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("FigureId");
 
-                    b.ToTable("EventFigures");
+                    b.ToTable("EventFigures", (string)null);
                 });
 
             modelBuilder.Entity("Bulgarikon.Data.Models.Feedback", b =>
@@ -3283,7 +3283,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Feedbacks");
+                    b.ToTable("Feedbacks", (string)null);
                 });
 
             modelBuilder.Entity("Bulgarikon.Data.Models.Figure", b =>
@@ -3329,7 +3329,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("EraId");
 
-                    b.ToTable("Figures");
+                    b.ToTable("Figures", (string)null);
 
                     b.HasData(
                         new
@@ -3783,7 +3783,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("FigureId");
 
-                    b.ToTable("Images");
+                    b.ToTable("Images", (string)null);
                 });
 
             modelBuilder.Entity("Bulgarikon.Data.Models.Question", b =>
@@ -3804,7 +3804,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("QuizId");
 
-                    b.ToTable("Questions");
+                    b.ToTable("Questions", (string)null);
 
                     b.HasData(
                         new
@@ -4229,7 +4229,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("EraId");
 
-                    b.ToTable("Quizzes");
+                    b.ToTable("Quizzes", (string)null);
 
                     b.HasData(
                         new
@@ -4312,7 +4312,7 @@ namespace Bulgarikon.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("QuizResults");
+                    b.ToTable("QuizResults", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>

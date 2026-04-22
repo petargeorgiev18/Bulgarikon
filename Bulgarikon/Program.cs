@@ -6,6 +6,7 @@ using Bulgarikon.Data.Models;
 using Bulgarikon.Data.Repository;
 using Bulgarikon.Data.Repository.Interface;
 using Bulgarikon.Data.Seed;
+using CloudinaryDotNet;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -42,6 +43,19 @@ namespace Bulgarikon
                         options.ClientSecret = googleClientSecret;
                     });
             }
+
+            builder.Services.AddSingleton(sp =>
+            {
+                var config = builder.Configuration;
+
+                var account = new Account(
+                    config["CloudinarySettings:CloudName"],
+                    config["CloudinarySettings:ApiKey"],
+                    config["CloudinarySettings:ApiSecret"]
+                );
+
+                return new Cloudinary(account);
+            });
 
             var fbAppId = builder.Configuration["Authentication:Facebook:AppId"];
             var fbAppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
